@@ -52,19 +52,6 @@ export default function CharacterDetail() {
     { label: 'CAR', value: character.charisma },
   ]
 
-  const powerTypeLabel: Record<string, string> = {
-    utility: 'Utilitário',
-    unlimited: 'Sem Limite',
-    encounter: 'Por Encontro',
-    daily: 'Diário',
-  }
-
-  const powerTypeColor: Record<string, string> = {
-    utility: 'bg-blue-900 text-blue-300',
-    unlimited: 'bg-green-900 text-green-300',
-    encounter: 'bg-yellow-900 text-yellow-300',
-    daily: 'bg-red-900 text-red-300',
-  }
 
   return (
     <div className="min-h-screen bg-gray-900 p-8">
