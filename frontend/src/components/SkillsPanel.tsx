@@ -1,16 +1,17 @@
-import { useState } from 'react'
-import { aiService } from '../services/aiService'
-import type { AISkill } from '../services/aiService'
+import { useEffect, useState } from 'react'
+import { skillService, type Skill } from '../services/skillService'
 
 interface Props {
   characterID: number
+  classID: number
+  raceID: number
   className: string
   edition: string
   level: number
 }
 
 const powerConfig = {
-  'at-will': {
+  unlimited: {
     label: '⚡ Sem Limite',
     color: 'text-green-400',
     border: 'border-green-800',
@@ -40,9 +41,11 @@ const powerConfig = {
   },
 }
 
-function SkillCard({ skill }: { skill: AISkill }) {
+function SkillCard({ skill }: { skill: Skill }) {
   const [expanded, setExpanded] = useState(false)
-  const config = powerConfig[skill.power_type] ?? powerConfig['at-will']
+  const config = skill.power_type
+    ? powerConfig[skill.power_type]
+    : powerConfig['utility']
 
   return (
     <div
@@ -52,159 +55,131 @@ function SkillCard({ skill }: { skill: AISkill }) {
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
           <h3 className="text-white font-semibold text-sm">{skill.name}</h3>
-          {skill.min_level > 1 && (
-            <span className="text-gray-500 text-xs">Nível {skill.min_level}</span>
+          {skill.level && skill.level > 1 && (
+            <span className="text-gray-500 text-xs">Nível {skill.level}</span>
           )}
         </div>
         <div className="flex items-center gap-2">
-          <span className={`text-xs px-2 py-1 rounded-full ${config.badge}`}>
-            {config.label}
-          </span>
-          <span className="text-gray-400 text-xs">{expanded ? '▲' : '▼'}</span>
+          {skill.power_type && (
+            <span className={`text-xs px-2 py-1 rounded-full ${config.badge}`}>
+              {config.label}
+            </span>
+          )}
+          {skill.description && (
+            <span className="text-gray-400 text-xs">{expanded ? '▲' : '▼'}</span>
+          )}
         </div>
       </div>
 
-      {expanded && (
-        <div className="mt-3 flex flex-col gap-2 border-t border-gray-700 pt-3">
-          {skill.action_type && (
-            <div className="flex gap-2 text-xs">
-              <span className="text-gray-400 w-24 shrink-0">Ação:</span>
-              <span className="text-white">{skill.action_type}</span>
-            </div>
-          )}
-          {skill.range && (
-            <div className="flex gap-2 text-xs">
-              <span className="text-gray-400 w-24 shrink-0">Alcance:</span>
-              <span className="text-white">{skill.range}</span>
-            </div>
-          )}
-          {skill.target && (
-            <div className="flex gap-2 text-xs">
-              <span className="text-gray-400 w-24 shrink-0">Alvo:</span>
-              <span className="text-white">{skill.target}</span>
-            </div>
-          )}
-          {skill.attack && (
-            <div className="flex gap-2 text-xs">
-              <span className="text-gray-400 w-24 shrink-0">Ataque:</span>
-              <span className="text-indigo-300 font-semibold">{skill.attack}</span>
-            </div>
-          )}
-          {skill.hit && (
-            <div className="flex gap-2 text-xs">
-              <span className="text-gray-400 w-24 shrink-0">Sucesso:</span>
-              <span className="text-green-300">{skill.hit}</span>
-            </div>
-          )}
-          {skill.miss && (
-            <div className="flex gap-2 text-xs">
-              <span className="text-gray-400 w-24 shrink-0">Fracasso:</span>
-              <span className="text-red-300">{skill.miss}</span>
-            </div>
-          )}
-          {skill.effect && (
-            <div className="flex gap-2 text-xs">
-              <span className="text-gray-400 w-24 shrink-0">Efeito:</span>
-              <span className="text-yellow-200">{skill.effect}</span>
-            </div>
-          )}
-        </div>
+      {expanded && skill.description && (
+        <p className="mt-3 text-gray-300 text-xs border-t border-gray-700 pt-3">
+          {skill.description}
+        </p>
       )}
     </div>
   )
 }
 
-export default function SkillsPanel({ className, edition, level }: Props) {
-  const [skills, setSkills] = useState<AISkill[] | null>(null)
-  const [loading, setLoading] = useState(false)
+export default function SkillsPanel({ classID, raceID, edition, level }: Props) {
+  const [skills, setSkills] = useState<Skill[]>([])
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
 
-  const handleLoad = async () => {
-    setLoading(true)
-    setError(false)
-    try {
-      const result = await aiService.getSkills(className, edition, level)
-      setSkills(result)
-    } catch {
-      setError(true)
-    } finally {
-      setLoading(false)
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true)
+      setError(false)
+      try {
+        const all = await skillService.getByFilter(classID, raceID)
+        // Filtra apenas habilidades disponíveis para o nível atual
+        const available = all.filter(s => !s.level || s.level <= level)
+        setSkills(available)
+      } catch {
+        setError(true)
+      } finally {
+        setLoading(false)
+      }
     }
-  }
+    load()
+  }, [classID, raceID, level])
+
+  const is4e = edition === '4e'
 
   const grouped = {
-    'at-will': skills?.filter(s => s.power_type === 'at-will') ?? [],
-    encounter: skills?.filter(s => s.power_type === 'encounter') ?? [],
-    daily: skills?.filter(s => s.power_type === 'daily') ?? [],
-    utility: skills?.filter(s => s.power_type === 'utility') ?? [],
+    unlimited: skills.filter(s => s.power_type === 'unlimited'),
+    encounter: skills.filter(s => s.power_type === 'encounter'),
+    daily: skills.filter(s => s.power_type === 'daily'),
+    utility: skills.filter(s => s.power_type === 'utility'),
+    other: skills.filter(s => !s.power_type),
   }
 
   return (
     <div className="bg-gray-800 rounded-lg p-6 mb-4 border border-gray-700">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold text-white">Habilidades da Classe</h2>
-        <button
-          onClick={handleLoad}
-          disabled={loading}
-          className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-2"
-        >
-          {loading ? (
-            <>
-              <span className="animate-spin inline-block">⟳</span>
-              Consultando IA...
-            </>
-          ) : (
-            <>🎲 {skills ? 'Recarregar' : 'Carregar'} Habilidades</>
-          )}
-        </button>
-      </div>
+      <h2 className="text-lg font-semibold text-white mb-4">
+        Habilidades da Classe
+      </h2>
 
-      {!skills && !loading && !error && (
-        <p className="text-gray-400 text-sm text-center py-4">
-          Clique em "Carregar Habilidades" para consultar os livros de D&D.
+      {loading && (
+        <p className="text-gray-400 text-sm text-center py-4 animate-pulse">
+          Carregando habilidades...
         </p>
       )}
 
       {error && (
         <p className="text-red-400 text-sm text-center py-4">
-          Erro ao consultar a IA. Verifique se o Ollama está rodando.
+          Erro ao carregar habilidades.
         </p>
       )}
 
-      {loading && (
-        <div className="text-center py-8">
-          <p className="text-indigo-400 text-sm animate-pulse">
-            🧠 Consultando os livros de D&D...
-          </p>
-          <p className="text-gray-500 text-xs mt-2">
-            Isso pode levar alguns segundos
-          </p>
-        </div>
-      )}
-
-      {skills && skills.length > 0 && (
-        <div className="flex flex-col gap-6">
-          {(Object.keys(grouped) as Array<keyof typeof grouped>).map(type => (
-            grouped[type].length > 0 && (
-              <div key={type}>
-                <h3 className={`text-sm font-bold mb-3 ${powerConfig[type].color}`}>
-                  {powerConfig[type].label} ({grouped[type].length})
-                </h3>
-                <div className="flex flex-col gap-2">
-                  {grouped[type].map((skill, i) => (
-                    <SkillCard key={i} skill={skill} />
-                  ))}
-                </div>
-              </div>
-            )
-          ))}
-        </div>
-      )}
-
-      {skills && skills.length === 0 && (
+      {!loading && !error && skills.length === 0 && (
         <p className="text-gray-400 text-sm text-center py-4">
-          Nenhuma habilidade encontrada.
+          Nenhuma habilidade cadastrada para essa classe ainda.
         </p>
+      )}
+
+      {!loading && !error && skills.length > 0 && (
+        <>
+          {is4e ? (
+            // 4e — agrupado por tipo de poder
+            <div className="flex flex-col gap-6">
+              {(Object.keys(grouped) as Array<keyof typeof grouped>).map(type => {
+                if (type === 'other' || grouped[type].length === 0) return null
+                const cfg = powerConfig[type as keyof typeof powerConfig]
+                return (
+                  <div key={type}>
+                    <h3 className={`text-sm font-bold mb-3 ${cfg.color}`}>
+                      {cfg.label} ({grouped[type].length})
+                    </h3>
+                    <div className="flex flex-col gap-2">
+                      {grouped[type].map(skill => (
+                        <SkillCard key={skill.ID} skill={skill} />
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+              {grouped.other.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-bold mb-3 text-gray-400">
+                    Outras ({grouped.other.length})
+                  </h3>
+                  <div className="flex flex-col gap-2">
+                    {grouped.other.map(skill => (
+                      <SkillCard key={skill.ID} skill={skill} />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            // 5e — lista simples sem agrupamento
+            <div className="flex flex-col gap-2">
+              {skills.map(skill => (
+                <SkillCard key={skill.ID} skill={skill} />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   )

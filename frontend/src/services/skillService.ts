@@ -1,21 +1,24 @@
 import api from './api'
-import type { Skill } from '../types'
+
+export type PowerType = 'unlimited' | 'encounter' | 'daily' | 'utility'
+
+export interface Skill {
+  ID: number
+  name: string
+  description?: string
+  power_type?: PowerType
+  level?: number      // nível mínimo para desbloquear
+  edition?: string
+  class_id?: number
+  race_id?: number
+}
 
 export const skillService = {
-  getAll: async (): Promise<Skill[]> => {
-    const { data } = await api.get('/skills')
-    return data
-  },
-
-  getByClassAndRace: async (classID: number, raceID: number): Promise<Skill[]> => {
-    const { data } = await api.get('/skills/filter', {
-      params: { class_id: classID, race_id: raceID },
-    })
-    return data
-  },
-
-  create: async (skill: Omit<Skill, 'ID'>): Promise<Skill> => {
-    const { data } = await api.post('/skills', skill)
+  getByFilter: async (classId: number, raceId?: number): Promise<Skill[]> => {
+    const params = new URLSearchParams()
+    params.append('class_id', String(classId))
+    if (raceId) params.append('race_id', String(raceId))
+    const { data } = await api.get(`/skills/filter?${params.toString()}`)
     return data
   },
 }

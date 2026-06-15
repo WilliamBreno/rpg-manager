@@ -15,6 +15,55 @@ func NewCharacterService(repo *repository.CharacterRepository, skillRepo *reposi
     return &CharacterService{Repo: repo, SkillRepo: skillRepo}
 }
 
+// conModifier retorna o modificador de CON padrão D&D
+func conModifier(constitution int) int {
+    return (constitution - 10) / 2
+}
+
+// calcInitialHP calcula o HP inicial (nível 1) com base na edição
+func calcInitialHP(c *domain.Character) int {
+    switch c.Edition {
+    case "5e":
+        // 5e: máximo do hit die + modificador de CON
+        hp := c.Class.HitDie + conModifier(c.Constitution)
+        if hp < 1 {
+            hp = 1
+        }
+        return hp
+    case "4e":
+        // 4e: BaseHP da classe + valor de CON (não modificador!)
+        hp := c.Class.BaseHP + c.Constitution
+        if hp < 1 {
+            hp = 1
+        }
+        return hp
+    default:
+        return c.Class.HitDie + conModifier(c.Constitution)
+    }
+}
+
+// calcLevelUpHP calcula o HP ganho ao subir de nível
+func calcLevelUpHP(c *domain.Character) int {
+    switch c.Edition {
+    case "5e":
+        // 5e: média do hit die (HitDie/2 + 1) + modificador de CON
+        gain := (c.Class.HitDie/2 + 1) + conModifier(c.Constitution)
+        if gain < 1 {
+            gain = 1
+        }
+        return gain
+    case "4e":
+        // 4e: HPPerLevel fixo por nível
+        return c.Class.HPPerLevel
+    default:
+        gain := c.Class.HitDie/2 + 1 + conModifier(c.Constitution)
+        if gain < 1 {
+            gain = 1
+        }
+        return gain
+    }
+}
+
 func (s *CharacterService) GetAll(userID uint) ([]domain.Character, error) {
     return s.Repo.FindAll(userID)
 }
@@ -34,9 +83,13 @@ func (s *CharacterService) Create(character *domain.Character) error {
         return errors.New("raça é obrigatória")
     }
 
-    // Todo personagem começa no nível 1
     character.Level = 1
-    character.MaxHP = character.HitPoints
+
+    // Calcula HP automaticamente com base na edição e classe
+    initialHP := calcInitialHP(character)
+    character.HitPoints = initialHP
+    character.MaxHP = initialHP
+
     return s.Repo.Create(character)
 }
 
@@ -61,11 +114,10 @@ func (s *CharacterService) LevelUp(id uint) (domain.Character, error) {
         return character, errors.New("personagem já está no nível máximo")
     }
 
-    // Sobe o nível
     character.Level++
 
-    // Atualiza HP com base no hit die da classe
-    hpGain := character.Class.HitDie
+    // HP gain baseado na edição
+    hpGain := calcLevelUpHP(&character)
     character.HitPoints += hpGain
     character.MaxHP += hpGain
 
