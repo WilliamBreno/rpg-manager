@@ -3,7 +3,19 @@ export interface Class {
   name: string
   edition: string
   description: string
+
+  // 5e
   hit_die: number
+
+  // 4e
+  base_hp: number
+  hp_per_level: number
+  surges_per_day: number
+  fort_bonus: number
+  refl_bonus: number
+  will_bonus: number
+
+  is_default: boolean
 }
 
 export interface Race {
@@ -37,40 +49,6 @@ export interface Background {
   flaws: string
 }
 
-export interface Character {
-  ID: number
-  name: string
-  edition: string
-  level: number
-  hit_points: number
-  class_id: number
-  race_id: number
-  avatar_url?: string
-  strength: number
-  dexterity: number
-  constitution: number
-  intelligence: number
-  wisdom: number
-  charisma: number
-  class: Class
-  race: Race
-  skills: Skill[]
-  background?: Background
-}
-
-export interface CreateCharacterDTO {
-  name: string
-  edition: string
-  class_id: number
-  race_id: number
-  hit_points: number
-  strength: number
-  dexterity: number
-  constitution: number
-  intelligence: number
-  wisdom: number
-  charisma: number
-}
 export type ArmorType = 'none' | 'light' | 'medium' | 'heavy' | 'shield'
 
 export interface Armor {
@@ -88,22 +66,55 @@ export interface Character {
   name: string
   edition: string
   level: number
+
+  // HP
   hit_points: number
   max_hp: number
   temp_hp: number
+
+  // Pulsos de Cura (4e)
+  surge_value: number
+  surges_per_day: number
+
+  // Defesas calculadas (4e)
+  defense_ac: number
+  defense_fort: number
+  defense_refl: number
+  defense_will: number
+
+  // Relacionamentos
   armor_id?: number
   class_id: number
   race_id: number
   avatar_url?: string
+
+  // Atributos
   strength: number
   dexterity: number
   constitution: number
   intelligence: number
   wisdom: number
   charisma: number
+
+  // Objetos relacionados
   class: Class
   race: Race
   armor?: Armor
   skills: Skill[]
   background?: Background
+}
+
+export interface CreateCharacterDTO {
+  name: string
+  edition: string
+  class_id: number
+  race_id: number
+  hit_points: number
+  strength: number
+  dexterity: number
+  constitution: number
+  intelligence: number
+  wisdom: number
+  charisma: number
+  armor_id?: number
 }

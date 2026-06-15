@@ -28,7 +28,8 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>
 
-const editions = ['1e', '2e', '3e', '3.5e', '4e', '5e']
+// Apenas 4e e 5e
+const editions = ['4e', '5e']
 
 function getConMod(con: number) {
   return Math.floor((con - 10) / 2)
@@ -41,6 +42,7 @@ export default function CharacterCreate() {
   const [selectedRace, setSelectedRace] = useState<number | null>(null)
   const [selectedClassData, setSelectedClassData] = useState<Class | null>(null)
   const [selectedArmorData, setSelectedArmorData] = useState<Armor | null>(null)
+
   const { register, handleSubmit, setValue, reset, control, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema) as any,
     defaultValues: {
@@ -48,20 +50,29 @@ export default function CharacterCreate() {
       intelligence: 10, wisdom: 10, charisma: 10,
       hit_points: 10,
     }
-  
   })
 
-  // Observa mudanças em constituição e class_id em tempo real
   const constitution = useWatch({ control, name: 'constitution' })
 
   // Recalcula HP automaticamente quando classe ou CON mudar
   useEffect(() => {
-    if (selectedClassData) {
-      const conMod = getConMod(Number(constitution))
-      const newHP = selectedClassData.hit_die + conMod
-      setValue('hit_points', Math.max(1, newHP))
+    if (!selectedClassData || !selectedEdition) return
+
+    const conValue = Number(constitution)
+    const conMod = getConMod(conValue)
+
+    let newHP: number
+
+    if (selectedEdition === '4e') {
+      // 4e: BaseHP da classe + valor de CON (não modificador!)
+      newHP = (selectedClassData.base_hp ?? 0) + conValue
+    } else {
+      // 5e: HitDie máximo + modificador de CON
+      newHP = (selectedClassData.hit_die ?? 0) + conMod
     }
-  }, [selectedClassData, constitution, setValue])
+
+    setValue('hit_points', Math.max(1, newHP))
+  }, [selectedClassData, constitution, selectedEdition, setValue])
 
   const { data: classes } = useQuery({
     queryKey: ['classes', selectedEdition],
@@ -83,7 +94,7 @@ export default function CharacterCreate() {
 
   const { data: skills } = useQuery({
     queryKey: ['skills', selectedClass, selectedRace],
-    queryFn: () => skillService.getByClassAndRace(selectedClass!, selectedRace!),
+    queryFn: () => skillService.getByFilter(selectedClass!, selectedRace!),
     enabled: !!selectedClass && !!selectedRace,
   })
 
@@ -143,6 +154,27 @@ export default function CharacterCreate() {
     daily: 'bg-red-900 text-red-300',
   }
 
+  // Info da classe conforme edição
+  const classInfo = () => {
+    if (!selectedClassData) return null
+    if (selectedEdition === '4e') {
+      return `PV base: ${selectedClassData.base_hp ?? '?'} + CON — ${selectedClassData.description}`
+    }
+    return `Hit Die: d${selectedClassData.hit_die} — ${selectedClassData.description}`
+  }
+
+  // Label do HP conforme edição
+  const hpLabel = () => {
+    if (!selectedClassData) return null
+    const conValue = Number(constitution)
+    const conMod = getConMod(conValue)
+
+    if (selectedEdition === '4e') {
+      return `${selectedClassData.base_hp ?? '?'} (base) + ${conValue} (CON) = ${Math.max(1, (selectedClassData.base_hp ?? 0) + conValue)} PV`
+    }
+    return `d${selectedClassData.hit_die} + mod CON (${conMod >= 0 ? '+' : ''}${conMod})`
+  }
+
   return (
     <div className="min-h-screen bg-gray-900 p-8">
       <div className="max-w-2xl mx-auto">
@@ -159,19 +191,19 @@ export default function CharacterCreate() {
         <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-6">
           <h2 className="text-lg font-semibold text-white mb-2">Passo 1 — Escolha a Edição</h2>
           <p className="text-gray-400 text-sm mb-4">Selecione qual edição do D&D você vai jogar.</p>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             {editions.map(edition => (
               <button
                 key={edition}
                 type="button"
                 onClick={() => handleEditionChange(edition)}
-                className={`py-3 rounded-lg font-semibold text-sm transition border ${
+                className={`py-4 rounded-lg font-semibold text-base transition border ${
                   selectedEdition === edition
                     ? 'bg-indigo-600 border-indigo-500 text-white'
                     : 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'
                 }`}
               >
-                {edition}
+                D&D {edition}
               </button>
             ))}
           </div>
@@ -208,13 +240,11 @@ export default function CharacterCreate() {
                   ))}
                 </select>
                 {selectedClassData && (
-                  <p className="text-gray-400 text-xs mt-1">
-                    Hit Die: d{selectedClassData.hit_die} — {selectedClassData.description}
-                  </p>
+                  <p className="text-gray-400 text-xs mt-1">{classInfo()}</p>
                 )}
                 {errors.class_id && <p className="text-red-400 text-xs mt-1">Selecione uma classe</p>}
               </div>
-                  
+
               <div>
                 <label className="text-gray-400 text-sm mb-1 block">Raça</label>
                 <select
@@ -242,8 +272,8 @@ export default function CharacterCreate() {
                       <div key={skill.ID} className="bg-gray-700 rounded-lg p-3">
                         <div className="flex justify-between items-center">
                           <p className="text-white text-sm font-semibold">{skill.name}</p>
-                          <span className={`text-xs px-2 py-1 rounded-full ${powerTypeColor[skill.power_type]}`}>
-                            {powerTypeLabel[skill.power_type]}
+                          <span className={`text-xs px-2 py-1 rounded-full ${powerTypeColor[skill.power_type ?? '']}`}>
+                            {powerTypeLabel[skill.power_type ?? '']}
                           </span>
                         </div>
                         <p className="text-gray-400 text-xs mt-1">{skill.description}</p>
@@ -311,12 +341,14 @@ export default function CharacterCreate() {
                 <h2 className="text-lg font-semibold text-white">Passo 5 — Hit Points</h2>
                 {selectedClassData && (
                   <span className="text-xs text-gray-400 bg-gray-700 px-3 py-1 rounded-full">
-                    d{selectedClassData.hit_die} + mod CON ({getConMod(Number(constitution)) >= 0 ? '+' : ''}{getConMod(Number(constitution))})
+                    {hpLabel()}
                   </span>
                 )}
               </div>
               {selectedClassData && (
-                <p className="text-gray-400 text-xs mb-3">Calculado automaticamente com base na sua classe e Constituição. Você pode ajustar manualmente.</p>
+                <p className="text-gray-400 text-xs mb-3">
+                  Calculado automaticamente com base na sua classe e Constituição. Você pode ajustar manualmente.
+                </p>
               )}
               <input
                 type="number"

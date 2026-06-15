@@ -14,14 +14,17 @@ import (
     "rpg-manager/pkg/config"
     "rpg-manager/pkg/middleware"
 )
+import "rpg-manager/internal/seed"
 
+  
 func main() {
     if err := godotenv.Load(); err != nil {
         log.Println("Nenhum arquivo .env encontrado, usando variáveis do sistema")
     }
 
     config.ConnectDatabase()
-
+    seed.Run(config.DB) 
+    
     // Repositories
     userRepo := repository.NewUserRepository(config.DB)
     classRepo := repository.NewClassRepository(config.DB)
