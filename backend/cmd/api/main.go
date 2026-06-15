@@ -61,8 +61,6 @@ func main() {
         AllowOriginFunc: func(origin string) bool {
             allowed := []string{
                 "http://localhost:5173",
-                "https://ager-smoky.vercel.app",
-                "https://rpg-manager.vercel.app",
                 "https://rpg-manager-smoky.vercel.app",
             }
             for _, o := range allowed {
