@@ -6,7 +6,6 @@ import (
     "net/http"
     "time"
 
-    "github.com/gin-contrib/cors"
     "github.com/gin-gonic/gin"
     "github.com/joho/godotenv"
     "rpg-manager/internal/handler"
@@ -57,24 +56,31 @@ func main() {
 
     r.Static("/uploads", "./uploads")
 
-    r.Use(cors.New(cors.Config{
-        AllowOriginFunc: func(origin string) bool {
-            allowed := []string{
-                "http://localhost:5173",
-                "https://rpg-manager-smoky.vercel.app",
-            }
-            for _, o := range allowed {
-                if o == origin {
-                    return true
-                }
-            }
-            return false
-        },
-        AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-        AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
-        ExposeHeaders:    []string{"Content-Length"},
-        AllowCredentials: true,
-    }))
+// Middleware CORS manual
+    r.Use(func(c *gin.Context) {
+        origin := c.Request.Header.Get("Origin")
+
+        allowed := map[string]bool{
+            "http://localhost:5173":                    true,
+            "https://rpg-manager-smoky.vercel.app":     true,
+        }
+
+        if allowed[origin] {
+            c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
+        }
+
+        c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+        c.Writer.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, Authorization")
+        c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+        c.Writer.Header().Set("Access-Control-Max-Age", "86400")
+
+        if c.Request.Method == "OPTIONS" {
+            c.AbortWithStatus(http.StatusNoContent)
+            return
+        }
+
+        c.Next()
+    })
 
     r.GET("/health", func(c *gin.Context) {
         c.JSON(200, gin.H{"status": "ok", "message": "RPG Manager API rodando!"})
