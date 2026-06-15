@@ -58,10 +58,18 @@ func main() {
     r.Static("/uploads", "./uploads")
 
     r.Use(cors.New(cors.Config{
-        AllowOrigins: []string{
-            "http://localhost:5173",
-            "https://rpg-manager.vercel.app",
-            "https://*.vercel.app",
+        AllowOriginFunc: func(origin string) bool {
+            allowed := []string{
+                "http://localhost:5173",
+                "https://ager-smoky.vercel.app",
+                "https://rpg-manager.vercel.app",
+            }
+            for _, o := range allowed {
+                if o == origin {
+                    return true
+                }
+            }
+            return false
         },
         AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
         AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
