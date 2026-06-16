@@ -115,12 +115,8 @@ export default function CharacterDetail() {
 
         {/* Habilidades da Classe via IA */}
         <SkillsPanel
-            characterID={character.ID}
-            classID={character.class_id}
-            raceID={character.race_id} 
-            className={character.class?.name ?? ''}
+            skills={character.skills}
             edition={character.edition}
-            level={character.level}
         />
 
         {/* Background */}

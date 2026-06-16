@@ -10,12 +10,10 @@ export const powerConfig: Record<string, { label: string; color: string; border:
 
 interface SkillCardProps {
   skill: Skill
-  // Modo seleção
   selectable?: boolean
   selected?: boolean
   disabled?: boolean
   onToggle?: (skill: Skill) => void
-  // Modo informativo (característica de classe automática)
   informative?: boolean
 }
 
@@ -23,60 +21,71 @@ export function SkillCard({ skill, selectable, selected, disabled, onToggle, inf
   const [expanded, setExpanded] = useState(false)
   const cfg = powerConfig[skill.power_type ?? 'unlimited']
 
-  const hasDetails = skill.action_type || skill.range || skill.target || skill.attack ||
-    skill.hit || skill.miss || skill.effect || skill.special || skill.level_scaling
+  const hasDetails = !!(skill.action_type || skill.range || skill.target || skill.attack ||
+    skill.hit || skill.miss || skill.effect || skill.special || skill.level_scaling)
 
-  const handleClick = () => {
-    if (selectable && onToggle && !disabled) {
-      onToggle(skill)
-    } else {
-      setExpanded(e => !e)
-    }
+  // Clique no corpo sempre expande/colapsa
+  const handleBodyClick = () => {
+    if (hasDetails) setExpanded(e => !e)
+  }
+
+  // Clique no checkbox só seleciona (não propaga para o corpo)
+  const handleCheckboxClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (selectable && onToggle && !disabled) onToggle(skill)
   }
 
   return (
     <div
-      onClick={handleClick}
-      className={`rounded-lg border p-4 transition-all ${
+      onClick={handleBodyClick}
+      className={`rounded-lg border p-4 transition-all ${hasDetails ? 'cursor-pointer' : ''} ${
         selectable
           ? selected
-            ? `${cfg.border} ${cfg.bg} ring-2 ring-offset-1 ring-offset-gray-800 cursor-pointer`
+            ? `${cfg.border} ${cfg.bg} ring-2 ring-offset-1 ring-offset-gray-800`
             : disabled
-            ? 'border-gray-700 bg-gray-800 opacity-40 cursor-not-allowed'
-            : 'border-gray-600 bg-gray-700 hover:border-gray-500 hover:bg-gray-600 cursor-pointer'
+            ? 'border-gray-700 bg-gray-800 opacity-40'
+            : 'border-gray-600 bg-gray-700 hover:border-gray-500 hover:bg-gray-600'
           : informative
-          ? 'border-indigo-900 bg-indigo-950 cursor-pointer'
-          : `${cfg.border} ${cfg.bg} cursor-pointer`
+          ? 'border-indigo-900 bg-indigo-950'
+          : `${cfg.border} ${cfg.bg}`
       }`}
     >
       {/* Header */}
       <div className="flex justify-between items-start gap-2">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="text-white font-semibold text-sm">{skill.name}</span>
             {skill.keywords && (
               <span className="text-gray-400 text-xs">• {skill.keywords}</span>
             )}
             {informative && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-900 text-indigo-300">
-                Automático
-              </span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-900 text-indigo-300">Automático</span>
             )}
           </div>
           {skill.description && (
-            <p className="text-gray-400 text-xs mt-1 italic line-clamp-2">{skill.description}</p>
+            <p className="text-gray-400 text-xs mt-1 italic">{skill.description}</p>
           )}
         </div>
+
         <div className="flex items-center gap-2 shrink-0">
+          {/* Checkbox de seleção — clique independente */}
           {selectable && (
-            <span className={`w-5 h-5 rounded-full border flex items-center justify-center text-xs ${
-              selected ? `${cfg.badge} border-transparent` : 'border-gray-500 text-gray-500'
-            }`}>
+            <button
+              type="button"
+              onClick={handleCheckboxClick}
+              disabled={disabled && !selected}
+              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs transition-all ${
+                selected
+                  ? `${cfg.badge} border-transparent`
+                  : 'border-gray-500 text-gray-500 hover:border-gray-300'
+              }`}
+            >
               {selected ? '✓' : ''}
-            </span>
+            </button>
           )}
+          {/* Indicador de expansão */}
           {hasDetails && (
-            <span className="text-gray-500 text-xs">{expanded ? '▲' : '▼'}</span>
+            <span className="text-gray-500 text-xs select-none">{expanded ? '▲' : '▼'}</span>
           )}
         </div>
       </div>
@@ -84,14 +93,14 @@ export function SkillCard({ skill, selectable, selected, disabled, onToggle, inf
       {/* Detalhes expandidos */}
       {expanded && hasDetails && (
         <div className="mt-3 pt-3 border-t border-gray-700 flex flex-col gap-1.5">
-          {skill.action_type && <DetailRow label="Ação" value={skill.action_type} />}
-          {skill.range      && <DetailRow label="Alcance" value={skill.range} />}
-          {skill.target     && <DetailRow label="Alvo" value={skill.target} />}
-          {skill.attack     && <DetailRow label="Ataque" value={skill.attack} color="text-indigo-300" />}
-          {skill.hit        && <DetailRow label="Sucesso" value={skill.hit} color="text-green-300" />}
-          {skill.miss       && <DetailRow label="Fracasso" value={skill.miss} color="text-red-300" />}
-          {skill.effect     && <DetailRow label="Efeito" value={skill.effect} color="text-yellow-200" />}
-          {skill.special    && <DetailRow label="Especial" value={skill.special} color="text-purple-300" />}
+          {skill.action_type   && <DetailRow label="Ação"          value={skill.action_type} />}
+          {skill.range         && <DetailRow label="Alcance"       value={skill.range} />}
+          {skill.target        && <DetailRow label="Alvo"          value={skill.target} />}
+          {skill.attack        && <DetailRow label="Ataque"        value={skill.attack}        color="text-indigo-300" />}
+          {skill.hit           && <DetailRow label="Sucesso"       value={skill.hit}           color="text-green-300" />}
+          {skill.miss          && <DetailRow label="Fracasso"      value={skill.miss}          color="text-red-300" />}
+          {skill.effect        && <DetailRow label="Efeito"        value={skill.effect}        color="text-yellow-200" />}
+          {skill.special       && <DetailRow label="Especial"      value={skill.special}       color="text-purple-300" />}
           {skill.level_scaling && <DetailRow label="Escalonamento" value={skill.level_scaling} color="text-gray-300" />}
         </div>
       )}
