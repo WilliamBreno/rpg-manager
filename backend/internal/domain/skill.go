@@ -43,4 +43,6 @@ type Skill struct {
 	IsClassFeature bool   `json:"is_class_feature"`
 	RequiresChoice bool   `json:"requires_choice"`
 	ChoiceGroup    string `json:"choice_group"`
+
+	IsRaceFeature  bool   `json:"is_race_feature"`
 }

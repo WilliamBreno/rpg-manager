@@ -70,34 +70,69 @@ export default function CharacterCreate() {
   })
 
   // ── Separação de skills por categoria ─────────────────────────
-  // Características automáticas (E — todos têm, sem escolha)
-  const classFeatures  = (allSkills ?? []).filter(s => s.is_class_feature && !s.requires_choice)
 
-  // Grupos de escolha (OU — escolhe UMA dentro do grupo)
-  const choiceFeatures = (allSkills ?? []).filter(s => s.is_class_feature && s.requires_choice)
-  const choiceGroups   = choiceFeatures.reduce<Record<string, Skill[]>>((acc, s) => {
+  // Características de CLASSE automáticas (todos têm, sem escolha)
+  const classFeatures   = (allSkills ?? []).filter(s => s.is_class_feature && !s.requires_choice)
+  // Grupos de escolha de CLASSE (OU — escolhe UMA)
+  const choiceFeatures  = (allSkills ?? []).filter(s => s.is_class_feature && s.requires_choice)
+  const choiceGroups    = choiceFeatures.reduce<Record<string, Skill[]>>((acc, s) => {
     const g = s.choice_group ?? 'default'
     acc[g] = [...(acc[g] ?? []), s]; return acc
   }, {})
 
-  // Se há grupos de escolha, todos devem ser preenchidos antes de mostrar poderes
-  const hasChoiceGroups  = Object.keys(choiceGroups).length > 0
-  const allChoicesMade   = !hasChoiceGroups ||
-    Object.keys(choiceGroups).every(g => !!choiceSelections[g])
+  // Características de RAÇA automáticas (todos têm, sem escolha)
+  const raceFeatures      = (allSkills ?? []).filter(s => s.is_race_feature && !s.requires_choice)
+  // Grupos de escolha de RAÇA (OU — escolhe UMA)
+  const raceChoiceFeatures = (allSkills ?? []).filter(s => s.is_race_feature && s.requires_choice)
+  const raceChoiceGroups   = raceChoiceFeatures.reduce<Record<string, Skill[]>>((acc, s) => {
+    const g = s.choice_group ?? 'default'
+    acc[g] = [...(acc[g] ?? []), s]; return acc
+  }, {})
 
+  // Há algum grupo de escolha (classe ou raça) que precisa ser preenchido?
+  const hasAnyChoiceGroups =
+    Object.keys(choiceGroups).length > 0 ||
+    Object.keys(raceChoiceGroups).length > 0
+
+  // Todos os grupos de escolha (classe E raça) estão preenchidos?
+  const allChoicesMade =
+    Object.keys(choiceGroups).every(g => !!choiceSelections[g]) &&
+    Object.keys(raceChoiceGroups).every(g => !!choiceSelections[g])
+
+  // Há características (classe ou raça) para exibir no passo 4?
+  const hasAnyFeatures =
+    classFeatures.length > 0 ||
+    Object.keys(choiceGroups).length > 0 ||
+    raceFeatures.length > 0 ||
+    Object.keys(raceChoiceGroups).length > 0
+
+  // Poderes normais (exclui features de classe E de raça)
   const normalByType = (type: PowerType): Skill[] =>
-    (allSkills ?? []).filter(s => !s.is_class_feature && s.power_type === type && (!s.level || s.level <= 1))
-  const utilitySkills = (allSkills ?? []).filter(s => !s.is_class_feature && s.power_type === 'utility')
+    (allSkills ?? []).filter(s =>
+      !s.is_class_feature &&
+      !s.is_race_feature &&
+      s.power_type === type &&
+      (!s.level || s.level <= 1)
+    )
+  const utilitySkills = (allSkills ?? []).filter(s =>
+    !s.is_class_feature && !s.is_race_feature && s.power_type === 'utility'
+  )
 
   // ── Mutação de criação ─────────────────────────────────────────
   const createMutation = useMutation({
     mutationFn: async (data: FormData) => {
       const character = await characterService.create(data)
+      // Poderes selecionados pelo jogador
       for (const skill of Object.values(selectedSkills).flat())
         await characterService.addSkill(character.ID, skill.ID)
+      // Escolhas de característica (classe + raça)
       for (const skill of Object.values(choiceSelections))
         await characterService.addSkill(character.ID, skill.ID)
+      // Características automáticas de classe
       for (const skill of classFeatures)
+        await characterService.addSkill(character.ID, skill.ID)
+      // Características automáticas de raça
+      for (const skill of raceFeatures)
         await characterService.addSkill(character.ID, skill.ID)
       return character
     },
@@ -133,8 +168,8 @@ export default function CharacterCreate() {
       return { ...prev, [type]: [...cur, skill] }
     })
   }
-  const isSelected     = (skill: Skill) => !!selectedSkills[(skill.power_type as PowerType) ?? 'unlimited'].find(s => s.ID === skill.ID)
-  const selectChoice   = (skill: Skill) => setChoiceSelections(prev => ({ ...prev, [skill.choice_group ?? 'default']: skill }))
+  const isSelected       = (skill: Skill) => !!selectedSkills[(skill.power_type as PowerType) ?? 'unlimited'].find(s => s.ID === skill.ID)
+  const selectChoice     = (skill: Skill) => setChoiceSelections(prev => ({ ...prev, [skill.choice_group ?? 'default']: skill }))
   const isChoiceSelected = (skill: Skill) => choiceSelections[skill.choice_group ?? 'default']?.ID === skill.ID
 
   const totalNormal   = Object.values(selectedSkills).flat().length
@@ -166,12 +201,12 @@ export default function CharacterCreate() {
     { label: 'Carisma',       key: 'charisma'     },
   ] as const
 
-  const is4e     = selectedEdition === '4e'
+  const is4e      = selectedEdition === '4e'
   const hasSkills = allSkills && allSkills.length > 0
 
   // Numeração dinâmica de passos
   let step = 1
-  const S = () => step++   // retorna o passo atual e incrementa
+  const S = () => step++
 
   return (
     <div className="min-h-screen bg-gray-900 px-4 py-6 sm:px-8 sm:py-8">
@@ -226,22 +261,22 @@ export default function CharacterCreate() {
               </div>
             </div>
 
-            {/* ── PASSO 4 — Características de Classe (apenas se houver escolha OU automáticas) ── */}
-            {is4e && selectedClass && hasSkills && (classFeatures.length > 0 || hasChoiceGroups) && (
+            {/* ── PASSO 4 — Características (Classe + Raça) ── */}
+            {is4e && selectedClass && hasSkills && hasAnyFeatures && (
               <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
-                <h2 className="text-base font-semibold text-white mb-1">Passo {S()} — Características de Classe</h2>
+                <h2 className="text-base font-semibold text-white mb-4">Passo {S()} — Características</h2>
 
-                <div className="flex flex-col gap-6 mt-4">
+                <div className="flex flex-col gap-6">
 
-                  {/* Características automáticas — todos possuem (E) */}
+                  {/* ── CLASSE: automáticas ── */}
                   {classFeatures.length > 0 && (
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-bold text-indigo-400">📖 Automáticas</span>
+                        <span className="text-sm font-bold text-indigo-400">📖 Classe — Automáticas</span>
                         <span className="text-xs bg-indigo-900 text-indigo-300 px-2 py-0.5 rounded-full">Todos possuem</span>
                       </div>
                       <p className="text-gray-500 text-xs mb-3">
-                        Todos os personagens desta classe recebem estas características automaticamente.
+                        Concedidas automaticamente pela classe.
                       </p>
                       <div className="flex flex-col gap-2">
                         {classFeatures.map(s => <SkillCard key={s.ID} skill={s} informative defaultExpanded />)}
@@ -249,25 +284,73 @@ export default function CharacterCreate() {
                     </div>
                   )}
 
-                  {/* Grupos de escolha — deve escolher UMA (OU) */}
+                  {/* ── CLASSE: escolha obrigatória (OU) ── */}
                   {Object.entries(choiceGroups).map(([group, options]) => {
                     const chosen = choiceSelections[group]
                     return (
                       <div key={group}>
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-bold text-purple-400">🎯 Escolha Obrigatória</span>
+                          <span className="text-sm font-bold text-purple-400">🎯 Classe — Escolha Obrigatória</span>
                           {chosen
                             ? <span className="text-xs bg-purple-900 text-purple-300 px-2 py-0.5 rounded-full">✓ {chosen.name}</span>
                             : <span className="text-xs bg-red-900 text-red-300 px-2 py-0.5 rounded-full animate-pulse">Escolha uma opção</span>
                           }
                         </div>
                         <p className="text-gray-500 text-xs mb-3">
-                          Escolha <strong className="text-white">uma</strong> das opções abaixo — esta será a tradição permanente do seu personagem.
+                          Escolha <strong className="text-white">uma</strong> das opções — esta será a tradição permanente do seu personagem.
                         </p>
                         <div className="flex flex-col gap-2">
                           {options.map(s => (
-                            <SkillCard
-                              key={s.ID} skill={s}
+                            <SkillCard key={s.ID} skill={s}
+                              selectable selected={isChoiceSelected(s)} disabled={false}
+                              onToggle={selectChoice} defaultExpanded
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })}
+
+                  {/* Divisor visual se há tanto features de classe quanto de raça */}
+                  {(classFeatures.length > 0 || Object.keys(choiceGroups).length > 0) &&
+                   (raceFeatures.length > 0 || Object.keys(raceChoiceGroups).length > 0) && (
+                    <hr className="border-gray-600" />
+                  )}
+
+                  {/* ── RAÇA: automáticas ── */}
+                  {raceFeatures.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-sm font-bold text-emerald-400">🐉 Raça — Automáticas</span>
+                        <span className="text-xs bg-emerald-900 text-emerald-300 px-2 py-0.5 rounded-full">Todos possuem</span>
+                      </div>
+                      <p className="text-gray-500 text-xs mb-3">
+                        Concedidas automaticamente pela raça.
+                      </p>
+                      <div className="flex flex-col gap-2">
+                        {raceFeatures.map(s => <SkillCard key={s.ID} skill={s} informative defaultExpanded />)}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── RAÇA: escolha obrigatória (OU) ── */}
+                  {Object.entries(raceChoiceGroups).map(([group, options]) => {
+                    const chosen = choiceSelections[group]
+                    return (
+                      <div key={group}>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-bold text-amber-400">🎯 Raça — Escolha Obrigatória</span>
+                          {chosen
+                            ? <span className="text-xs bg-amber-900 text-amber-300 px-2 py-0.5 rounded-full">✓ {chosen.name}</span>
+                            : <span className="text-xs bg-red-900 text-red-300 px-2 py-0.5 rounded-full animate-pulse">Escolha uma opção</span>
+                          }
+                        </div>
+                        <p className="text-gray-500 text-xs mb-3">
+                          Escolha <strong className="text-white">uma</strong> das opções — esta será a característica permanente da sua raça.
+                        </p>
+                        <div className="flex flex-col gap-2">
+                          {options.map(s => (
+                            <SkillCard key={s.ID} skill={s}
                               selectable selected={isChoiceSelected(s)} disabled={false}
                               onToggle={selectChoice} defaultExpanded
                             />
@@ -281,15 +364,15 @@ export default function CharacterCreate() {
               </div>
             )}
 
-            {/* ── Aviso: aguardando escolha de característica ── */}
-            {is4e && selectedClass && hasSkills && hasChoiceGroups && !allChoicesMade && (
+            {/* ── Aviso: aguardando escolhas pendentes ── */}
+            {is4e && selectedClass && hasSkills && hasAnyChoiceGroups && !allChoicesMade && (
               <div className="bg-yellow-900/30 border border-yellow-700 rounded-xl p-4 text-center">
-                <p className="text-yellow-300 text-sm font-semibold">⚠️ Complete a escolha de característica acima para continuar</p>
-                <p className="text-yellow-500 text-xs mt-1">Você precisar escolher uma das opções antes de selecionar seus poderes.</p>
+                <p className="text-yellow-300 text-sm font-semibold">⚠️ Complete todas as escolhas acima para continuar</p>
+                <p className="text-yellow-500 text-xs mt-1">Escolha as opções pendentes antes de selecionar seus poderes.</p>
               </div>
             )}
 
-            {/* ── PASSO 5 — Habilidades (só aparece após escolha de característica) ── */}
+            {/* ── PASSO 5 — Poderes (só aparece após todas as escolhas) ── */}
             {is4e && selectedClass && hasSkills && allChoicesMade && (
               <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
                 <div className="flex justify-between items-center mb-1">
@@ -313,7 +396,8 @@ export default function CharacterCreate() {
                       </div>
                       <div className="flex flex-col gap-2">
                         {normalByType('unlimited').map(s => (
-                          <SkillCard key={s.ID} skill={s} selectable selected={isSelected(s)} disabled={!canSelect('unlimited', s) && !isSelected(s)} onToggle={toggleSkill} defaultExpanded />
+                          <SkillCard key={s.ID} skill={s} selectable selected={isSelected(s)}
+                            disabled={!canSelect('unlimited', s) && !isSelected(s)} onToggle={toggleSkill} defaultExpanded />
                         ))}
                       </div>
                     </div>
@@ -330,7 +414,8 @@ export default function CharacterCreate() {
                       </div>
                       <div className="flex flex-col gap-2">
                         {normalByType('encounter').map(s => (
-                          <SkillCard key={s.ID} skill={s} selectable selected={isSelected(s)} disabled={!canSelect('encounter', s) && !isSelected(s)} onToggle={toggleSkill} defaultExpanded />
+                          <SkillCard key={s.ID} skill={s} selectable selected={isSelected(s)}
+                            disabled={!canSelect('encounter', s) && !isSelected(s)} onToggle={toggleSkill} defaultExpanded />
                         ))}
                       </div>
                     </div>
@@ -347,7 +432,8 @@ export default function CharacterCreate() {
                       </div>
                       <div className="flex flex-col gap-2">
                         {normalByType('daily').map(s => (
-                          <SkillCard key={s.ID} skill={s} selectable selected={isSelected(s)} disabled={!canSelect('daily', s) && !isSelected(s)} onToggle={toggleSkill} defaultExpanded />
+                          <SkillCard key={s.ID} skill={s} selectable selected={isSelected(s)}
+                            disabled={!canSelect('daily', s) && !isSelected(s)} onToggle={toggleSkill} defaultExpanded />
                         ))}
                       </div>
                     </div>
@@ -407,9 +493,19 @@ export default function CharacterCreate() {
               <div className="bg-gray-800 rounded-xl p-4 border border-indigo-700">
                 <p className="text-indigo-300 text-sm font-semibold mb-2">✨ Selecionados</p>
                 <div className="flex flex-wrap gap-2">
-                  {Object.values(choiceSelections).map(s => (
-                    <span key={s.ID} className="text-xs px-2 py-1 rounded-full bg-purple-900 text-purple-300">{s.name}</span>
-                  ))}
+                  {/* Escolhas de classe (roxo) */}
+                  {Object.entries(choiceSelections)
+                    .filter(([, s]) => s.is_class_feature)
+                    .map(([, s]) => (
+                      <span key={s.ID} className="text-xs px-2 py-1 rounded-full bg-purple-900 text-purple-300">{s.name}</span>
+                    ))}
+                  {/* Escolhas de raça (âmbar) */}
+                  {Object.entries(choiceSelections)
+                    .filter(([, s]) => s.is_race_feature)
+                    .map(([, s]) => (
+                      <span key={s.ID} className="text-xs px-2 py-1 rounded-full bg-amber-900 text-amber-300">{s.name}</span>
+                    ))}
+                  {/* Poderes selecionados */}
                   {Object.values(selectedSkills).flat().map(s => (
                     <span key={s.ID} className={`text-xs px-2 py-1 rounded-full ${powerConfig[(s.power_type as PowerType) ?? 'unlimited'].badge}`}>{s.name}</span>
                   ))}

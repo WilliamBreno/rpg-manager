@@ -10,19 +10,7 @@ func Run(db *gorm.DB) {
 	log.Println("🌱 Rodando seed...")
 	seedClasses(db)
 	seedSkills(db)
-	seedClerigoSkills(db)
-	seedGuerreiroSkills(db)
-	seedLadinoSkills(db)
-	seedMagoSkills(db)
-	seedPaladinoSkills(db)
-	seedPatrulheiroSkills(db)
-	seedBarbaroSkills(db)
-	seedDruidaSkills(db)
-	seedFeiticeiroSkills(db)
-	seedGuardiaoSkills(db)
-	seedInvocadorSkills(db)
-	seedVingadorSkills(db)
-	seedXamaSkills(db)
+	seedRaceSkills(db)
 	log.Println("✅ Seed concluído!")
 }
 
@@ -98,6 +86,19 @@ func seedClasses(db *gorm.DB) {
 func seedSkills(db *gorm.DB) {
 	seedBardoSkills(db)
 	seedMongeSkills(db)
+	seedClerigoSkills(db)
+	seedGuerreiroSkills(db)
+	seedLadinoSkills(db)
+	seedMagoSkills(db)
+	seedPaladinoSkills(db)
+	seedPatrulheiroSkills(db)
+	seedBarbaroSkills(db)
+	seedDruidaSkills(db)
+	seedFeiticeiroSkills(db)
+	seedGuardiaoSkills(db)
+	seedInvocadorSkills(db)
+	seedVingadorSkills(db)
+	seedXamaSkills(db)
 }
 
 func seedBardoSkills(db *gorm.DB) {
@@ -505,37 +506,358 @@ func seedBardoSkills(db *gorm.DB) {
 func seedMongeSkills(db *gorm.DB) {
 	var cls domain.Class
 	if err := db.Where("name = ? AND edition = ?", "Monge", "4e").First(&cls).Error; err != nil {
-		log.Println("  ✗ Monge 4e não encontrado"); return
+		log.Println("  ✗ Monge 4e não encontrado")
+		return
 	}
 	id := cls.ID
 
 	skills := []domain.Skill{
+
+		// ── CARACTERÍSTICAS DE CLASSE (escolha obrigatória — OU) ────
 		{
 			Name: "Sequência de Golpes Centrada", Edition: "4e", ClassID: &id,
-			Description: "Seus punhos ficam ofuscados enquanto você desfere um ataque inicial seguido de outro, ajustando posições dos inimigos ao seu favor.",
-			Keywords: "Psiônico", ActionType: "Nenhuma Ação (Especial)", Range: "Corpo a corpo 1",
-			Target: "Uma ou duas criaturas",
-			Effect: "Gatilho: O monge atinge uma criatura durante seu turno. O alvo sofre dano igual a 2 + mod Sabedoria. O monge conduz o alvo 1 quadrado adjacente.",
-			Special: "Pode ser usado apenas uma vez por rodada. Nível 21: cada inimigo adjacente ao monge.",
-			PowerType: domain.PowerUnlimited, Level: 1,
+			Description: "Seus punhos ficam ofuscados enquanto você desfere um ataque inicial seguido de outro, ajustando as posições dos inimigos ao seu favor.",
+			Keywords:   "Psiônico",
+			ActionType: "Nenhuma Ação (Especial)", Range: "Corpo a corpo 1",
+			Target: "Uma criatura",
+			Effect: "Gatilho: O monge atinge uma criatura durante seu turno. O alvo sofre dano igual a 2 + o modificador de Sabedoria do monge, e o monge conduz o alvo 1 quadrado para 1 quadrado adjacente ao monge ou 1 quadrado em qualquer direção caso o alvo não tenha sido a criatura atingida pelo ataque que ativou o gatilho.",
+			Special: "O monge pode usar este poder apenas uma vez por rodada. Nível 11: Uma ou duas criaturas. Nível 21: Cada inimigo adjacente ao monge.",
+			LevelScaling: "Nível 21: Cada inimigo adjacente ao monge.",
+			PowerType:      domain.PowerUnlimited, Level: 1,
 			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "sequencia_golpes_monge",
 		},
 		{
 			Name: "Sequência de Golpes do Punho de Pedra", Edition: "4e", ClassID: &id,
 			Description: "Você golpeia outro inimigo após seu primeiro ataque, um lembre casual da sua grande força.",
-			Keywords: "Psiônico", ActionType: "Nenhuma Ação (Especial)", Range: "Corpo a corpo 1",
+			Keywords:   "Psiônico",
+			ActionType: "Nenhuma Ação (Especial)", Range: "Corpo a corpo 1",
 			Target: "Uma criatura",
-			Effect: "Gatilho: O monge atinge uma criatura durante seu turno. O alvo sofre dano igual a 3 + mod Sabedoria. Caso não tenha sido a criatura atingida pelo gatilho, o dano aumenta em 2 (nível 11 e 21).",
-			Special: "Pode ser usado apenas uma vez por rodada. Nível 21: cada inimigo adjacente ao monge.",
-			PowerType: domain.PowerUnlimited, Level: 1,
+			Effect: "Gatilho: O monge atinge uma criatura durante seu turno. O alvo sofre dano igual a 3 + o modificador de Sabedoria do monge. Caso o alvo não tenha sido a criatura atingida pelo ataque que ativou o gatilho, o dano aumenta em 2 (no nível 11 e 6 no nível 21).",
+			Special: "O monge pode usar este poder apenas uma vez por rodada. Nível 11: Uma ou duas criaturas. Nível 21: Cada inimigo adjacente ao monge.",
+			PowerType:      domain.PowerUnlimited, Level: 1,
 			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "sequencia_golpes_monge",
+		},
+
+		// ── NÍVEL 1 — SEM LIMITE ────────────────────────────────────
+		{
+			Name: "Asas do Grou", Edition: "4e", ClassID: &id,
+			Description: "Você salta cruzando o campo de batalha e chuta seu adversário, fazendo-o recuar desnorteado.",
+			Keywords:   "Disciplina Total, Implemento, Psiônico",
+			ActionType: "Ação Padrão", Range: "Toque corpo a corpo",
+			Target:       "Uma criatura",
+			Attack:       "Destreza vs. Fortitude",
+			Hit:          "1d10 + mod Destreza de dano. O monge empurra o alvo 1 quadrado.",
+			Special:      "Técnica de Movimento (Ação de Movimento, Pessoal): O monge realiza um teste de Atletismo para saltar com +5 de bônus de poder. A distância do salto não fica limitada pelo deslocamento.",
+			LevelScaling: "Nível 21: 2d10 + mod Destreza.",
+			PowerType: domain.PowerUnlimited, Level: 1,
+		},
+		{
+			Name: "Cauda do Dragão", Edition: "4e", ClassID: &id,
+			Description: "Sua mão ondula como a cauda de um dragão e com um leve toque libera-se poder que derruba seu adversário ao chão.",
+			Keywords:   "Disciplina Total, Implemento, Psiônico",
+			ActionType: "Ação Padrão", Range: "Toque corpo a corpo",
+			Target:       "Uma criatura",
+			Attack:       "Destreza vs. Fortitude",
+			Hit:          "1d6 + mod Destreza de dano e o alvo fica derrubado.",
+			Special:      "Técnica de Movimento (Ação de Movimento, Corpo a corpo 1): Um aliado ou inimigo derrubado. O monge troca de lugar com o alvo.",
+			LevelScaling: "Nível 21: 2d6 + mod Destreza.",
+			PowerType: domain.PowerUnlimited, Level: 1,
+		},
+		{
+			Name: "Cinco Tempestades", Edition: "4e", ClassID: &id,
+			Description: "Você se movimenta como um tornado, rodopiando enquanto desfere uma sucessão de chutes e socos que atingem seus adversários.",
+			Keywords:   "Disciplina Total, Implemento, Psiônico",
+			ActionType: "Ação Padrão", Range: "Explosão contígua 1",
+			Target:       "Cada inimigo que o monge consiga enxergar dentro da explosão",
+			Attack:       "Destreza vs. Reflexos",
+			Hit:          "1d8 + mod Destreza de dano.",
+			Special:      "Técnica de Movimento (Ação de Movimento, Pessoal): O monge ajusta 2 quadrados.",
+			LevelScaling: "Nível 21: 2d8 + mod Destreza.",
+			PowerType: domain.PowerUnlimited, Level: 1,
+		},
+		{
+			Name: "Cobra Dançarina", Edition: "4e", ClassID: &id,
+			Description: "Você se esquiva e se movimenta como uma cobra, confundindo seu inimigo e voltando seus ataques contra ele mesmo.",
+			Keywords:   "Disciplina Total, Implemento, Psiônico",
+			ActionType: "Ação Padrão", Range: "Toque corpo a corpo",
+			Target:       "Uma criatura",
+			Attack:       "Destreza vs. Reflexos",
+			Hit:          "1d10 + mod Destreza de dano. Caso o alvo tenha realizado um ataque de oportunidade contra o monge durante este turno, o alvo sofre dano adicional igual ao modificador de Sabedoria do monge.",
+			Special:      "Técnica de Movimento (Ação de Movimento, Pessoal): O monge move seu deslocamento +2.",
+			LevelScaling: "Nível 21: 2d10 + mod Destreza.",
+			PowerType: domain.PowerUnlimited, Level: 1,
+		},
+
+		// ── NÍVEL 1 — POR ENCONTRO ──────────────────────────────────
+		{
+			Name: "Abrir os Portões da Batalha", Edition: "4e", ClassID: &id,
+			Description: "Seu movimento repentino pega seu adversário desprevenido e você parte para o ataque.",
+			Keywords:   "Disciplina Total, Implemento, Psiônico",
+			ActionType: "Ação Padrão", Range: "Toque corpo a corpo",
+			Target:  "Uma criatura",
+			Attack:  "Destreza vs. Reflexos",
+			Hit:     "2d10 + mod Destreza de dano. O alvo sofre 1d10 de dano adicional caso ele esteja com todos os pontos de vida no momento em que é atingido pelo monge com este ataque.",
+			Special: "Técnica de Movimento (Ação de Movimento, Pessoal): O monge move seu deslocamento +2. Durante este movimento, o monge não provoca ataques de oportunidade do primeiro inimigo que o monge se afasta.",
+			PowerType: domain.PowerEncounter, Level: 1,
+		},
+		{
+			Name: "Despertar da Dor Entorpecida", Edition: "4e", ClassID: &id,
+			Description: "Os ferimentos do seu adversário o permitem se esquivar nos ângulos certos. Quando você ataca, você alveja os ferimentos de um único inimigo e encontra o ponto perfeito para atacar.",
+			Keywords:   "Disciplina Total, Implemento, Psiônico",
+			ActionType: "Ação Padrão", Range: "Toque corpo a corpo",
+			Target:  "Uma criatura",
+			Attack:  "Destreza vs. Fortitude",
+			Hit:     "2d8 + mod Destreza de dano. Se o alvo estiver sangrando, ele sofre dano adicional neste ataque e no próximo ataque do monge contra ele antes do final do próximo turno. O dano adicional é igual ao modificador de Força do monge.",
+			Special: "Técnica de Movimento (Ação de Movimento, Pessoal): O monge move seu deslocamento. Durante este movimento, os inimigos sangrando não podem atacar o monge com ações de oportunidade ou ação imediatas.",
+			PowerType: domain.PowerEncounter, Level: 1,
+		},
+		{
+			Name: "Macaco Bêbado", Edition: "4e", ClassID: &id,
+			Description: "Você cambaleia aparentemente fora de controle, seus inimigos ficam espantados por não conseguirem atingir seu corpo desgonçado, após um soco habilidoso, você faz seu adversário atacar um companheiro dele.",
+			Keywords:   "Disciplina Total, Implemento, Psiônico",
+			ActionType: "Ação Padrão", Range: "Toque corpo a corpo",
+			Target:  "Um inimigo",
+			Attack:  "Destreza vs. Vontade",
+			Hit:     "1d8 + mod Destreza de dano. O monge conduz o alvo 1 quadrado. O alvo então realiza um ataque básico corpo a corpo usando uma ação livre contra um inimigo escolhido pelo monge. O alvo recebe um bônus na jogada de ataque igual ao modificador de Sabedoria do monge.",
+			Special: "Técnica de Movimento (Ação de Movimento, Pessoal): O monge move seu deslocamento +2. Durante este movimento, o monge ignora terreno acidentado e recebe um bônus de poder em todas as defesas contra ataques de oportunidade igual ao seu modificador de Sabedoria.",
+			PowerType: domain.PowerEncounter, Level: 1,
+		},
+		{
+			Name: "Tempestade Ascendente", Edition: "4e", ClassID: &id,
+			Description: "O ar ao se redor fica carregado de poder enquanto você focaliza sua energia interior em um rugido de trovões.",
+			Keywords:   "Disciplina Total, Implemento, Psiônico, Trovejante",
+			ActionType: "Ação Padrão", Range: "Toque corpo a corpo",
+			Target:  "Uma criatura",
+			Attack:  "Destreza vs. Fortitude",
+			Hit:     "2d8 + mod Destreza de dano trovejante. Cada inimigo adjacente ao alvo sofre dano trovejante igual ao modificador de Força do monge.",
+			Special: "Técnica de Movimento (Ação de Movimento, Pessoal): O monge voa seu deslocamento. Se o monge não pousar no final deste movimento, ele cai.",
+			PowerType: domain.PowerEncounter, Level: 1,
+		},
+
+		// ── NÍVEL 1 — DIÁRIO ────────────────────────────────────────
+		{
+			Name: "Chute Giratório do Louva-Deus", Edition: "4e", ClassID: &id,
+			Description: "Com passos rápidos e com um impulso assustador, você empurra de lado seus adversários e os aleijam com chutes cruéis.",
+			Keywords:   "Implemento, Psiônico",
+			ActionType: "Ação Padrão", Range: "Toque corpo a corpo",
+			Target:  "Um, duas ou três criaturas",
+			Attack:  "Destreza vs. Fortitude",
+			Effect:  "O monge ajusta seu deslocamento. Se o monge entrar num quadrado adjacente a qualquer inimigo durante este ajuste, o monge conduz aquele inimigo 1 quadrado. O monge pode conduzir cada inimigo apenas uma única vez durante o ajuste.",
+			Hit:     "2d10 + mod Destreza de dano e o alvo fica lento (TR encerra).",
+			Miss:    "Metade do dano e o alvo fica lento até o final do próximo turno do monge.",
+			PowerType: domain.PowerDaily, Level: 1,
+		},
+		{
+			Name: "Espiral Exímia", Edition: "4e", ClassID: &id,
+			Description: "Com uma explosão de movimento repentina, você desfere chutes devastadores de energia psiônica nos inimigos próximos.",
+			Keywords:   "Energético, Implemento, Postura, Psiônico",
+			ActionType: "Ação Padrão", Range: "Explosão contígua 2",
+			Target: "Cada inimigo dentro da explosão",
+			Attack: "Destreza vs. Reflexos",
+			Hit:    "3d8 + mod Destreza de dano energético.",
+			Miss:   "Metade do dano.",
+			Effect: "O monge pode assumir a postura da espiral. Enquanto durar a postura, o alcance do monge com ataques de toque corpo a corpo aumenta em 1.",
+			PowerType: domain.PowerDaily, Level: 1,
+		},
+		{
+			Name: "Manobra Volteadora do Leopardo", Edition: "4e", ClassID: &id,
+			Description: "Mantendo seu equilíbrio perfeito, você percorre um caminho mortal através do embate, desferindo chutes e socos em cada adversário que passar.",
+			Keywords:   "Implemento, Psiônico",
+			ActionType: "Ação Padrão", Range: "Corpo a corpo 1",
+			Effect:  "O monge ajusta seu deslocamento e pode realizar o seguinte ataque uma vez contra cada inimigo que o monge passar adjacente durante o ajuste.",
+			Target:  "Um inimigo",
+			Attack:  "Destreza vs. Reflexos",
+			Hit:     "2d6 + mod Destreza de dano.",
+			Miss:    "Metade do dano.",
+			PowerType: domain.PowerDaily, Level: 1,
+		},
+		{
+			Name: "Trovão Harmonioso", Edition: "4e", ClassID: &id,
+			Description: "Você soca um adversário, então gira e desfere um chute em outro. Trovões troam à distância, aproximando-se e explodindo entre seus dois adversários.",
+			Keywords:   "Implemento, Psiônico, Trovejante",
+			ActionType: "Ação Padrão", Range: "Toque corpo a corpo",
+			Target:  "Uma ou duas criaturas",
+			Attack:  "Destreza vs. Fortitude",
+			Hit:     "3d6 + mod Destreza de dano trovejante.",
+			Miss:    "Metade do dano.",
+			Effect:  "Na primeira vez em que cada um dos alvos sofre dano durante um turno, o outro alvo sofre dano trovejante igual ao modificador de Força do monge. Este efeito dura até o final do encontro ou até um dos alvos cair a 0 pontos de vida.",
+			PowerType: domain.PowerDaily, Level: 1,
+		},
+
+		// ── NÍVEL 2 — UTILITÁRIO ────────────────────────────────────
+		{
+			Name: "Agarrar o Vento", Edition: "4e", ClassID: &id,
+			Description: "Antes que seu inimigo o obrigue a recuar, você salta girando, usando o poder do ataque do inimigo para lançar-se para onde você queira.",
+			Keywords:   "Psiônico",
+			ActionType: "Interrupção Imediata", Range: "Pessoal",
+			Special: "Gatilho: O monge é conduzido, empurrado ou puxado.",
+			Effect:  "Em vez de ser afetado pelo movimento forçado, o monge ajusta o número de quadrados que ele deveria ser movido.",
+			PowerType: domain.PowerEncounter, Level: 2,
+		},
+		{
+			Name: "Disciplina Harmoniosa", Edition: "4e", ClassID: &id,
+			Description: "Uma sequência específica de respirações disciplinadas aprimoram tanto sua defesa quanto sua ofensiva.",
+			Keywords:   "Psiônico",
+			ActionType: "Ação Mínima", Range: "Pessoal",
+			Effect: "O monge adquire pontos de vida adicionais igual ao seu modificador de Sabedoria. Quando o monge não possuir nenhum ponto de vida temporário sobrando, ele recebe um bônus na jogada de dano do seu próximo ataque corpo a corpo antes do final do seu próximo turno. O bônus é igual ao modificador de Sabedoria do Monge.",
+			PowerType: domain.PowerEncounter, Level: 2,
+		},
+		{
+			Name: "Marcha Cuidadosa", Edition: "4e", ClassID: &id,
+			Description: "Você caminha com tamanha precisão e controle que aquele piso quebrado e mesmo corpos de água não conseguem impedi-lo.",
+			Keywords:   "Psiônico",
+			ActionType: "Ação de Movimento", Range: "Pessoal",
+			Effect: "Até o final deste turno, o monge ignora terreno acidentado e pode pisar em terrenos líquidos sem afundar e permanecer parado acima de líquidos como se fosse um piso sólido. Além disso, o monge move seu deslocamento.",
+			PowerType: domain.PowerEncounter, Level: 2,
+		},
+		{
+			Name: "Sequência Suprema", Edition: "4e", ClassID: &id,
+			Description: "Seu movimento fica ofuscado. Onde um golpe termina e o outro começa? Isso não importa enquanto os golpes atingirem.",
+			Keywords:   "Psiônico",
+			ActionType: "Ação Livre", Range: "Pessoal",
+			Special: "Gatilho: O monge usa seu poder Sequência de Golpes e resolve os efeitos do poder que ativou o poder.",
+			Effect:  "O monge ajusta metade do seu deslocamento e utiliza seu poder Sequência de Golpes novamente.",
+			PowerType: domain.PowerDaily, Level: 2,
+		},
+
+		// ── NÍVEL 3 — POR ENCONTRO ──────────────────────────────────
+		{
+			Name: "Campeão Duradouro", Edition: "4e", ClassID: &id,
+			Description: "Você concentra sua dor em um ponto na extremidade do seu punho. Ao atacar, você transmite sua dor para o seu inimigo.",
+			Keywords:   "Disciplina Total, Implemento, Psiônico",
+			ActionType: "Ação Padrão", Range: "Toque corpo a corpo",
+			Target:  "Uma criatura",
+			Attack:  "Destreza vs. Fortitude",
+			Hit:     "2d10 + mod Destreza de dano. O monge pode realizar um teste de resistência contra um efeito que possa ser encerrado com um sucesso em um teste de resistência, com um bônus igual ao modificador de Sabedoria do monge. Se o monge obter sucesso no teste de resistência, o efeito não apenas se encerra mas o alvo sofre dano igual ao modificador de Sabedoria do monge.",
+			Special: "Técnica de Movimento (Ação de Movimento, Pessoal): O monge move seu deslocamento +2. Sempre que o monge for atacado durante este movimento, o monge recebe +1 de bônus no deslocamento até o final do seu próximo turno.",
+			PowerType: domain.PowerEncounter, Level: 3,
+		},
+		{
+			Name: "Dança das Espadas", Edition: "4e", ClassID: &id,
+			Description: "Enquanto seus adversários cercam você, você salta entre eles, voltando seus números contra eles mesmos.",
+			Keywords:   "Disciplina Total, Implemento, Psiônico",
+			ActionType: "Ação Padrão", Range: "Toque corpo a corpo",
+			Target:  "Uma criatura",
+			Attack:  "Destreza vs. Reflexos",
+			Hit:     "2d8 + mod Destreza de dano e o alvo sofre dano adicional igual a duas vezes o número de inimigos adjacentes ao monge.",
+			Special: "Técnica de Movimento (Ação de Movimento, Pessoal): O monge move seu deslocamento +2. Se os inimigos realizarem ataques de oportunidade contra o monge durante este movimento e fracassarem, o monge adquire vantagem de combate contra os inimigos que fracassaram até o final do turno do monge.",
+			PowerType: domain.PowerEncounter, Level: 3,
+		},
+		{
+			Name: "Montanha Eterna", Edition: "4e", ClassID: &id,
+			Description: "Você concentra sua mente, convocando sua disciplina de ferro para caminhar, combater e resistir aos ataques com um espírito duradouro da montanha.",
+			Keywords:   "Disciplina Total, Implemento, Psiônico",
+			ActionType: "Ação Padrão", Range: "Explosão contígua 1",
+			Target:  "Cada inimigo dentro da explosão",
+			Attack:  "Destreza vs. Fortitude",
+			Hit:     "2d8 + mod Destreza de dano e o monge derruba o alvo.",
+			Special: "Técnica de Movimento (Ação de Movimento, Pessoal): O monge adquire resistência contra todos os tipos de dano igual ao seu modificador de Força até o final do seu próximo turno. Além disso, o monge ajusta 2 quadrados.",
+			PowerType: domain.PowerEncounter, Level: 3,
+		},
+		{
+			Name: "Trovões Gêmeos", Edition: "4e", ClassID: &id,
+			Description: "Você se movimenta ofuscado e desfere um chute giratório com tamanha ferocidade que uma energia trovejante atinge tanto seu adversário quanto os companheiros dele.",
+			Keywords:   "Disciplina Total, Implemento, Psiônico, Trovejante",
+			ActionType: "Ação Padrão", Range: "Toque corpo a corpo",
+			Target:  "Uma criatura",
+			Attack:  "Destreza vs. Fortitude",
+			Hit:     "2d10 + mod Destreza de dano trovejante e um inimigo adjacente ao alvo sofre 1d10 de dano trovejante.",
+			Special: "Técnica de Movimento (Ação de Movimento, Pessoal): O monge move seu deslocamento +2 e escolhe um inimigo adjacente ao monge no início do movimento. Durante este movimento, o monge não provoca ataques de oportunidade do inimigo escolhido.",
+			PowerType: domain.PowerEncounter, Level: 3,
+		},
+
+		// ── NÍVEL 5 — DIÁRIO ────────────────────────────────────────
+		{
+			Name: "Cem Folhas", Edition: "4e", ClassID: &id,
+			Description: "Você desfere uma sequência de ataques, golpeando com tamanha velocidade que as criaturas se dispersam diante de você como folhas em um furacão.",
+			Keywords:   "Implemento, Psiônico",
+			ActionType: "Ação Padrão", Range: "Rajada contígua 3",
+			Target: "Cada criatura dentro da rajada",
+			Attack: "Destreza vs. Reflexos",
+			Hit:    "3d8 + mod Destreza de dano e o monge empurra o alvo 2 quadrados.",
+			Miss:   "Metade do dano e o monge empurra o alvo 1 quadrado.",
+			Effect: "Até o final do próximo turno do monge, o monge pode alvejar uma criatura adicional dentro do alcance com o seu poder Sequência de Golpes.",
+			PowerType: domain.PowerDaily, Level: 5,
+		},
+
+		// ── NÍVEL 6 — UTILITÁRIO ────────────────────────────────────
+		{
+			Name: "Mente em Branco", Edition: "4e", ClassID: &id,
+			Description: "Você esvazia sua mente de todos os pensamentos, tornando-se difícil de atingir com poderes que afetam a mente.",
+			Keywords:   "Psiônico",
+			ActionType: "Ação Mínima", Range: "Pessoal",
+			Effect: "Até o final do próximo turno do monge, ele recebe resistência 5 a dano psíquico e +2 de bônus de poder nas defesas de Vontade.",
+			PowerType: domain.PowerEncounter, Level: 6,
+		},
+		{
+			Name: "Descanso do Guerreiro", Edition: "4e", ClassID: &id,
+			Description: "Com uma série de respirações profundas, você restaura sua vitalidade em plena batalha.",
+			Keywords:   "Cura, Psiônico",
+			ActionType: "Ação Padrão", Range: "Pessoal",
+			Effect: "O monge pode gastar um pulso de cura e recupera PV adicionais iguais ao modificador de Sabedoria.",
+			PowerType: domain.PowerEncounter, Level: 6,
+		},
+
+		// ── NÍVEL 7 — POR ENCONTRO ──────────────────────────────────
+		{
+			Name: "Voo do Pássaro de Ferro", Edition: "4e", ClassID: &id,
+			Description: "Você voa em direção ao adversário com a velocidade e precisão de um pássaro de ferro.",
+			Keywords:   "Disciplina Total, Implemento, Psiônico",
+			ActionType: "Ação Padrão", Range: "Toque corpo a corpo",
+			Effect:  "O monge voa até sua velocidade antes de realizar o ataque. Esse voo não provoca ataques de oportunidade.",
+			Target:  "Uma criatura",
+			Attack:  "Destreza vs. CA",
+			Hit:     "3d8 + mod Destreza de dano. O alvo fica imobilizado até o final do próximo turno.",
+			Special: "Técnica de Movimento (Ação de Movimento, Pessoal): O monge voa seu deslocamento +2.",
+			PowerType: domain.PowerEncounter, Level: 7,
+		},
+
+		// ── NÍVEL 7 — DIÁRIO ────────────────────────────────────────
+		{
+			Name: "Forma do Vento Cortante", Edition: "4e", ClassID: &id,
+			Description: "Você assume a forma do vento cortante, tornando-se imparável no campo de batalha.",
+			Keywords:   "Implemento, Postura, Psiônico",
+			ActionType: "Ação Mínima", Range: "Pessoal",
+			Effect: "Você assume a Postura do Vento Cortante. Enquanto nessa postura: o monge recebe +2 de bônus de poder na velocidade, pode ignorar terreno difícil durante o movimento e seus ataques de toque corpo a corpo causam dano adicional igual ao modificador de Sabedoria.",
+			PowerType: domain.PowerDaily, Level: 7,
+		},
+
+		// ── NÍVEL 9 — POR ENCONTRO ──────────────────────────────────
+		{
+			Name: "Punho da Tempestade Perfeita", Edition: "4e", ClassID: &id,
+			Description: "Seu punho concentra toda a energia da tempestade num único golpe devastador.",
+			Keywords:   "Disciplina Total, Implemento, Psiônico, Trovejante",
+			ActionType: "Ação Padrão", Range: "Toque corpo a corpo",
+			Target:  "Uma criatura",
+			Attack:  "Destreza vs. Fortitude",
+			Hit:     "3d10 + mod Destreza de dano trovejante. O alvo fica atordoado até o final do próximo turno. Todos os inimigos adjacentes ao alvo sofrem 1d10 de dano trovejante.",
+			Special: "Técnica de Movimento (Ação de Movimento, Pessoal): O monge ajusta seu deslocamento +2 e recebe +2 de bônus de poder nas defesas até o final do próximo turno.",
+			PowerType: domain.PowerEncounter, Level: 9,
+		},
+
+		// ── NÍVEL 10 — UTILITÁRIO ───────────────────────────────────
+		{
+			Name: "Corpo de Diamante", Edition: "4e", ClassID: &id,
+			Description: "Você fortalece seu corpo até a dureza de um diamante, tornando-se temporariamente imune a danos.",
+			Keywords:   "Psiônico",
+			ActionType: "Ação Mínima", Range: "Pessoal",
+			Effect: "Até o final do próximo turno do monge, ele recebe resistência 10 a todos os danos.",
+			PowerType: domain.PowerEncounter, Level: 10,
+		},
+		{
+			Name: "Transcendência Marcial", Edition: "4e", ClassID: &id,
+			Description: "Você atinge um estado de perfeição marcial que potencializa todos os seus ataques.",
+			Keywords:   "Postura, Psiônico",
+			ActionType: "Ação Mínima", Range: "Pessoal",
+			Effect: "Você assume a Postura da Transcendência Marcial. Enquanto nessa postura: o monge recebe +2 de bônus de poder em todas as jogadas de ataque e dano, e sua Sequência de Golpes pode ser usada duas vezes por rodada.",
+			PowerType: domain.PowerDaily, Level: 10,
 		},
 	}
 
 	for _, s := range skills {
 		upsertSkill(db, s, id)
 	}
-	log.Printf("  ✓ Monge 4e: %d características processadas", len(skills))
+	log.Printf("  ✓ Monge 4e: %d habilidades processadas", len(skills))
 }
 
 func seedClerigoSkills(db *gorm.DB) {
@@ -4814,4 +5136,424 @@ func seedXamaSkills(db *gorm.DB) {
 		upsertSkill(db, s, id)
 	}
 	log.Printf("  ✓ Xamã 4e: %d habilidades processadas", len(skills))
+}
+func upsertRaceSkill(db *gorm.DB, s domain.Skill, raceID uint) {
+	var existing domain.Skill
+	if db.Where("name = ? AND edition = ? AND race_id = ?", s.Name, s.Edition, raceID).First(&existing).Error != nil {
+		if err := db.Create(&s).Error; err != nil {
+			log.Printf("  Erro ao criar racial skill %s: %v", s.Name, err)
+		}
+	} else {
+		db.Model(&existing).Updates(map[string]interface{}{
+			"description":     s.Description,
+			"keywords":        s.Keywords,
+			"action_type":     s.ActionType,
+			"range":           s.Range,
+			"target":          s.Target,
+			"attack":          s.Attack,
+			"hit":             s.Hit,
+			"miss":            s.Miss,
+			"effect":          s.Effect,
+			"special":         s.Special,
+			"level_scaling":   s.LevelScaling,
+			"power_type":      s.PowerType,
+			"is_race_feature": s.IsRaceFeature,
+			"requires_choice": s.RequiresChoice,
+			"choice_group":    s.ChoiceGroup,
+		})
+	}
+}
+ 
+func seedRaceSkills(db *gorm.DB) {
+	// LJ1
+	seedDraconatoRaceSkills(db)
+	seedEladrinRaceSkills(db)
+	seedElfoRaceSkills(db)
+	seedHalflingRaceSkills(db)
+	seedTieflingRaceSkills(db)
+	// Anão, Humano e Meio-Elfo: sem poder racial com card próprio
+ 
+	// LJ2
+	seedDevaRaceSkills(db)
+	seedGnomoRaceSkills(db)
+	seedGoliasRaceSkills(db)
+	seedMeioOrcRaceSkills(db)
+	seedFeralRaceSkills(db)
+ 
+	// LJ3
+	seedFragmentalRaceSkills(db)
+	seedGithzeraiRaceSkills(db)
+	seedMinotauroRaceSkills(db)
+	seedSelvioRaceSkills(db)
+}
+ 
+// ── LJ1 ────────────────────────────────────────────────────────────────────────
+ 
+// Draconato — Sopro de Dragão (escolha de tipo de dano e atributo na criação)
+func seedDraconatoRaceSkills(db *gorm.DB) {
+	var race domain.Race
+	if err := db.Where("name = ? AND edition = ?", "Draconato", "4e").First(&race).Error; err != nil {
+		log.Println("  ✗ Raça Draconato 4e não encontrada"); return
+	}
+	id := race.ID
+ 
+	skills := []domain.Skill{
+		{
+			Name: "Sopro de Dragão", Edition: "4e", RaceID: &id,
+			Description: "Escancarando sua boca com um rugido, o poder mortífero dos seus ancestrais dracônicos explode numa rajada, engolfando seus inimigos.",
+			Keywords:   "Ácido, Congelante, Flamejante, Elétrico ou Venenoso",
+			ActionType: "Ação Mínima", Range: "Rajada contígua 3",
+			Target:  "As criaturas dentro da área",
+			Attack:  "Força +2 vs. Reflexos, Constituição +2 vs. Reflexos, ou Destreza +2 vs. Reflexos",
+			Hit:     "1d6 + modificador de Constituição de dano.",
+			Special: "Ao criar o personagem, escolha Força, Constituição ou Destreza como o valor de atributo relevante para as jogadas de ataque e dano desse poder. Você também deve escolher o tipo de dano: ácido, congelante, flamejante, elétrico ou venenoso. Essas duas opções permanecem durante toda a vida do personagem.",
+			LevelScaling: "Nível 11: +4 de bônus e 2d6 + mod CON. Nível 21: +6 de bônus e 3d6 + mod CON.",
+			PowerType: domain.PowerEncounter, Level: 1,
+			IsRaceFeature: true, RequiresChoice: true, ChoiceGroup: "sopro_draconato",
+		},
+	}
+	for _, s := range skills { upsertRaceSkill(db, s, id) }
+	log.Println("  ✓ Draconato 4e: habilidades raciais seedadas")
+}
+ 
+// Eladrin — Passo Féerico (automático)
+func seedEladrinRaceSkills(db *gorm.DB) {
+	var race domain.Race
+	if err := db.Where("name = ? AND edition = ?", "Eladrin", "4e").First(&race).Error; err != nil {
+		log.Println("  ✗ Raça Eladrin 4e não encontrada"); return
+	}
+	id := race.ID
+ 
+	skills := []domain.Skill{
+		{
+			Name: "Passo Féerico", Edition: "4e", RaceID: &id,
+			Description: "Com um passo, você desaparece de um lugar e ressurge em outro.",
+			Keywords:   "Teleporte",
+			ActionType: "Ação de Movimento", Range: "Pessoal",
+			Effect:        "O eladrin se teleporta até 5 quadrados.",
+			PowerType:     domain.PowerEncounter, Level: 1,
+			IsRaceFeature: true,
+		},
+	}
+	for _, s := range skills { upsertRaceSkill(db, s, id) }
+	log.Println("  ✓ Eladrin 4e: habilidades raciais seedadas")
+}
+ 
+// Elfo — Precisão Élfica (automático)
+func seedElfoRaceSkills(db *gorm.DB) {
+	var race domain.Race
+	if err := db.Where("name = ? AND edition = ?", "Elfo", "4e").First(&race).Error; err != nil {
+		log.Println("  ✗ Raça Elfo 4e não encontrada"); return
+	}
+	id := race.ID
+ 
+	skills := []domain.Skill{
+		{
+			Name: "Precisão Élfica", Edition: "4e", RaceID: &id,
+			Description: "Com um momento de concentração, você mira cuidadosamente no seu adversário e dispara com a precisão lendária dos elfos.",
+			ActionType: "Ação Livre", Range: "Pessoal",
+			Effect:        "O elfo refaz sua jogada de ataque. Utilize o segundo resultado, mesmo que seja inferior.",
+			PowerType:     domain.PowerEncounter, Level: 1,
+			IsRaceFeature: true,
+		},
+	}
+	for _, s := range skills { upsertRaceSkill(db, s, id) }
+	log.Println("  ✓ Elfo 4e: habilidades raciais seedadas")
+}
+ 
+// Halfling — Segunda Chance (automático)
+func seedHalflingRaceSkills(db *gorm.DB) {
+	var race domain.Race
+	if err := db.Where("name = ? AND edition = ?", "Halfling", "4e").First(&race).Error; err != nil {
+		log.Println("  ✗ Raça Halfling 4e não encontrada"); return
+	}
+	id := race.ID
+ 
+	skills := []domain.Skill{
+		{
+			Name: "Segunda Chance", Edition: "4e", RaceID: &id,
+			Description: "A sorte e o tamanho reduzido se combinam para favorecê-lo conforme você se desvia do ataque do inimigo.",
+			ActionType: "Interrupção Imediata", Range: "Pessoal",
+			Special:       "Quando um ataque atingir o personagem, o inimigo é obrigado a refazer a jogada. O atacante deve utilizar o segundo resultado, mesmo que seja inferior.",
+			PowerType:     domain.PowerEncounter, Level: 1,
+			IsRaceFeature: true,
+		},
+	}
+	for _, s := range skills { upsertRaceSkill(db, s, id) }
+	log.Println("  ✓ Halfling 4e: habilidades raciais seedadas")
+}
+ 
+// Tiefling — Cólera Infernal (automático)
+func seedTieflingRaceSkills(db *gorm.DB) {
+	var race domain.Race
+	if err := db.Where("name = ? AND edition = ?", "Tiefling", "4e").First(&race).Error; err != nil {
+		log.Println("  ✗ Raça Tiefling 4e não encontrada"); return
+	}
+	id := race.ID
+ 
+	skills := []domain.Skill{
+		{
+			Name: "Cólera Infernal", Edition: "4e", RaceID: &id,
+			Description: "Você convoca sua natureza furiosa para aumentar sua capacidade de ferir seus inimigos.",
+			ActionType: "Ação Mínima", Range: "Pessoal",
+			Effect:        "O tiefling canaliza sua fúria para receber +1 de bônus racial na próxima jogada de ataque contra um inimigo que o tenha atingido desde seu último turno. Se obtiver sucesso nesse ataque e ele causar dano, adicione o modificador de Carisma do tiefling como dano adicional.",
+			PowerType:     domain.PowerEncounter, Level: 1,
+			IsRaceFeature: true,
+		},
+	}
+	for _, s := range skills { upsertRaceSkill(db, s, id) }
+	log.Println("  ✓ Tiefling 4e: habilidades raciais seedadas")
+}
+ 
+// ── LJ2 ────────────────────────────────────────────────────────────────────────
+ 
+// Deva — Memória de Mil Vidas (automático)
+func seedDevaRaceSkills(db *gorm.DB) {
+	var race domain.Race
+	if err := db.Where("name = ? AND edition = ?", "Deva", "4e").First(&race).Error; err != nil {
+		log.Println("  ✗ Raça Deva 4e não encontrada"); return
+	}
+	id := race.ID
+ 
+	skills := []domain.Skill{
+		{
+			Name: "Memória de Mil Vidas", Edition: "4e", RaceID: &id,
+			Description: "Como sonhos, memórias de vidas passadas retornam para ajudá-lo.",
+			ActionType: "Nenhuma Ação", Range: "Pessoal",
+			Special:       "Gatilho: O deva realiza uma jogada de ataque, teste de resistência ou teste de atributo e não gosta do resultado.",
+			Effect:        "O personagem adiciona 1d6 ao resultado da jogada que ativou o gatilho.",
+			PowerType:     domain.PowerEncounter, Level: 1,
+			IsRaceFeature: true,
+		},
+	}
+	for _, s := range skills { upsertRaceSkill(db, s, id) }
+	log.Println("  ✓ Deva 4e: habilidades raciais seedadas")
+}
+ 
+// Gnomo — Desvanecer (automático)
+func seedGnomoRaceSkills(db *gorm.DB) {
+	var race domain.Race
+	if err := db.Where("name = ? AND edition = ?", "Gnomo", "4e").First(&race).Error; err != nil {
+		log.Println("  ✗ Raça Gnomo 4e não encontrada"); return
+	}
+	id := race.ID
+ 
+	skills := []domain.Skill{
+		{
+			Name: "Desvanecer", Edition: "4e", RaceID: &id,
+			Description: "Você fica invisível em resposta ao perigo.",
+			Keywords:   "Ilusão",
+			ActionType: "Reação Imediata", Range: "Pessoal",
+			Special:       "Gatilho: O gnomo sofre dano.",
+			Effect:        "O gnomo fica invisível até atacar ou até o final do seu próximo turno.",
+			PowerType:     domain.PowerEncounter, Level: 1,
+			IsRaceFeature: true,
+		},
+	}
+	for _, s := range skills { upsertRaceSkill(db, s, id) }
+	log.Println("  ✓ Gnomo 4e: habilidades raciais seedadas")
+}
+ 
+// Golias — Resistência de Pedra (automático)
+func seedGoliasRaceSkills(db *gorm.DB) {
+	var race domain.Race
+	if err := db.Where("name = ? AND edition = ?", "Golias", "4e").First(&race).Error; err != nil {
+		log.Println("  ✗ Raça Golias 4e não encontrada"); return
+	}
+	id := race.ID
+ 
+	skills := []domain.Skill{
+		{
+			Name: "Resistência de Pedra", Edition: "4e", RaceID: &id,
+			Description: "Os ataques de seus inimigos resvalam em seu corpo pedregoso.",
+			ActionType: "Ação Mínima", Range: "Pessoal",
+			Effect:        "O golias adquire resistência 5 contra todos os tipos de dano até o final do seu próximo turno.",
+			LevelScaling: "Nível 11: Resistência 10. Nível 21: Resistência 15.",
+			PowerType:     domain.PowerEncounter, Level: 1,
+			IsRaceFeature: true,
+		},
+	}
+	for _, s := range skills { upsertRaceSkill(db, s, id) }
+	log.Println("  ✓ Golias 4e: habilidades raciais seedadas")
+}
+ 
+// Meio-Orc — Assalto Furioso (automático)
+func seedMeioOrcRaceSkills(db *gorm.DB) {
+	var race domain.Race
+	if err := db.Where("name = ? AND edition = ?", "Meio-Orc", "4e").First(&race).Error; err != nil {
+		log.Println("  ✗ Raça Meio-Orc 4e não encontrada"); return
+	}
+	id := race.ID
+ 
+	skills := []domain.Skill{
+		{
+			Name: "Assalto Furioso", Edition: "4e", RaceID: &id,
+			Description: "Sua ira monstruosa queima dentro de seu corpo, aumentando a força de seu ataque.",
+			ActionType: "Ação Livre", Range: "Pessoal",
+			Special:       "Gatilho: O personagem atinge um inimigo.",
+			Effect:        "O ataque causa 1[A] de dano adicional se for um ataque com arma ou 1d8 de dano adicional se não for.",
+			PowerType:     domain.PowerEncounter, Level: 1,
+			IsRaceFeature: true,
+		},
+	}
+	for _, s := range skills { upsertRaceSkill(db, s, id) }
+	log.Println("  ✓ Meio-Orc 4e: habilidades raciais seedadas")
+}
+ 
+// Feral — escolha obrigatória entre duas mutações (Dente-Alongado OU Garra-Navalha)
+// A escolha determina qual subtipo de Feral o personagem é
+func seedFeralRaceSkills(db *gorm.DB) {
+	var race domain.Race
+	if err := db.Where("name = ? AND edition = ?", "Feral", "4e").First(&race).Error; err != nil {
+		log.Println("  ✗ Raça Feral 4e não encontrada"); return
+	}
+	id := race.ID
+ 
+	skills := []domain.Skill{
+		// Feral Dente-Alongado
+		{
+			Name: "Mutação do Dente-Alongado", Edition: "4e", RaceID: &id,
+			Description: "Você libera a fera primitiva em seu interior e assume um aspecto mais selvagem. Seus dentes crescem, aumentando sua ferocidade em combate.",
+			Keywords:   "Cura",
+			ActionType: "Ação Mínima", Range: "Pessoal",
+			Special:       "Condição: O personagem deve estar sangrando.",
+			Effect:        "Até o final do encontro, o personagem recebe +2 de bônus nas jogadas de dano. Além disso, ele adquire regeneração 2 enquanto estiver sangrando.",
+			LevelScaling: "Nível 11: Regeneração 4. Nível 21: Regeneração 6.",
+			PowerType:     domain.PowerEncounter, Level: 1,
+			IsRaceFeature: true, RequiresChoice: true, ChoiceGroup: "mutacao_feral",
+		},
+		// Feral Garra-Navalha
+		{
+			Name: "Mutação do Garra-Navalha", Edition: "4e", RaceID: &id,
+			Description: "Você libera a fera primitiva em seu interior e assume um aspecto mais selvagem. Suas garras se alongam como navalhas, tornando-o mais ágil e difícil de atingir.",
+			ActionType: "Ação Mínima", Range: "Pessoal",
+			Special:       "Condição: O personagem deve estar sangrando.",
+			Effect:        "Até o final do encontro, o deslocamento do personagem aumenta em 2 quadrados e ele recebe +1 de bônus na CA e na defesa de Reflexos.",
+			PowerType:     domain.PowerEncounter, Level: 1,
+			IsRaceFeature: true, RequiresChoice: true, ChoiceGroup: "mutacao_feral",
+		},
+	}
+	for _, s := range skills { upsertRaceSkill(db, s, id) }
+	log.Println("  ✓ Feral 4e: habilidades raciais seedadas")
+}
+ 
+// ── LJ3 ────────────────────────────────────────────────────────────────────────
+ 
+// Fragmental — Enxame de Fragmentos (automático)
+func seedFragmentalRaceSkills(db *gorm.DB) {
+	var race domain.Race
+	if err := db.Where("name = ? AND edition = ?", "Fragmental", "4e").First(&race).Error; err != nil {
+		log.Println("  ✗ Raça Fragmental 4e não encontrada"); return
+	}
+	id := race.ID
+ 
+	skills := []domain.Skill{
+		{
+			Name: "Enxame de Fragmentos", Edition: "4e", RaceID: &id,
+			Description: "Você libera o controle mental sobre sua forma física, distraindo seus inimigos com uma nuvem de fragmentos. Você então reforma seu corpo em outro lugar.",
+			Keywords:   "Teleporte",
+			ActionType: "Ação de Movimento", Range: "Explosão contígua 1",
+			Target:        "Cada inimigo dentro da explosão",
+			Effect:        "Cada alvo concede vantagem de combate ao fragmental até o final do próximo turno do personagem. O fragmental então teleporta metade de seu deslocamento.",
+			PowerType:     domain.PowerEncounter, Level: 1,
+			IsRaceFeature: true,
+		},
+	}
+	for _, s := range skills { upsertRaceSkill(db, s, id) }
+	log.Println("  ✓ Fragmental 4e: habilidades raciais seedadas")
+}
+ 
+// Githzerai — Mente de Ferro (automático)
+func seedGithzeraiRaceSkills(db *gorm.DB) {
+	var race domain.Race
+	if err := db.Where("name = ? AND edition = ?", "Githzerai", "4e").First(&race).Error; err != nil {
+		log.Println("  ✗ Raça Githzerai 4e não encontrada"); return
+	}
+	id := race.ID
+ 
+	skills := []domain.Skill{
+		{
+			Name: "Mente de Ferro", Edition: "4e", RaceID: &id,
+			Description: "Sob o peso de um ataque, você usa o poder de sua mente para fortalecer-se contra danos.",
+			ActionType: "Interrupção Imediata", Range: "Pessoal",
+			Special:       "Gatilho: O githzerai é atingido por um ataque.",
+			Effect:        "O githzerai recebe +2 de bônus em todas as defesas até o final do seu próximo turno.",
+			PowerType:     domain.PowerEncounter, Level: 1,
+			IsRaceFeature: true,
+		},
+	}
+	for _, s := range skills { upsertRaceSkill(db, s, id) }
+	log.Println("  ✓ Githzerai 4e: habilidades raciais seedadas")
+}
+ 
+// Minotauro — Investida com Chifres (automático)
+func seedMinotauroRaceSkills(db *gorm.DB) {
+	var race domain.Race
+	if err := db.Where("name = ? AND edition = ?", "Minotauro", "4e").First(&race).Error; err != nil {
+		log.Println("  ✗ Raça Minotauro 4e não encontrada"); return
+	}
+	id := race.ID
+ 
+	skills := []domain.Skill{
+		{
+			Name: "Investida com Chifres", Edition: "4e", RaceID: &id,
+			Description: "Você investe contra o inimigo e o perfura com seus chifres.",
+			ActionType: "Ação Padrão", Range: "Corpo a corpo 1",
+			Effect:        "O minotauro realiza uma investida e realiza o seguinte ataque no lugar do ataque básico corpo a corpo.",
+			Target:        "Uma criatura",
+			Attack:        "Força, Constituição ou Destreza +4 vs. CA",
+			Hit:           "1d6 + modificador de Força, Constituição ou Destreza de dano e o alvo fica derrubado.",
+			LevelScaling: "Nível 11: 2d6 + modificador. Nível 21: 3d6 + modificador.",
+			PowerType:     domain.PowerEncounter, Level: 1,
+			IsRaceFeature: true,
+		},
+	}
+	for _, s := range skills { upsertRaceSkill(db, s, id) }
+	log.Println("  ✓ Minotauro 4e: habilidades raciais seedadas")
+}
+ 
+// Sélvio — escolha obrigatória de Aspecto (3 opções, muda a cada descanso prolongado)
+// Cada aspecto concede um poder racial diferente
+func seedSelvioRaceSkills(db *gorm.DB) {
+	var race domain.Race
+	if err := db.Where("name = ? AND edition = ?", "Sélvio", "4e").First(&race).Error; err != nil {
+		log.Println("  ✗ Raça Sélvio 4e não encontrada"); return
+	}
+	id := race.ID
+ 
+	skills := []domain.Skill{
+		// Aspecto do Destruidor
+		{
+			Name: "Ira do Destruidor", Edition: "4e", RaceID: &id,
+			Description: "Seu aspecto destrutivo responde a um ataque com força mortal. Quando um inimigo ferido ousa atacar você ou seus aliados, você reage com violência imediata.",
+			ActionType: "Reação Imediata", Range: "Pessoal",
+			Special:       "Gatilho: Um inimigo sangrando ataca o sélvio ou um aliado adjacente ao sélvio. Condição: O sélvio deve estar manifestando o Aspecto do Destruidor.",
+			Effect:        "O sélvio decide realizar um ataque básico corpo a corpo ou uma investida contra o inimigo que ativou o gatilho. Se o ataque for bem-sucedido, o inimigo fica pasmo até o final do próximo turno do sélvio.",
+			PowerType:     domain.PowerEncounter, Level: 1,
+			IsRaceFeature: true, RequiresChoice: true, ChoiceGroup: "aspecto_selvio",
+		},
+		// Aspecto do Caçador
+		{
+			Name: "Perseguição do Caçador", Edition: "4e", RaceID: &id,
+			Description: "Sua presa tenta se distanciar de você, mas não há escapatória. O instinto caçador toma conta de você quando o inimigo tenta recuar.",
+			ActionType: "Reação Imediata", Range: "Pessoal",
+			Special:       "Gatilho: Um inimigo a até 2 quadrados do sélvio se desloca no turno dele. Condição: O sélvio deve estar manifestando o Aspecto do Caçador.",
+			Effect:        "O sélvio ajusta 3 quadrados. Até o final do próximo turno do sélvio, ele causa 1d6 de dano adicional ao inimigo que ativou o gatilho quando o sélvio o atinge. O sélvio ignora a penalidade de -2 nas jogadas de ataque ao atacar o inimigo que tiver cobertura ou ocultação.",
+			PowerType:     domain.PowerEncounter, Level: 1,
+			IsRaceFeature: true, RequiresChoice: true, ChoiceGroup: "aspecto_selvio",
+		},
+		// Aspecto dos Anciões
+		{
+			Name: "Viagem dos Anciões", Edition: "4e", RaceID: &id,
+			Description: "Você desaparece e deixa um inimigo perplexo em seu rastro. O conhecimento ancestral fae permite que você se teleporte após atingir um grupo de inimigos.",
+			Keywords:   "Teleporte",
+			ActionType: "Ação Livre", Range: "Pessoal",
+			Special:       "Gatilho: O sélvio atinge um inimigo com um ataque de área ou contíguo. Condição: O sélvio deve estar manifestando o Aspecto dos Anciões.",
+			Effect:        "O sélvio teleporta 3 quadrados. Escolha um inimigo atingido pelo ataque: o sélvio e um aliado dentro da linha de visão do sélvio adquirem vantagem de combate contra aquele inimigo até o final do próximo turno do sélvio.",
+			PowerType:     domain.PowerEncounter, Level: 1,
+			IsRaceFeature: true, RequiresChoice: true, ChoiceGroup: "aspecto_selvio",
+		},
+	}
+	for _, s := range skills { upsertRaceSkill(db, s, id) }
+	log.Println("  ✓ Sélvio 4e: habilidades raciais seedadas")
 }

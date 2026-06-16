@@ -53,6 +53,7 @@ export interface Skill {
   is_class_feature?: boolean
   requires_choice?: boolean
   choice_group?: string
+  is_race_feature: boolean
 }
 
 export interface Background {
