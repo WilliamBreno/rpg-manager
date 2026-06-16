@@ -31,12 +31,12 @@ export type PowerType = 'utility' | 'unlimited' | 'encounter' | 'daily'
 export interface Skill {
   ID: number
   name: string
-  description: string
-  power_type: PowerType
-  level: number
-  edition: string
-  class_id: number | null
-  race_id: number | null
+  description?: string    // opcional — nem sempre preenchido
+  power_type?: PowerType  // opcional — habilidades 5e podem não ter tipo
+  level?: number
+  edition?: string
+  class_id?: number | null
+  race_id?: number | null
 }
 
 export interface Background {

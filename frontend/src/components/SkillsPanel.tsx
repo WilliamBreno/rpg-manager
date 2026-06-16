@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { skillService, type Skill } from '../services/skillService'
+import type { Skill } from '../types'
+import { skillService } from '../services/skillService'
 
 interface Props {
   characterID: number
