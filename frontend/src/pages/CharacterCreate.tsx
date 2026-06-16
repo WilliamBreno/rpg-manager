@@ -28,25 +28,21 @@ const schema = z.object({
 })
 type FormData = z.infer<typeof schema>
 
-// Limites de seleção por tipo no nível 1
 const SKILL_LIMITS: Record<PowerType, number> = { unlimited: 2, encounter: 1, daily: 1, utility: 1 }
-
 const editions = ['4e', '5e']
 function getConMod(con: number) { return Math.floor((con - 10) / 2) }
 
 export default function CharacterCreate() {
   const navigate = useNavigate()
-  const [selectedEdition, setSelectedEdition] = useState<string | null>(null)
-  const [selectedClass, setSelectedClass] = useState<number | null>(null)
-  const [selectedRace, setSelectedRace] = useState<number | null>(null)
+  const [selectedEdition, setSelectedEdition]     = useState<string | null>(null)
+  const [selectedClass, setSelectedClass]         = useState<number | null>(null)
+  const [selectedRace, setSelectedRace]           = useState<number | null>(null)
   const [selectedClassData, setSelectedClassData] = useState<Class | null>(null)
   const [selectedArmorData, setSelectedArmorData] = useState<Armor | null>(null)
 
-  // Poderes selecionados por tipo
   const [selectedSkills, setSelectedSkills] = useState<Record<PowerType, Skill[]>>({
     unlimited: [], encounter: [], daily: [], utility: [],
   })
-  // Escolha de características (grupos mutuamente exclusivos)
   const [choiceSelections, setChoiceSelections] = useState<Record<string, Skill>>({})
 
   const { register, handleSubmit, setValue, reset, control, formState: { errors } } = useForm<FormData>({
@@ -69,41 +65,46 @@ export default function CharacterCreate() {
   const { data: races }     = useQuery({ queryKey: ['races', selectedEdition],    queryFn: () => raceService.getAll(selectedEdition!), enabled: !!selectedEdition })
   const { data: allSkills } = useQuery({
     queryKey: ['skills-filter', selectedClass, selectedRace],
-    queryFn: () => skillService.getByFilter(selectedClass!, selectedRace ?? undefined),
-    enabled: !!selectedClass,
+    queryFn:  () => skillService.getByFilter(selectedClass!, selectedRace ?? undefined),
+    enabled:  !!selectedClass,
   })
 
-  // Separa skills por categoria
-  const classFeatures   = (allSkills ?? []).filter(s => s.is_class_feature && !s.requires_choice)
-  const choiceFeatures  = (allSkills ?? []).filter(s => s.is_class_feature && s.requires_choice)
-  const choiceGroups    = choiceFeatures.reduce<Record<string, Skill[]>>((acc, s) => {
+  // ── Separação de skills por categoria ─────────────────────────
+  // Características automáticas (E — todos têm, sem escolha)
+  const classFeatures  = (allSkills ?? []).filter(s => s.is_class_feature && !s.requires_choice)
+
+  // Grupos de escolha (OU — escolhe UMA dentro do grupo)
+  const choiceFeatures = (allSkills ?? []).filter(s => s.is_class_feature && s.requires_choice)
+  const choiceGroups   = choiceFeatures.reduce<Record<string, Skill[]>>((acc, s) => {
     const g = s.choice_group ?? 'default'
     acc[g] = [...(acc[g] ?? []), s]; return acc
   }, {})
+
+  // Se há grupos de escolha, todos devem ser preenchidos antes de mostrar poderes
+  const hasChoiceGroups  = Object.keys(choiceGroups).length > 0
+  const allChoicesMade   = !hasChoiceGroups ||
+    Object.keys(choiceGroups).every(g => !!choiceSelections[g])
+
   const normalByType = (type: PowerType): Skill[] =>
     (allSkills ?? []).filter(s => !s.is_class_feature && s.power_type === type && (!s.level || s.level <= 1))
   const utilitySkills = (allSkills ?? []).filter(s => !s.is_class_feature && s.power_type === 'utility')
 
+  // ── Mutação de criação ─────────────────────────────────────────
   const createMutation = useMutation({
     mutationFn: async (data: FormData) => {
       const character = await characterService.create(data)
-      // Poderes selecionados
-      for (const skill of Object.values(selectedSkills).flat()) {
+      for (const skill of Object.values(selectedSkills).flat())
         await characterService.addSkill(character.ID, skill.ID)
-      }
-      // Escolhas de características
-      for (const skill of Object.values(choiceSelections)) {
+      for (const skill of Object.values(choiceSelections))
         await characterService.addSkill(character.ID, skill.ID)
-      }
-      // Características automáticas
-      for (const skill of classFeatures) {
+      for (const skill of classFeatures)
         await characterService.addSkill(character.ID, skill.ID)
-      }
       return character
     },
     onSuccess: () => navigate('/characters'),
   })
 
+  // ── Handlers ───────────────────────────────────────────────────
   const handleEditionChange = (edition: string) => {
     setSelectedEdition(edition); setSelectedClass(null); setSelectedRace(null); setSelectedClassData(null)
     setSelectedSkills({ unlimited: [], encounter: [], daily: [], utility: [] })
@@ -132,18 +133,15 @@ export default function CharacterCreate() {
       return { ...prev, [type]: [...cur, skill] }
     })
   }
-  const isSelected = (skill: Skill) => !!selectedSkills[(skill.power_type as PowerType) ?? 'unlimited'].find(s => s.ID === skill.ID)
-
-  const selectChoice = (skill: Skill) => {
-    setChoiceSelections(prev => ({ ...prev, [skill.choice_group ?? 'default']: skill }))
-  }
-  const isChoiceSelected = (skill: Skill) =>
-    choiceSelections[skill.choice_group ?? 'default']?.ID === skill.ID
+  const isSelected     = (skill: Skill) => !!selectedSkills[(skill.power_type as PowerType) ?? 'unlimited'].find(s => s.ID === skill.ID)
+  const selectChoice   = (skill: Skill) => setChoiceSelections(prev => ({ ...prev, [skill.choice_group ?? 'default']: skill }))
+  const isChoiceSelected = (skill: Skill) => choiceSelections[skill.choice_group ?? 'default']?.ID === skill.ID
 
   const totalNormal   = Object.values(selectedSkills).flat().length
   const totalChoices  = Object.keys(choiceSelections).length
   const totalSelected = totalNormal + totalChoices
 
+  // ── Helpers de display ─────────────────────────────────────────
   const classInfo = () => {
     if (!selectedClassData) return null
     return selectedEdition === '4e'
@@ -160,27 +158,34 @@ export default function CharacterCreate() {
   }
 
   const attributes = [
-    { label: 'Força', key: 'strength' }, { label: 'Destreza', key: 'dexterity' },
-    { label: 'Constituição', key: 'constitution' }, { label: 'Inteligência', key: 'intelligence' },
-    { label: 'Sabedoria', key: 'wisdom' }, { label: 'Carisma', key: 'charisma' },
+    { label: 'Força',         key: 'strength'     },
+    { label: 'Destreza',      key: 'dexterity'    },
+    { label: 'Constituição',  key: 'constitution' },
+    { label: 'Inteligência',  key: 'intelligence' },
+    { label: 'Sabedoria',     key: 'wisdom'       },
+    { label: 'Carisma',       key: 'charisma'     },
   ] as const
 
-  const is4e = selectedEdition === '4e'
+  const is4e     = selectedEdition === '4e'
   const hasSkills = allSkills && allSkills.length > 0
 
-  return (
-    <div className="min-h-screen bg-gray-900 p-8">
-      <div className="max-w-2xl mx-auto">
-        <button onClick={() => navigate('/characters')} className="text-gray-400 hover:text-white transition mb-6 block">← Voltar</button>
-        <h1 className="text-3xl font-bold text-white mb-8">Criar Personagem</h1>
+  // Numeração dinâmica de passos
+  let step = 1
+  const S = () => step++   // retorna o passo atual e incrementa
 
-        {/* Passo 1 — Edição */}
-        <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-6">
-          <h2 className="text-lg font-semibold text-white mb-2">Passo 1 — Escolha a Edição</h2>
+  return (
+    <div className="min-h-screen bg-gray-900 px-4 py-6 sm:px-8 sm:py-8">
+      <div className="max-w-2xl mx-auto">
+        <button onClick={() => navigate('/characters')} className="text-gray-400 hover:text-white transition mb-6 block text-sm">← Voltar</button>
+        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">Criar Personagem</h1>
+
+        {/* ── PASSO 1 — Edição ──────────────────────────────── */}
+        <div className="bg-gray-800 rounded-xl p-5 border border-gray-700 mb-5">
+          <h2 className="text-base font-semibold text-white mb-3">Passo {S()} — Escolha a Edição</h2>
           <div className="grid grid-cols-2 gap-3">
             {editions.map(e => (
               <button key={e} type="button" onClick={() => handleEditionChange(e)}
-                className={`py-4 rounded-lg font-semibold text-base transition border ${selectedEdition === e ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'}`}>
+                className={`py-4 rounded-lg font-semibold text-sm transition border ${selectedEdition === e ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'}`}>
                 D&D {e}
               </button>
             ))}
@@ -188,22 +193,22 @@ export default function CharacterCreate() {
         </div>
 
         {selectedEdition && (
-          <form onSubmit={handleSubmit(data => createMutation.mutate(data))} className="flex flex-col gap-6">
+          <form onSubmit={handleSubmit(data => createMutation.mutate(data))} className="flex flex-col gap-5">
 
-            {/* Passo 2 — Nome */}
-            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-              <h2 className="text-lg font-semibold text-white mb-4">Passo 2 — Nome do Personagem</h2>
-              <input {...register('name')} className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Ex: Aragorn" />
+            {/* ── PASSO 2 — Nome ────────────────────────────── */}
+            <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
+              <h2 className="text-base font-semibold text-white mb-3">Passo {S()} — Nome do Personagem</h2>
+              <input {...register('name')} className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Ex: Aragorn" />
               {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name.message}</p>}
             </div>
 
-            {/* Passo 3 — Classe e Raça */}
-            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 flex flex-col gap-4">
-              <h2 className="text-lg font-semibold text-white">Passo 3 — Classe e Raça</h2>
+            {/* ── PASSO 3 — Classe e Raça ───────────────────── */}
+            <div className="bg-gray-800 rounded-xl p-5 border border-gray-700 flex flex-col gap-4">
+              <h2 className="text-base font-semibold text-white">Passo {S()} — Classe e Raça</h2>
               <div>
-                <label className="text-gray-400 text-sm mb-1 block">Classe</label>
+                <label className="text-gray-400 text-xs mb-1 block">Classe</label>
                 <select {...register('class_id', { valueAsNumber: true })} onChange={e => handleClassChange(Number(e.target.value))}
-                  className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                  className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                   <option value="">Selecione a classe</option>
                   {classes?.map(c => <option key={c.ID} value={c.ID}>{c.name}</option>)}
                 </select>
@@ -211,9 +216,9 @@ export default function CharacterCreate() {
                 {errors.class_id && <p className="text-red-400 text-xs mt-1">Selecione uma classe</p>}
               </div>
               <div>
-                <label className="text-gray-400 text-sm mb-1 block">Raça</label>
+                <label className="text-gray-400 text-xs mb-1 block">Raça</label>
                 <select {...register('race_id', { valueAsNumber: true })} onChange={e => { const v = Number(e.target.value); setValue('race_id', v); setSelectedRace(v) }}
-                  className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                  className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                   <option value="">Selecione a raça</option>
                   {races?.map(r => <option key={r.ID} value={r.ID}>{r.name}</option>)}
                 </select>
@@ -221,44 +226,81 @@ export default function CharacterCreate() {
               </div>
             </div>
 
-            {/* Passo 4 — Habilidades (4e) */}
-            {is4e && selectedClass && hasSkills && (
-              <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-                <div className="flex justify-between items-center mb-1">
-                  <h2 className="text-lg font-semibold text-white">Passo 4 — Habilidades</h2>
-                  <span className="text-xs text-gray-400 bg-gray-700 px-3 py-1 rounded-full">{totalSelected} selecionado{totalSelected !== 1 ? 's' : ''}</span>
-                </div>
-                <p className="text-gray-400 text-sm mb-5">Clique em qualquer habilidade para ver os detalhes completos.</p>
+            {/* ── PASSO 4 — Características de Classe (apenas se houver escolha OU automáticas) ── */}
+            {is4e && selectedClass && hasSkills && (classFeatures.length > 0 || hasChoiceGroups) && (
+              <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
+                <h2 className="text-base font-semibold text-white mb-1">Passo {S()} — Características de Classe</h2>
 
-                <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-6 mt-4">
 
-                  {/* Características automáticas */}
+                  {/* Características automáticas — todos possuem (E) */}
                   {classFeatures.length > 0 && (
                     <div>
-                      <h3 className="text-sm font-bold text-indigo-400 mb-1">📖 Características de Classe</h3>
-                      <p className="text-gray-500 text-xs mb-3">Concedidas automaticamente ao criar o personagem.</p>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-sm font-bold text-indigo-400">📖 Automáticas</span>
+                        <span className="text-xs bg-indigo-900 text-indigo-300 px-2 py-0.5 rounded-full">Todos possuem</span>
+                      </div>
+                      <p className="text-gray-500 text-xs mb-3">
+                        Todos os personagens desta classe recebem estas características automaticamente.
+                      </p>
                       <div className="flex flex-col gap-2">
                         {classFeatures.map(s => <SkillCard key={s.ID} skill={s} informative defaultExpanded />)}
                       </div>
                     </div>
                   )}
 
-                  {/* Grupos de escolha de características */}
-                  {Object.entries(choiceGroups).map(([group, options]) => (
-                    <div key={group}>
-                      <h3 className="text-sm font-bold text-purple-400 mb-1">🎯 Escolha uma Característica</h3>
-                      <p className="text-gray-500 text-xs mb-3">Selecione uma das opções abaixo — esta será sua característica permanente.</p>
-                      <div className="flex flex-col gap-2">
-                        {options.map(s => (
-                          <SkillCard
-                            key={s.ID} skill={s}
-                            selectable selected={isChoiceSelected(s)} disabled={false}
-                            onToggle={selectChoice} defaultExpanded
-                          />
-                        ))}
+                  {/* Grupos de escolha — deve escolher UMA (OU) */}
+                  {Object.entries(choiceGroups).map(([group, options]) => {
+                    const chosen = choiceSelections[group]
+                    return (
+                      <div key={group}>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-bold text-purple-400">🎯 Escolha Obrigatória</span>
+                          {chosen
+                            ? <span className="text-xs bg-purple-900 text-purple-300 px-2 py-0.5 rounded-full">✓ {chosen.name}</span>
+                            : <span className="text-xs bg-red-900 text-red-300 px-2 py-0.5 rounded-full animate-pulse">Escolha uma opção</span>
+                          }
+                        </div>
+                        <p className="text-gray-500 text-xs mb-3">
+                          Escolha <strong className="text-white">uma</strong> das opções abaixo — esta será a tradição permanente do seu personagem.
+                        </p>
+                        <div className="flex flex-col gap-2">
+                          {options.map(s => (
+                            <SkillCard
+                              key={s.ID} skill={s}
+                              selectable selected={isChoiceSelected(s)} disabled={false}
+                              onToggle={selectChoice} defaultExpanded
+                            />
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
+
+                </div>
+              </div>
+            )}
+
+            {/* ── Aviso: aguardando escolha de característica ── */}
+            {is4e && selectedClass && hasSkills && hasChoiceGroups && !allChoicesMade && (
+              <div className="bg-yellow-900/30 border border-yellow-700 rounded-xl p-4 text-center">
+                <p className="text-yellow-300 text-sm font-semibold">⚠️ Complete a escolha de característica acima para continuar</p>
+                <p className="text-yellow-500 text-xs mt-1">Você precisar escolher uma das opções antes de selecionar seus poderes.</p>
+              </div>
+            )}
+
+            {/* ── PASSO 5 — Habilidades (só aparece após escolha de característica) ── */}
+            {is4e && selectedClass && hasSkills && allChoicesMade && (
+              <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
+                <div className="flex justify-between items-center mb-1">
+                  <h2 className="text-base font-semibold text-white">Passo {S()} — Poderes</h2>
+                  <span className="text-xs text-gray-400 bg-gray-700 px-3 py-1 rounded-full">
+                    {totalNormal} selecionado{totalNormal !== 1 ? 's' : ''}
+                  </span>
+                </div>
+                <p className="text-gray-500 text-xs mb-5">Clique no card para ver detalhes. Clique no círculo para selecionar.</p>
+
+                <div className="flex flex-col gap-6">
 
                   {/* Sem Limite */}
                   {normalByType('unlimited').length > 0 && (
@@ -323,10 +365,10 @@ export default function CharacterCreate() {
               </div>
             )}
 
-            {/* Armadura */}
-            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-              <h2 className="text-lg font-semibold text-white mb-4">{is4e ? 'Passo 5' : 'Passo 4'} — Armadura</h2>
-              <select {...register('armor_id')} className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            {/* ── Armadura ──────────────────────────────────── */}
+            <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
+              <h2 className="text-base font-semibold text-white mb-3">Passo {S()} — Armadura</h2>
+              <select {...register('armor_id')} className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 onChange={e => { const v = Number(e.target.value); setValue('armor_id', v); setSelectedArmorData(armors?.find((a: Armor) => a.ID === v) ?? null) }}>
                 <option value="">Sem armadura</option>
                 {armors?.filter((a: Armor) => a.armor_type !== 'shield').map((a: Armor) => (
@@ -336,36 +378,36 @@ export default function CharacterCreate() {
               {selectedArmorData && <p className="text-gray-400 text-xs mt-2">{selectedArmorData.description}</p>}
             </div>
 
-            {/* Atributos */}
-            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-              <h2 className="text-lg font-semibold text-white mb-1">{is4e ? 'Passo 6' : 'Passo 5'} — Atributos</h2>
-              <p className="text-gray-400 text-sm mb-4">Alterar a <span className="text-indigo-400">Constituição</span> recalcula o HP automaticamente.</p>
-              <div className="grid grid-cols-2 gap-4">
+            {/* ── Atributos ─────────────────────────────────── */}
+            <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
+              <h2 className="text-base font-semibold text-white mb-1">Passo {S()} — Atributos</h2>
+              <p className="text-gray-400 text-xs mb-4">Alterar a <span className="text-indigo-400">Constituição</span> recalcula o HP automaticamente.</p>
+              <div className="grid grid-cols-2 gap-3">
                 {attributes.map(attr => (
                   <div key={attr.key}>
-                    <label className={`text-sm mb-1 block ${attr.key === 'constitution' ? 'text-indigo-400 font-semibold' : 'text-gray-400'}`}>{attr.label}</label>
+                    <label className={`text-xs mb-1 block ${attr.key === 'constitution' ? 'text-indigo-400 font-semibold' : 'text-gray-400'}`}>{attr.label}</label>
                     <input type="number" {...register(attr.key)} min={1} max={20}
-                      className={`w-full bg-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 ${attr.key === 'constitution' ? 'focus:ring-indigo-400 ring-1 ring-indigo-800' : 'focus:ring-indigo-500'}`} />
+                      className={`w-full bg-gray-700 text-white rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 ${attr.key === 'constitution' ? 'focus:ring-indigo-400 ring-1 ring-indigo-800' : 'focus:ring-indigo-500'}`} />
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* HP */}
-            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            {/* ── Hit Points ────────────────────────────────── */}
+            <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
               <div className="flex justify-between items-center mb-2">
-                <h2 className="text-lg font-semibold text-white">{is4e ? 'Passo 7' : 'Passo 6'} — Hit Points</h2>
+                <h2 className="text-base font-semibold text-white">Passo {S()} — Hit Points</h2>
                 {selectedClassData && <span className="text-xs text-gray-400 bg-gray-700 px-3 py-1 rounded-full">{hpLabel()}</span>}
               </div>
-              <input type="number" {...register('hit_points')} min={1} className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              <input type="number" {...register('hit_points')} min={1} className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             </div>
 
-            {/* Resumo de seleção */}
+            {/* ── Resumo do que foi selecionado ─────────────── */}
             {is4e && totalSelected > 0 && (
-              <div className="bg-gray-800 rounded-lg p-4 border border-indigo-700">
-                <p className="text-indigo-300 text-sm font-semibold mb-2">✨ Selecionados ({totalSelected})</p>
+              <div className="bg-gray-800 rounded-xl p-4 border border-indigo-700">
+                <p className="text-indigo-300 text-sm font-semibold mb-2">✨ Selecionados</p>
                 <div className="flex flex-wrap gap-2">
-                  {Object.entries(choiceSelections).map(([, s]) => (
+                  {Object.values(choiceSelections).map(s => (
                     <span key={s.ID} className="text-xs px-2 py-1 rounded-full bg-purple-900 text-purple-300">{s.name}</span>
                   ))}
                   {Object.values(selectedSkills).flat().map(s => (
@@ -376,7 +418,7 @@ export default function CharacterCreate() {
             )}
 
             <button type="submit" disabled={createMutation.isPending}
-              className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold py-3 rounded-lg transition">
+              className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold py-3 rounded-xl transition text-sm">
               {createMutation.isPending ? 'Criando...' : '✨ Criar Personagem'}
             </button>
 
