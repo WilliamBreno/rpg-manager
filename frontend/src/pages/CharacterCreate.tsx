@@ -238,7 +238,7 @@ export default function CharacterCreate() {
                       <h3 className="text-sm font-bold text-indigo-400 mb-1">📖 Características de Classe</h3>
                       <p className="text-gray-500 text-xs mb-3">Concedidas automaticamente ao criar o personagem.</p>
                       <div className="flex flex-col gap-2">
-                        {classFeatures.map(s => <SkillCard key={s.ID} skill={s} informative />)}
+                        {classFeatures.map(s => <SkillCard key={s.ID} skill={s} informative defaultExpanded />)}
                       </div>
                     </div>
                   )}
@@ -253,7 +253,7 @@ export default function CharacterCreate() {
                           <SkillCard
                             key={s.ID} skill={s}
                             selectable selected={isChoiceSelected(s)} disabled={false}
-                            onToggle={selectChoice}
+                            onToggle={selectChoice} defaultExpanded
                           />
                         ))}
                       </div>
@@ -271,7 +271,7 @@ export default function CharacterCreate() {
                       </div>
                       <div className="flex flex-col gap-2">
                         {normalByType('unlimited').map(s => (
-                          <SkillCard key={s.ID} skill={s} selectable selected={isSelected(s)} disabled={!canSelect('unlimited', s) && !isSelected(s)} onToggle={toggleSkill} />
+                          <SkillCard key={s.ID} skill={s} selectable selected={isSelected(s)} disabled={!canSelect('unlimited', s) && !isSelected(s)} onToggle={toggleSkill} defaultExpanded />
                         ))}
                       </div>
                     </div>
@@ -288,7 +288,7 @@ export default function CharacterCreate() {
                       </div>
                       <div className="flex flex-col gap-2">
                         {normalByType('encounter').map(s => (
-                          <SkillCard key={s.ID} skill={s} selectable selected={isSelected(s)} disabled={!canSelect('encounter', s) && !isSelected(s)} onToggle={toggleSkill} />
+                          <SkillCard key={s.ID} skill={s} selectable selected={isSelected(s)} disabled={!canSelect('encounter', s) && !isSelected(s)} onToggle={toggleSkill} defaultExpanded />
                         ))}
                       </div>
                     </div>
@@ -305,7 +305,7 @@ export default function CharacterCreate() {
                       </div>
                       <div className="flex flex-col gap-2">
                         {normalByType('daily').map(s => (
-                          <SkillCard key={s.ID} skill={s} selectable selected={isSelected(s)} disabled={!canSelect('daily', s) && !isSelected(s)} onToggle={toggleSkill} />
+                          <SkillCard key={s.ID} skill={s} selectable selected={isSelected(s)} disabled={!canSelect('daily', s) && !isSelected(s)} onToggle={toggleSkill} defaultExpanded />
                         ))}
                       </div>
                     </div>
