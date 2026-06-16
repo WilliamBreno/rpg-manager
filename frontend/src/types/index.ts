@@ -3,18 +3,13 @@ export interface Class {
   name: string
   edition: string
   description: string
-
-  // 5e
   hit_die: number
-
-  // 4e
   base_hp: number
   hp_per_level: number
   surges_per_day: number
   fort_bonus: number
   refl_bonus: number
   will_bonus: number
-
   is_default: boolean
 }
 
@@ -31,12 +26,33 @@ export type PowerType = 'utility' | 'unlimited' | 'encounter' | 'daily'
 export interface Skill {
   ID: number
   name: string
-  description?: string    // opcional — nem sempre preenchido
-  power_type?: PowerType  // opcional — habilidades 5e podem não ter tipo
-  level?: number
   edition?: string
   class_id?: number | null
   race_id?: number | null
+  power_type?: PowerType
+  level?: number
+
+  // Palavras-chave ex: "Arcano, Arma"
+  keywords?: string
+
+  // Mecânicas
+  action_type?: string
+  range?: string
+  target?: string
+  attack?: string
+
+  // Efeitos
+  description?: string
+  hit?: string
+  miss?: string
+  effect?: string
+  special?: string
+  level_scaling?: string
+
+  // Características de classe
+  is_class_feature?: boolean
+  requires_choice?: boolean
+  choice_group?: string
 }
 
 export interface Background {
@@ -66,37 +82,25 @@ export interface Character {
   name: string
   edition: string
   level: number
-
-  // HP
   hit_points: number
   max_hp: number
   temp_hp: number
-
-  // Pulsos de Cura (4e)
   surge_value: number
   surges_per_day: number
-
-  // Defesas calculadas (4e)
   defense_ac: number
   defense_fort: number
   defense_refl: number
   defense_will: number
-
-  // Relacionamentos
   armor_id?: number
   class_id: number
   race_id: number
   avatar_url?: string
-
-  // Atributos
   strength: number
   dexterity: number
   constitution: number
   intelligence: number
   wisdom: number
   charisma: number
-
-  // Objetos relacionados
   class: Class
   race: Race
   armor?: Armor
