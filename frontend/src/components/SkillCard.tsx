@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { Skill, PowerType } from '../types'
+import type { Skill } from '../types'
 
 export const powerConfig: Record<string, {
   label: string; color: string; border: string; bg: string; badge: string
@@ -31,11 +31,6 @@ export function SkillCard({
 
   const hasDetails = !!(skill.action_type || skill.range || skill.target || skill.attack ||
     skill.hit || skill.miss || skill.effect || skill.special || skill.level_scaling)
-
-  const handleBodyClick = () => {
-    if (!selectable || !hasDetails) return // no selectable mode, body expands
-    if (!selectable) setExpanded(e => !e)
-  }
 
   const handleExpandClick = (e: React.MouseEvent) => {
     e.stopPropagation()
