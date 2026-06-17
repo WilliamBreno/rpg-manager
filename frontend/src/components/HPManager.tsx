@@ -157,7 +157,9 @@ export default function HPManager({ character }: Props) {
         // Mostra resultado na face frontal
         const front = diceRef.current?.querySelector<HTMLDivElement>('.rpg-face-front')
         if (front) front.textContent = numDice === 1 ? String(total) : '∑'
-
+        faces.forEach(f => {
+          f.textContent = numDice === 1 ? String(total) : '∑'
+        })
         setRollResult({ rolls, total })
         const entry = numDice === 1
           ? `${total} (d${selectedDie})`
