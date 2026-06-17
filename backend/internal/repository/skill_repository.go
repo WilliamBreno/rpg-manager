@@ -37,9 +37,14 @@ func (r *SkillRepository) FindByRaceID(raceID uint) ([]domain.Skill, error) {
     return skills, result.Error
 }
 
-func (r *SkillRepository) FindByClassAndRace(classID, raceID uint) ([]domain.Skill, error) {
+func (r *SkillRepository) FindByClassAndRace(classID uint, raceID *uint) ([]domain.Skill, error) {
     var skills []domain.Skill
-    result := r.DB.Where("class_id = ? OR race_id = ?", classID, raceID).Find(&skills)
+    var result *gorm.DB
+    if raceID != nil {
+        result = r.DB.Where("class_id = ? OR race_id = ?", classID, *raceID).Find(&skills)
+    } else {
+        result = r.DB.Where("class_id = ?", classID).Find(&skills)
+    }
     return skills, result.Error
 }
 

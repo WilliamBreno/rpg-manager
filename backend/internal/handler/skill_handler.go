@@ -27,24 +27,31 @@ func (h *SkillHandler) GetAll(c *gin.Context) {
 }
 
 func (h *SkillHandler) GetByClassAndRace(c *gin.Context) {
-    classID, err := strconv.ParseUint(c.Query("class_id"), 10, 32)
-    if err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "class_id inválido"})
-        return
-    }
+	classID, err := strconv.ParseUint(c.Query("class_id"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "class_id inválido"})
+		return
+	}
 
-    raceID, err := strconv.ParseUint(c.Query("race_id"), 10, 32)
-    if err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "race_id inválido"})
-        return
-    }
+	// ── race_id é opcional ──────────────────────────────────────────
+	var raceIDPtr *uint
+	if raceStr := c.Query("race_id"); raceStr != "" {
+		raceID, err := strconv.ParseUint(raceStr, 10, 32)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "race_id inválido"})
+			return
+		}
+		id := uint(raceID)
+		raceIDPtr = &id
+	}
+	// ───────────────────────────────────────────────────────────────
 
-    skills, err := h.Service.GetByClassAndRace(uint(classID), uint(raceID))
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-        return
-    }
-    c.JSON(http.StatusOK, skills)
+	skills, err := h.Service.GetByClassAndRace(uint(classID), raceIDPtr)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, skills)
 }
 
 func (h *SkillHandler) Create(c *gin.Context) {

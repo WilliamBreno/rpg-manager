@@ -18,7 +18,7 @@ func (s *SkillService) GetAll() ([]domain.Skill, error) {
     return s.Repo.FindAll()
 }
 
-func (s *SkillService) GetByClassAndRace(classID, raceID uint) ([]domain.Skill, error) {
+func (s *SkillService) GetByClassAndRace(classID uint, raceID *uint) ([]domain.Skill, error) {
     return s.Repo.FindByClassAndRace(classID, raceID)
 }
 
