@@ -2,6 +2,9 @@ import { useRef, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { characterService } from '../services/characterService'
 
+// ✅ Usa a variável de ambiente — funciona local E em produção
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
+
 interface Props {
   characterID: number
   avatarURL?: string
@@ -11,12 +14,17 @@ interface Props {
 export default function AvatarUpload({ characterID, avatarURL, characterName }: Props) {
   const queryClient = useQueryClient()
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [preview, setPreview] = useState<string | null>(avatarURL ? `http://localhost:8080${avatarURL}` : null)
+
+  // ✅ Monta a URL correta com a base do ambiente
+  const buildUrl = (path?: string) => path ? `${API_URL}${path}` : null
+
+  const [preview, setPreview] = useState<string | null>(buildUrl(avatarURL))
 
   const uploadMutation = useMutation({
     mutationFn: (file: File) => characterService.uploadAvatar(characterID, file),
     onSuccess: (data) => {
-      setPreview(`http://localhost:8080${data.avatar_url}`)
+      // ✅ Usa a mesma função para montar a URL
+      setPreview(buildUrl(data.avatar_url))
       queryClient.invalidateQueries({ queryKey: ['character', String(characterID)] })
       queryClient.invalidateQueries({ queryKey: ['characters'] })
     },
@@ -25,12 +33,9 @@ export default function AvatarUpload({ characterID, avatarURL, characterName }: 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-
-    // Preview local antes de enviar
     const reader = new FileReader()
     reader.onloadend = () => setPreview(reader.result as string)
     reader.readAsDataURL(file)
-
     uploadMutation.mutate(file)
   }
 

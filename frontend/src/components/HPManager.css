@@ -1,0 +1,221 @@
+/* ── Dado 3D RPG ────────────────────────────────────────────────────────────── */
+
+.rpg-dice {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transform: rotateX(20deg) rotateY(30deg);
+}
+
+.rpg-face {
+  position: absolute;
+  width: 72px;
+  height: 72px;
+  left: 12px;
+  top: 12px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 21px;
+  font-weight: 500;
+  font-family: Georgia, 'Times New Roman', serif;
+  color: #c9a84c;
+  background: #0e0e0e;
+  border: 1.5px solid #c9a84c;
+  overflow: hidden;
+}
+
+/* Brilho diagonal simulando faceta do d20 */
+.rpg-face::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(201, 168, 76, 0.16) 0%,
+    transparent 48%,
+    rgba(201, 168, 76, 0.06) 100%
+  );
+  pointer-events: none;
+}
+
+/* Linhas de faceta cruzadas */
+.rpg-face::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(45deg, transparent 40%, rgba(201,168,76,.08) 41%, rgba(201,168,76,.08) 42%, transparent 43%),
+    linear-gradient(-45deg, transparent 40%, rgba(201,168,76,.08) 41%, rgba(201,168,76,.08) 42%, transparent 43%);
+  pointer-events: none;
+}
+
+.rpg-face-front  { transform: translateZ(36px);               border-color: #d4a843; }
+.rpg-face-back   { transform: rotateY(180deg) translateZ(36px); background: #090909; border-color: #a08020; }
+.rpg-face-right  { transform: rotateY(90deg)  translateZ(36px); }
+.rpg-face-left   { transform: rotateY(-90deg) translateZ(36px); background: #090909; border-color: #a08020; }
+.rpg-face-top    { transform: rotateX(90deg)  translateZ(36px); background: #141414; border-color: #e8c46a; }
+.rpg-face-bottom { transform: rotateX(-90deg) translateZ(36px); background: #050505; border-color: #7a5a10; }
+
+/* ── Estrelas de 4 pontas (igual à logo) ──────────────────────────────────── */
+.rpg-star {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: #c9a84c;
+  clip-path: polygon(50% 0%, 57% 43%, 100% 50%, 57% 57%, 50% 100%, 43% 57%, 0% 50%, 43% 43%);
+  z-index: 3;
+  pointer-events: none;
+}
+.rpg-star-top    { top: -3px;    left: 50%; transform: translateX(-50%); }
+.rpg-star-bottom { bottom: -3px; left: 50%; transform: translateX(-50%); }
+.rpg-star-left   { left: -3px;   top: 50%;  transform: translateY(-50%) scale(.65); }
+.rpg-star-right  { right: -3px;  top: 50%;  transform: translateY(-50%) scale(.65); }
+
+/* ── Partículas douradas (crítico/máximo) ─────────────────────────────────── */
+.rpg-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #e8c46a;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  transition: transform .75s ease-out, opacity .75s ease-out;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* ── Botões dos tipos de dado ─────────────────────────────────────────────── */
+.rpg-die-btn {
+  padding: 6px 0;
+  border-radius: 6px;
+  border: 1px solid rgba(201, 168, 76, .28);
+  background: rgba(201, 168, 76, .04);
+  color: rgba(201, 168, 76, .65);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .15s;
+}
+.rpg-die-btn:hover {
+  border-color: rgba(201, 168, 76, .6);
+  color: #c9a84c;
+  background: rgba(201, 168, 76, .1);
+}
+.rpg-die-btn.active {
+  background: #c9a84c;
+  color: #080808;
+  border-color: #c9a84c;
+}
+
+/* ── Botões de quantidade ─────────────────────────────────────────────────── */
+.rpg-qty-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid rgba(201, 168, 76, .35);
+  background: rgba(201, 168, 76, .05);
+  color: #c9a84c;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s;
+}
+.rpg-qty-btn:hover { background: rgba(201, 168, 76, .15); }
+
+/* ── Botão Rolar ──────────────────────────────────────────────────────────── */
+.rpg-roll-btn {
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+  border: 1px solid #c9a84c;
+  color: #c9a84c;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  font-family: Georgia, serif;
+  letter-spacing: .04em;
+  cursor: pointer;
+  transition: background .15s;
+}
+.rpg-roll-btn:hover:not(:disabled) { background: rgba(201, 168, 76, .1); }
+.rpg-roll-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+/* ── Toggle simulador ─────────────────────────────────────────────────────── */
+.rpg-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: none;
+  border: none;
+  color: rgba(201, 168, 76, .5);
+  font-size: 14px;
+  font-family: Georgia, serif;
+  cursor: pointer;
+  transition: color .15s;
+  padding: 0;
+}
+.rpg-toggle-btn:hover,
+.rpg-toggle-btn.open { color: #c9a84c; }
+
+/* ── Caixa de resultado ───────────────────────────────────────────────────── */
+.rpg-result-box {
+  width: 100%;
+  background: #060606;
+  border-radius: 10px;
+  border: 1px solid rgba(201, 168, 76, .22);
+  padding: 1rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-height: 82px;
+  justify-content: center;
+}
+
+.rpg-result-number {
+  font-size: 52px;
+  font-weight: 500;
+  color: #d4a843;
+  line-height: 1;
+  font-family: Georgia, serif;
+}
+
+.rpg-result-detail {
+  font-size: 12px;
+  color: rgba(201, 168, 76, .45);
+}
+
+.rpg-badge {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2px 12px;
+  border-radius: 20px;
+  margin-top: 4px;
+}
+.rpg-badge-crit { background: rgba(201,168,76,.12); border: 1px solid rgba(201,168,76,.4); color: #e8c46a; }
+.rpg-badge-fail { background: rgba(180,20,20,.15);  border: 1px solid rgba(180,20,20,.4);  color: #f87171; }
+.rpg-badge-max  { background: rgba(34,197,94,.08);  border: 1px solid rgba(34,197,94,.3);  color: #4ade80; }
+
+/* ── Chips do histórico ───────────────────────────────────────────────────── */
+.rpg-chip {
+  font-size: 12px;
+  padding: 2px 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(201, 168, 76, .18);
+  background: rgba(201, 168, 76, .04);
+  color: rgba(201, 168, 76, .5);
+}
+.rpg-chip.latest {
+  border-color: rgba(201, 168, 76, .5);
+  background: rgba(201, 168, 76, .1);
+  color: #c9a84c;
+}
