@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { characterService } from '../services/characterService'
 
 // ✅ Usa a variável de ambiente — funciona local E em produção
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
+const API_URL = (import.meta.env.VITE_API_URL ?? 'http://localhost:8080/api').replace(/\/api$/, '')
 
 interface Props {
   characterID: number
