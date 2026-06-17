@@ -6,6 +6,9 @@ import './HPManager.css'
 
 const DICE_TYPES = [4, 6, 8, 10, 12, 20] as const
 
+// Posição final que mostra a face frontal claramente
+const SETTLE = { x: -15, y: 15, z: 0 }
+
 interface Props { character: Character }
 
 export default function HPManager({ character }: Props) {
@@ -28,7 +31,7 @@ export default function HPManager({ character }: Props) {
   // ── Refs ────────────────────────────────────────────────────────────────────
   const diceRef      = useRef<HTMLDivElement>(null)
   const wrapperRef   = useRef<HTMLDivElement>(null)
-  const diceAngleRef = useRef({ x: -15, y: 15, z: 0 })
+  const diceAngleRef = useRef({ ...SETTLE })
   const animFrameRef = useRef<number | null>(null)
   const tickerRef    = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -78,16 +81,6 @@ export default function HPManager({ character }: Props) {
   }
   const status = getHPStatus()
 
-  // ── Easing ──────────────────────────────────────────────────────────────────
-  const easeOutElastic = (t: number) => {
-    if (t === 0 || t === 1) return t
-    return Math.pow(2, -10 * t) * Math.sin((t - .3 / 4) * (2 * Math.PI) / .3) + 1
-  }
-  const blend = (t: number) => {
-    if (t < .72) return (1 - Math.pow(1 - t / .72, 3)) * .84
-    return .84 + easeOutElastic((t - .72) / .28) * .16
-  }
-
   // ── Partículas douradas ─────────────────────────────────────────────────────
   const spawnParticles = useCallback((die: number) => {
     if (!wrapperRef.current) return
@@ -98,11 +91,9 @@ export default function HPManager({ character }: Props) {
       p.className = 'rpg-particle'
       const a = (i / count) * Math.PI * 2 + Math.random() * .4
       const dist = 48 + Math.random() * 30
-      const dx = Math.cos(a) * dist
-      const dy = Math.sin(a) * dist
       w.appendChild(p)
       requestAnimationFrame(() => requestAnimationFrame(() => {
-        p.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`
+        p.style.transform = `translate(calc(-50% + ${Math.cos(a) * dist}px), calc(-50% + ${Math.sin(a) * dist}px))`
         p.style.opacity = '0'
       }))
       setTimeout(() => p.remove(), 900)
@@ -115,59 +106,78 @@ export default function HPManager({ character }: Props) {
     setIsRolling(true)
     setRollResult(null)
 
+    // Pré-calcula resultado antes de começar a animação
+    const rolls = Array.from({ length: numDice }, () =>
+      Math.floor(Math.random() * selectedDie) + 1
+    )
+    const total = rolls.reduce((a, b) => a + b, 0)
+
     const dice  = diceRef.current
-    dice.style.transition = '' // limpa transição anterior
+    dice.style.transition = ''
     const faces = dice.querySelectorAll<HTMLDivElement>('.rpg-face')
-    const { x: cx, y: cy, z: cz } = diceAngleRef.current
 
-    // Trajetória completamente aleatória a cada rolagem
-    const spins = 4 + Math.floor(Math.random() * 4)
-    const dirX  = Math.random() < .5 ? 1 : -1
-    const dirY  = Math.random() < .5 ? 1 : -1
-    const dirZ  = Math.random() < .5 ? 1 : -1
-    const tX    = cx + dirX * spins * 360 + (Math.random() - .5) * 200
-    const tY    = cy + dirY * spins * 360 + (Math.random() - .5) * 200
-    const tZ    = cz + dirZ * (2 + Math.floor(Math.random() * 3)) * 360 + (Math.random() - .5) * 120
-    const dur   = 820 + Math.floor(Math.random() * 480)
+    // Destino = posição frontal + N rotações completas em direção aleatória
+    // O dado naturalmente termina mostrando a face frontal — sem transição extra
+    const spinsX = 4 + Math.floor(Math.random() * 4)
+    const spinsY = 4 + Math.floor(Math.random() * 4)
+    const spinsZ = 2 + Math.floor(Math.random() * 3)
+    const dirX   = Math.random() < .5 ? 1 : -1
+    const dirY   = Math.random() < .5 ? 1 : -1
+    const dirZ   = Math.random() < .5 ? 1 : -1
+
+    const target = {
+      x: SETTLE.x + dirX * spinsX * 360,
+      y: SETTLE.y + dirY * spinsY * 360,
+      z: SETTLE.z + dirZ * spinsZ * 360,
+    }
+
+    const start = { ...diceAngleRef.current }
+    const dur   = 1200 + Math.floor(Math.random() * 400) // 1200-1600ms
     const t0    = performance.now()
+    let resultPlaced = false
 
-    // Faces piscam números aleatórios durante a animação
+    // Faces piscam números aleatórios enquanto gira rápido
     tickerRef.current = setInterval(() => {
       faces.forEach(f => { f.textContent = String(Math.floor(Math.random() * selectedDie) + 1) })
     }, 65)
 
+    // easeOutCubic: desaceleração física natural, sem bounce
+    const easeOut = (t: number) => 1 - Math.pow(1 - t, 3)
+
     function frame(now: number) {
       const t = Math.min((now - t0) / dur, 1)
-      const e = blend(t)
+      const e = easeOut(t)
+
       if (diceRef.current) {
         diceRef.current.style.transform =
-          `rotateX(${cx + (tX - cx) * e}deg) rotateY(${cy + (tY - cy) * e}deg) rotateZ(${cz + (tZ - cz) * e}deg)`
+          `rotateX(${start.x + (target.x - start.x) * e}deg) ` +
+          `rotateY(${start.y + (target.y - start.y) * e}deg) ` +
+          `rotateZ(${start.z + (target.z - start.z) * e}deg)`
+      }
+
+      // A 75% do tempo o dado está quase parado (97% da rotação completa)
+      // Coloca o resultado na face frontal — o dado ainda se move levemente,
+      // então a troca de número não é percebida
+      if (t >= 0.75 && !resultPlaced) {
+        resultPlaced = true
+        if (tickerRef.current) { clearInterval(tickerRef.current); tickerRef.current = null }
+        const front = diceRef.current?.querySelector<HTMLDivElement>('.rpg-face-front')
+        if (front) front.textContent = numDice === 1 ? String(total) : '∑'
       }
 
       if (t < 1) {
         animFrameRef.current = requestAnimationFrame(frame)
       } else {
-        if (tickerRef.current) clearInterval(tickerRef.current)
+        // Garante posição final exata
+        if (diceRef.current) {
+          diceRef.current.style.transform =
+            `rotateX(${SETTLE.x}deg) rotateY(${SETTLE.y}deg) rotateZ(${SETTLE.z}deg)`
+        }
+        diceAngleRef.current = { ...SETTLE }
 
-        // Calcula resultado
-        const rolls = Array.from({ length: numDice }, () =>
-          Math.floor(Math.random() * selectedDie) + 1
-        )
-        const total = rolls.reduce((a, b) => a + b, 0)
-
-        // Atualiza só a face frontal
+        // Garante resultado na face frontal
         const front = diceRef.current?.querySelector<HTMLDivElement>('.rpg-face-front')
         if (front) front.textContent = numDice === 1 ? String(total) : '∑'
-
-        // Assenta suavemente mostrando a face frontal
-        if (diceRef.current) {
-          diceRef.current.style.transition = 'transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
-          diceRef.current.style.transform  = 'rotateX(-15deg) rotateY(15deg)'
-        }
-        setTimeout(() => {
-          if (diceRef.current) diceRef.current.style.transition = ''
-          diceAngleRef.current = { x: -15, y: 15, z: 0 }
-        }, 470)
 
         setRollResult({ rolls, total })
         const entry = numDice === 1
@@ -175,7 +185,6 @@ export default function HPManager({ character }: Props) {
           : `${total} (${numDice}d${selectedDie})`
         setRollHistory(prev => [entry, ...prev].slice(0, 6))
 
-        // Partículas em crítico ou máximo
         const isCrit = numDice === 1 && selectedDie === 20 && total === 20
         const isMax  = total === selectedDie * numDice
         if (isCrit || isMax) spawnParticles(selectedDie)
@@ -184,7 +193,7 @@ export default function HPManager({ character }: Props) {
       }
     }
     animFrameRef.current = requestAnimationFrame(frame)
-  }, [isRolling, numDice, selectedDie, spawnParticles, blend])
+  }, [isRolling, numDice, selectedDie, spawnParticles])
 
   // ── Input Row helper ────────────────────────────────────────────────────────
   const InputRow = ({
@@ -227,7 +236,6 @@ export default function HPManager({ character }: Props) {
       isUnconscious ? 'border-red-700' : isCritical ? 'border-orange-700' : 'border-gray-700'
     }`}>
 
-      {/* ── Pontos de Vida ─────────────────────────────────────────────────── */}
       <h2 className="text-base sm:text-lg font-semibold text-white mb-3">Pontos de Vida</h2>
 
       <div className="flex justify-between items-center mb-2">
@@ -241,129 +249,75 @@ export default function HPManager({ character }: Props) {
         </div>
       </div>
 
-      {/* Barra HP */}
       <div className="w-full bg-gray-700 rounded-full h-3 sm:h-4 mb-2 overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all duration-500 ${getHPColor()}`}
-          style={{ width: `${hpPercent}%` }}
-        />
+        <div className={`h-full rounded-full transition-all duration-500 ${getHPColor()}`} style={{ width: `${hpPercent}%` }} />
       </div>
 
-      {/* Barra Temp HP */}
       {tempHP > 0 && (
         <div className="w-full bg-gray-700 rounded-full h-2 mb-3 overflow-hidden">
-          <div
-            className="h-2 rounded-full bg-blue-500 transition-all duration-500"
-            style={{ width: `${Math.min(100, (tempHP / maxHP) * 100)}%` }}
-          />
+          <div className="h-2 rounded-full bg-blue-500 transition-all duration-500" style={{ width: `${Math.min(100, (tempHP / maxHP) * 100)}%` }} />
         </div>
       )}
 
-      {isCritical && (
-        <p className="text-orange-400 text-xs text-center mb-3 font-semibold">
-          ⚠️ HP crítico — procure cura imediatamente!
-        </p>
-      )}
-      {isUnconscious && (
-        <p className="text-red-400 text-xs text-center mb-3 font-semibold animate-pulse">
-          💀 Inconsciente — salvaguardas de morte!
-        </p>
-      )}
+      {isCritical && <p className="text-orange-400 text-xs text-center mb-3 font-semibold">⚠️ HP crítico — procure cura imediatamente!</p>}
+      {isUnconscious && <p className="text-red-400 text-xs text-center mb-3 font-semibold animate-pulse">💀 Inconsciente — salvaguardas de morte!</p>}
 
-      {/* Botões de ação */}
       <div className="grid grid-cols-3 gap-2 mb-3">
-        <button
-          onClick={() => setMode(mode === 'damage' ? null : 'damage')}
-          className={`py-2 rounded-lg font-semibold transition flex flex-col sm:flex-row items-center justify-center gap-1 ${
-            mode === 'damage' ? 'bg-red-600 text-white' : 'bg-gray-700 text-red-400 hover:bg-gray-600'
-          }`}
-        >
+        <button onClick={() => setMode(mode === 'damage' ? null : 'damage')}
+          className={`py-2 rounded-lg font-semibold transition flex flex-col sm:flex-row items-center justify-center gap-1 ${mode === 'damage' ? 'bg-red-600 text-white' : 'bg-gray-700 text-red-400 hover:bg-gray-600'}`}>
           <span>⚔️</span>
-          <span className="text-xs sm:text-sm leading-tight">
-            <span className="hidden sm:inline">Receber </span>Dano
-          </span>
+          <span className="text-xs sm:text-sm leading-tight"><span className="hidden sm:inline">Receber </span>Dano</span>
         </button>
-        <button
-          onClick={() => setMode(mode === 'heal' ? null : 'heal')}
-          className={`py-2 rounded-lg font-semibold transition flex flex-col sm:flex-row items-center justify-center gap-1 ${
-            mode === 'heal' ? 'bg-green-600 text-white' : 'bg-gray-700 text-green-400 hover:bg-gray-600'
-          }`}
-        >
+        <button onClick={() => setMode(mode === 'heal' ? null : 'heal')}
+          className={`py-2 rounded-lg font-semibold transition flex flex-col sm:flex-row items-center justify-center gap-1 ${mode === 'heal' ? 'bg-green-600 text-white' : 'bg-gray-700 text-green-400 hover:bg-gray-600'}`}>
           <span>💚</span>
           <span className="text-xs sm:text-sm">Curar</span>
         </button>
-        <button
-          onClick={() => setMode(mode === 'temp' ? null : 'temp')}
-          className={`py-2 rounded-lg font-semibold transition flex flex-col sm:flex-row items-center justify-center gap-1 ${
-            mode === 'temp' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-blue-400 hover:bg-gray-600'
-          }`}
-        >
+        <button onClick={() => setMode(mode === 'temp' ? null : 'temp')}
+          className={`py-2 rounded-lg font-semibold transition flex flex-col sm:flex-row items-center justify-center gap-1 ${mode === 'temp' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-blue-400 hover:bg-gray-600'}`}>
           <span>🛡️</span>
           <span className="text-xs sm:text-sm"><span className="hidden sm:inline">HP </span>Temp</span>
         </button>
       </div>
 
       {mode === 'damage' && (
-        <InputRow value={damageInput} onChange={setDamageInput}
-          placeholder="Quantidade de dano"
-          onApply={() => damageMutation.mutate(Number(damageInput))}
-          isPending={damageMutation.isPending} color="red" />
+        <InputRow value={damageInput} onChange={setDamageInput} placeholder="Quantidade de dano"
+          onApply={() => damageMutation.mutate(Number(damageInput))} isPending={damageMutation.isPending} color="red" />
       )}
       {mode === 'heal' && (
-        <InputRow value={healInput} onChange={setHealInput}
-          placeholder="Quantidade de cura"
-          onApply={() => healMutation.mutate(Number(healInput))}
-          isPending={healMutation.isPending} color="green" />
+        <InputRow value={healInput} onChange={setHealInput} placeholder="Quantidade de cura"
+          onApply={() => healMutation.mutate(Number(healInput))} isPending={healMutation.isPending} color="green" />
       )}
       {mode === 'temp' && (
         <div className="flex flex-col gap-1">
-          <InputRow value={tempInput} onChange={setTempInput}
-            placeholder="HP temporário"
-            onApply={() => tempMutation.mutate(Number(tempInput))}
-            isPending={tempMutation.isPending} color="blue" />
+          <InputRow value={tempInput} onChange={setTempInput} placeholder="HP temporário"
+            onApply={() => tempMutation.mutate(Number(tempInput))} isPending={tempMutation.isPending} color="blue" />
           <p className="text-gray-500 text-xs">HP temporário não acumula — fica com o maior valor.</p>
         </div>
       )}
 
-      {/* ── Divisor + Simulador de Dados ───────────────────────────────────── */}
+      {/* ── Simulador de Dados ─────────────────────────────────────────────── */}
       <div className="border-t border-gray-700 mt-4 pt-4">
 
-        <button
-          type="button"
-          onClick={() => setShowDice(v => !v)}
-          className={`rpg-toggle-btn ${showDice ? 'open' : ''}`}
-        >
+        <button type="button" onClick={() => setShowDice(v => !v)} className={`rpg-toggle-btn ${showDice ? 'open' : ''}`}>
           <span style={{ fontSize: 16 }}>✦</span>
           <span>Simulador de Dados</span>
-          <span className="ml-auto text-xs" style={{ color: 'rgba(201,168,76,.35)' }}>
-            {showDice ? '▲' : '▼'}
-          </span>
+          <span className="ml-auto text-xs" style={{ color: 'rgba(201,168,76,.35)' }}>{showDice ? '▲' : '▼'}</span>
         </button>
 
         {showDice && (
           <div className="mt-5 flex flex-col items-center gap-4">
 
-            {/* ── Cena do dado 3D ──────────────────────────────────────────── */}
-            <div
-              ref={wrapperRef}
-              style={{ width: 148, height: 148, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            >
-              {/* Anéis concêntricos */}
+            {/* Cena 3D */}
+            <div ref={wrapperRef} style={{ width: 148, height: 148, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#060606', border: '1.5px solid rgba(201,168,76,.55)', pointerEvents: 'none' }} />
               <div style={{ position: 'absolute', inset: 10, borderRadius: '50%', border: '.5px solid rgba(201,168,76,.18)', pointerEvents: 'none' }} />
               <div style={{ position: 'absolute', inset: 20, borderRadius: '50%', border: '.5px dashed rgba(201,168,76,.1)', pointerEvents: 'none' }} />
-
-              {/* Estrelas de 4 pontas */}
               <div className="rpg-star rpg-star-top" />
               <div className="rpg-star rpg-star-bottom" />
               <div className="rpg-star rpg-star-left" />
               <div className="rpg-star rpg-star-right" />
-
-              {/* Dado 3D */}
-              <div
-                style={{ width: 96, height: 96, perspective: '440px', cursor: 'pointer', position: 'relative', zIndex: 2 }}
-                onClick={rollDice}
-              >
+              <div style={{ width: 96, height: 96, perspective: '440px', cursor: 'pointer', position: 'relative', zIndex: 2 }} onClick={rollDice}>
                 <div ref={diceRef} className="rpg-dice">
                   <div className="rpg-face rpg-face-front">20</div>
                   <div className="rpg-face rpg-face-back">1</div>
@@ -375,45 +329,28 @@ export default function HPManager({ character }: Props) {
               </div>
             </div>
 
-            {/* ── Controles ────────────────────────────────────────────────── */}
+            {/* Controles */}
             <div className="w-full flex flex-col gap-3">
-
-              {/* Quantidade */}
               <div className="flex items-center justify-center gap-3">
                 <span style={{ color: 'rgba(201,168,76,.6)', fontSize: 13 }}>Qtd:</span>
                 <button type="button" className="rpg-qty-btn" onClick={() => setNumDice(v => Math.max(1, v - 1))}>−</button>
                 <span style={{ color: '#c9a84c' }} className="font-bold w-6 text-center text-lg tabular-nums">{numDice}</span>
                 <button type="button" className="rpg-qty-btn" onClick={() => setNumDice(v => Math.min(10, v + 1))}>+</button>
               </div>
-
-              {/* Tipos de dado */}
               <div className="grid grid-cols-3 gap-1.5">
                 {DICE_TYPES.map(d => (
-                  <button
-                    key={d}
-                    type="button"
-                    onClick={() => setSelectedDie(d)}
-                    className={`rpg-die-btn ${selectedDie === d ? 'active' : ''}`}
-                  >
+                  <button key={d} type="button" onClick={() => setSelectedDie(d)}
+                    className={`rpg-die-btn ${selectedDie === d ? 'active' : ''}`}>
                     d{d}
                   </button>
                 ))}
               </div>
-
-              {/* Botão rolar */}
-              <button
-                type="button"
-                className="rpg-roll-btn"
-                onClick={rollDice}
-                disabled={isRolling}
-              >
-                {isRolling
-                  ? '✦ Rolando...'
-                  : `✦ Rolar ${numDice > 1 ? numDice : ''}d${selectedDie}`}
+              <button type="button" className="rpg-roll-btn" onClick={rollDice} disabled={isRolling}>
+                {isRolling ? '✦ Rolando...' : `✦ Rolar ${numDice > 1 ? numDice : ''}d${selectedDie}`}
               </button>
             </div>
 
-            {/* ── Resultado ────────────────────────────────────────────────── */}
+            {/* Resultado */}
             {(isRolling || rollResult) && (
               <div className="rpg-result-box">
                 {isRolling ? (
@@ -421,48 +358,29 @@ export default function HPManager({ character }: Props) {
                 ) : rollResult && (
                   <>
                     <p className="rpg-result-number">{rollResult.total}</p>
-                    {numDice > 1 && (
-                      <p className="rpg-result-detail">[ {rollResult.rolls.join(' + ')} ]</p>
-                    )}
+                    {numDice > 1 && <p className="rpg-result-detail">[ {rollResult.rolls.join(' + ')} ]</p>}
                     <p className="rpg-result-detail flex items-center gap-2">
                       <span>{numDice}d{selectedDie}</span>
-                      {numDice === 1 && selectedDie === 20 && rollResult.total === 20 && (
-                        <span className="rpg-badge rpg-badge-crit">⚡ Crítico natural!</span>
-                      )}
-                      {numDice === 1 && selectedDie === 20 && rollResult.total === 1 && (
-                        <span className="rpg-badge rpg-badge-fail">💀 Falha crítica!</span>
-                      )}
-                      {rollResult.total === selectedDie * numDice && numDice > 1 && (
-                        <span className="rpg-badge rpg-badge-max">✦ Máximo!</span>
-                      )}
+                      {numDice === 1 && selectedDie === 20 && rollResult.total === 20 && <span className="rpg-badge rpg-badge-crit">⚡ Crítico natural!</span>}
+                      {numDice === 1 && selectedDie === 20 && rollResult.total === 1  && <span className="rpg-badge rpg-badge-fail">💀 Falha crítica!</span>}
+                      {rollResult.total === selectedDie * numDice && numDice > 1        && <span className="rpg-badge rpg-badge-max">✦ Máximo!</span>}
                     </p>
                   </>
                 )}
               </div>
             )}
 
-            {/* ── Histórico ────────────────────────────────────────────────── */}
+            {/* Histórico */}
             {rollHistory.length > 0 && (
               <div className="w-full flex flex-col gap-2">
                 <div className="flex justify-between items-center">
-                  <span style={{ color: 'rgba(201,168,76,.45)', letterSpacing: '.08em' }}
-                    className="text-xs font-medium uppercase">
-                    Histórico
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setRollHistory([])}
-                    style={{ color: 'rgba(201,168,76,.35)' }}
-                    className="text-xs bg-transparent border-none cursor-pointer hover:opacity-70"
-                  >
-                    limpar
-                  </button>
+                  <span style={{ color: 'rgba(201,168,76,.45)', letterSpacing: '.08em' }} className="text-xs font-medium uppercase">Histórico</span>
+                  <button type="button" onClick={() => setRollHistory([])}
+                    style={{ color: 'rgba(201,168,76,.35)' }} className="text-xs bg-transparent border-none cursor-pointer hover:opacity-70">limpar</button>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {rollHistory.map((entry, i) => (
-                    <span key={i} className={`rpg-chip ${i === 0 ? 'latest' : ''}`}>
-                      {entry}
-                    </span>
+                    <span key={i} className={`rpg-chip ${i === 0 ? 'latest' : ''}`}>{entry}</span>
                   ))}
                 </div>
               </div>
