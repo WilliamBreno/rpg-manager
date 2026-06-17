@@ -376,14 +376,13 @@ export default function HPManager({ character }: Props) {
               </div>
 
               {/* Tipos de dado */}
-              <div className="grid grid-cols-4 gap-1.5">
+              <div className="grid grid-cols-3 gap-1.5">
                 {DICE_TYPES.map(d => (
                   <button
                     key={d}
                     type="button"
                     onClick={() => setSelectedDie(d)}
                     className={`rpg-die-btn ${selectedDie === d ? 'active' : ''}`}
-                    style={{ gridColumn: d === 20 ? 'span 2' : undefined }}
                   >
                     d{d}
                   </button>
