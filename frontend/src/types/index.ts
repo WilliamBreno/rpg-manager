@@ -11,6 +11,11 @@ export interface Class {
   refl_bonus: number
   will_bonus: number
   is_default: boolean
+  // Perícias (4e)
+  trained_skills_count: number  // quantas pode treinar
+  available_skills: string      // JSON: '["Atletismo","Percepção"]'
+  // Talentos (4e)
+  talentos_count: number        // 2 na campanha
 }
 
 export interface Race {
@@ -19,6 +24,11 @@ export interface Race {
   edition: string
   description: string
   speed: number
+  // Perícias (4e)
+  bonus_trained_skills: number  // 0 para maioria, 1 para Humano/Meio-Elfo
+  bonus_skill_values: string    // JSON: '{"Percepção": 2}'
+  // Talentos (4e)
+  bonus_talentos: number        // 0 para maioria, 1 para Humano
 }
 
 export type PowerType = 'utility' | 'unlimited' | 'encounter' | 'daily'
@@ -31,31 +41,50 @@ export interface Skill {
   race_id?: number | null
   power_type?: PowerType
   level?: number
-
-  // Palavras-chave ex: "Arcano, Arma"
   keywords?: string
-
-  // Mecânicas
   action_type?: string
   range?: string
   target?: string
   attack?: string
-
-  // Efeitos
   description?: string
   hit?: string
   miss?: string
   effect?: string
   special?: string
   level_scaling?: string
-
-  // Características de classe
   is_class_feature?: boolean
   requires_choice?: boolean
   choice_group?: string
   is_race_feature: boolean
 }
 
+// ── NOVO — Perícia ──────────────────────────────────────────────────────────
+export interface Pericia {
+  ID: number
+  name: string
+  attribute: string   // "Força", "Destreza", etc.
+  description: string
+  tooltip: string
+  edition: string
+}
+
+export interface CharacterPericia {
+  character_id: number
+  pericia_name: string
+}
+
+// ── NOVO — Talento ──────────────────────────────────────────────────────────
+export interface Talento {
+  ID: number
+  name: string
+  edition: string
+  category: string      // "Combate", "Defesa", "Perícia", "Magia", "Armadura"
+  description: string
+  prerequisite: string  // "" se não tiver
+  tooltip: string
+}
+
+// ── Background ──────────────────────────────────────────────────────────────
 export interface Background {
   ID?: number
   character_id?: number
@@ -107,6 +136,9 @@ export interface Character {
   armor?: Armor
   skills: Skill[]
   background?: Background
+  // NOVO
+  pericias: CharacterPericia[]
+  talentos: Talento[]
 }
 
 export interface CreateCharacterDTO {
