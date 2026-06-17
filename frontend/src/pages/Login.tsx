@@ -14,7 +14,6 @@ export default function Login() {
     e.preventDefault()
     setError('')
     setLoading(true)
-
     try {
       const response = await authService.login(form)
       setAuth(response.token, response.user)
@@ -27,57 +26,87 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-rpg-dark flex items-center justify-center p-4">
+      <div className="w-full max-w-sm">
+
+        {/* ── Logo ── */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white">🎲 RPG Manager</h1>
-          <p className="text-gray-400 mt-2">Entre na sua conta</p>
+          <div
+            className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 text-4xl"
+            style={{ background: '#0e0e0e', border: '1.5px solid rgba(201,168,76,0.45)', boxShadow: '0 0 30px rgba(201,168,76,0.08)' }}
+          >
+            🎲
+          </div>
+          <h1 className="font-rpg text-3xl font-bold" style={{ color: '#c9a84c', letterSpacing: '0.05em' }}>
+            RPG Manager
+          </h1>
+          <div className="flex items-center justify-center gap-3 mt-2">
+            <div style={{ height: 1, width: 32, background: 'rgba(201,168,76,0.25)' }} />
+            <span style={{ color: 'rgba(201,168,76,0.45)', fontSize: 9 }}>✦</span>
+            <p className="text-gray-500 text-sm">Entre na sua conta</p>
+            <span style={{ color: 'rgba(201,168,76,0.45)', fontSize: 9 }}>✦</span>
+            <div style={{ height: 1, width: 32, background: 'rgba(201,168,76,0.25)' }} />
+          </div>
         </div>
 
-        <div className="bg-gray-800 rounded-lg p-8 border border-gray-700">
+        {/* ── Card ── */}
+        <div
+          className="rounded-xl p-7 flex flex-col gap-5"
+          style={{ background: '#161616', border: '1px solid rgba(201,168,76,0.2)', boxShadow: '0 0 50px rgba(201,168,76,0.05)' }}
+        >
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+
             <div>
-              <label className="text-gray-400 text-sm mb-1 block">Email</label>
+              <label className="text-gray-500 text-xs font-medium mb-1.5 block uppercase tracking-widest">
+                Email
+              </label>
               <input
                 type="email"
                 value={form.email}
                 onChange={e => setForm(prev => ({ ...prev, email: e.target.value }))}
-                className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="rpg-input"
                 placeholder="seu@email.com"
               />
             </div>
 
             <div>
-              <label className="text-gray-400 text-sm mb-1 block">Senha</label>
+              <label className="text-gray-500 text-xs font-medium mb-1.5 block uppercase tracking-widest">
+                Senha
+              </label>
               <input
                 type="password"
                 value={form.password}
                 onChange={e => setForm(prev => ({ ...prev, password: e.target.value }))}
-                className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="rpg-input"
                 placeholder="••••••"
               />
             </div>
 
             {error && (
-              <p className="text-red-400 text-sm text-center">{error}</p>
+              <p
+                className="text-red-400 text-xs text-center py-2 px-3 rounded-lg"
+                style={{ background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.25)' }}
+              >
+                {error}
+              </p>
             )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold py-2 rounded-lg transition mt-2"
-            >
-              {loading ? 'Entrando...' : 'Entrar'}
+            <button type="submit" disabled={loading} className="btn-rpg-primary w-full mt-1">
+              {loading ? '⚔️ Entrando...' : '✦ Entrar'}
             </button>
+
           </form>
 
-          <p className="text-gray-400 text-sm text-center mt-6">
-            Não tem conta?{' '}
-            <Link to="/register" className="text-indigo-400 hover:text-indigo-300">
-              Cadastre-se
-            </Link>
-          </p>
+          <div className="pt-4 text-center" style={{ borderTop: '1px solid rgba(201,168,76,0.1)' }}>
+            <p className="text-gray-600 text-sm">
+              Não tem conta?{' '}
+              <Link to="/register" className="transition" style={{ color: '#c9a84c' }}>
+                Cadastre-se
+              </Link>
+            </p>
+          </div>
         </div>
+
       </div>
     </div>
   )
