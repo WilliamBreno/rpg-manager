@@ -11,6 +11,10 @@ func Run(db *gorm.DB) {
 	seedClasses(db)
 	seedSkills(db)
 	seedRaceSkills(db)
+	seedPericias(db)
+    seedClassPericias(db)
+    seedRacePericias(db)
+    seedTalentos(db)
 	log.Println("✅ Seed concluído!")
 }
 
