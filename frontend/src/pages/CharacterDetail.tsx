@@ -1,10 +1,22 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useParams } from 'react-router-dom'
 import { characterService } from '../services/characterService'
+import { periciaService } from '../services/periciaService'
+import { talentoService } from '../services/talentoService'
 import BackgroundForm from '../components/BackgroundForm'
 import AvatarUpload from '../components/AvatarUpload'
 import HPManager from '../components/HPManager'
 import SkillsPanel from '../components/SkillsPanel'
+import { Tooltip } from '../components/Tooltip'
+import type { Pericia, Talento } from '../types'
+
+const CATEGORY_CONFIG: Record<string, { color: string; icon: string }> = {
+  'Combate':  { color: 'text-red-400',    icon: '⚔️' },
+  'Defesa':   { color: 'text-blue-400',   icon: '🛡️' },
+  'Perícia':  { color: 'text-yellow-400', icon: '📚' },
+  'Magia':    { color: 'text-purple-400', icon: '✨' },
+  'Armadura': { color: 'text-gray-300',   icon: '🪖' },
+}
 
 export default function CharacterDetail() {
   const { id } = useParams()
@@ -16,6 +28,29 @@ export default function CharacterDetail() {
     queryFn: () => characterService.getByID(Number(id)),
   })
 
+  // ── Péricias do personagem ─────────────────────────────────────────────────
+  const { data: characterPericias } = useQuery({
+    queryKey: ['character-pericias', id],
+    queryFn: () => periciaService.getByCharacter(Number(id)),
+    enabled: !!id,
+  })
+
+  // Todas as péricias para pegar atributo + tooltip pelo nome
+  const { data: allPericias } = useQuery({
+    queryKey: ['pericias', character?.edition],
+    queryFn: () => periciaService.getAll(character?.edition),
+    enabled: !!character && character.edition === '4e',
+    staleTime: Infinity,
+  })
+
+  // ── Talentos do personagem ─────────────────────────────────────────────────
+  const { data: characterTalentos } = useQuery({
+    queryKey: ['character-talentos', id],
+    queryFn: () => talentoService.getByCharacter(Number(id)),
+    enabled: !!id,
+  })
+
+  // ── Mutations ──────────────────────────────────────────────────────────────
   const levelUpMutation = useMutation({
     mutationFn: () => characterService.levelUp(Number(id)),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['character', id] }),
@@ -54,6 +89,19 @@ export default function CharacterDetail() {
     { label: 'VONT', value: character.defense_will },
   ] : []
 
+  // Agrupa talentos por categoria para exibição
+  const talentosByCategory = (characterTalentos ?? []).reduce<Record<string, Talento[]>>(
+    (acc, t) => {
+      const cat = t.category ?? 'Outros'
+      acc[cat] = [...(acc[cat] ?? []), t]
+      return acc
+    },
+    {}
+  )
+
+  const hasPericias = (characterPericias ?? []).length > 0
+  const hasTalentos = (characterTalentos ?? []).length > 0
+
   return (
     <div className="min-h-screen bg-gray-900 px-4 py-6 sm:px-8 sm:py-8">
       <div className="max-w-3xl mx-auto">
@@ -65,13 +113,9 @@ export default function CharacterDetail() {
           ← Voltar
         </button>
 
-        {/* Cabeçalho */}
+        {/* ── Cabeçalho ──────────────────────────────────────────────────── */}
         <div className="bg-gray-800 rounded-lg p-4 sm:p-6 mb-4 border border-gray-700">
-
-          {/* Mobile: empilhado | Desktop: lado a lado */}
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
-
-            {/* Avatar + info */}
             <div className="flex gap-4 items-center">
               <AvatarUpload
                 characterID={Number(id)}
@@ -92,7 +136,6 @@ export default function CharacterDetail() {
               </div>
             </div>
 
-            {/* Nível + stats rápidos */}
             <div className="flex sm:flex-col items-center sm:items-end gap-4 sm:gap-1 sm:text-right">
               <div className="text-center sm:text-right">
                 <p className="text-gray-400 text-xs">Nível</p>
@@ -111,10 +154,10 @@ export default function CharacterDetail() {
           </div>
         </div>
 
-        {/* HP Manager */}
+        {/* ── HP Manager ─────────────────────────────────────────────────── */}
         <HPManager character={character} />
 
-        {/* Atributos */}
+        {/* ── Atributos ──────────────────────────────────────────────────── */}
         <div className="bg-gray-800 rounded-lg p-4 sm:p-6 mb-4 border border-gray-700">
           <h2 className="text-base sm:text-lg font-semibold text-white mb-3">Atributos</h2>
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-3">
@@ -133,7 +176,7 @@ export default function CharacterDetail() {
           </div>
         </div>
 
-        {/* Defesas (4e) */}
+        {/* ── Defesas (4e) ───────────────────────────────────────────────── */}
         {is4e && defenses.some(d => d.value > 0) && (
           <div className="bg-gray-800 rounded-lg p-4 sm:p-6 mb-4 border border-gray-700">
             <h2 className="text-base sm:text-lg font-semibold text-white mb-3">Defesas</h2>
@@ -147,26 +190,101 @@ export default function CharacterDetail() {
             </div>
             {is4e && character.surges_per_day > 0 && (
               <p className="text-gray-400 text-xs mt-3">
-                Pulsos de Cura: <span className="text-white font-semibold">{character.surges_per_day}/dia</span>
-                {' '}(valor: <span className="text-white font-semibold">{character.surge_value} PV</span>)
+                Pulsos de Cura:{' '}
+                <span className="text-white font-semibold">{character.surges_per_day}/dia</span>
+                {' '}(valor:{' '}
+                <span className="text-white font-semibold">{character.surge_value} PV</span>)
               </p>
             )}
           </div>
         )}
 
-        {/* Habilidades */}
+        {/* ── Péricias Treinadas (4e) ────────────────────────────────────── */}
+        {is4e && hasPericias && (
+          <div className="bg-gray-800 rounded-lg p-4 sm:p-6 mb-4 border border-gray-700">
+            <h2 className="text-base sm:text-lg font-semibold text-white mb-3">
+              📚 Perícias Treinadas
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {(characterPericias ?? []).map(cp => {
+                const info: Pericia | undefined = allPericias?.find(p => p.name === cp.pericia_name)
+                return (
+                  <div
+                    key={cp.pericia_name}
+                    className="flex items-center justify-between bg-gray-700 rounded-lg px-3 py-2.5 border border-gray-600"
+                  >
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-white text-sm font-medium">{cp.pericia_name}</span>
+                      {info && (
+                        <span className="text-gray-400 text-xs">({info.attribute})</span>
+                      )}
+                      <span className="text-teal-400 text-xs font-semibold">+5</span>
+                    </div>
+                    {info && <Tooltip content={info.tooltip} />}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── Talentos (4e) ─────────────────────────────────────────────── */}
+        {is4e && hasTalentos && (
+          <div className="bg-gray-800 rounded-lg p-4 sm:p-6 mb-4 border border-gray-700">
+            <h2 className="text-base sm:text-lg font-semibold text-white mb-4">
+              🏆 Talentos
+            </h2>
+            <div className="flex flex-col gap-5">
+              {Object.entries(talentosByCategory).map(([category, talentos]) => {
+                const cfg = CATEGORY_CONFIG[category] ?? { color: 'text-gray-300', icon: '📌' }
+                return (
+                  <div key={category}>
+                    <h3 className={`text-xs font-bold uppercase tracking-wider mb-2 ${cfg.color}`}>
+                      {cfg.icon} {category}
+                    </h3>
+                    <div className="flex flex-col gap-2">
+                      {talentos.map((t: Talento) => (
+                        <div
+                          key={t.ID}
+                          className="flex items-start justify-between bg-gray-700 rounded-lg px-3 py-2.5 border border-gray-600"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                              <span className="text-white text-sm font-medium">{t.name}</span>
+                              {t.prerequisite && (
+                                <span className="text-xs bg-orange-900/60 text-orange-300 px-1.5 py-0.5 rounded">
+                                  Req: {t.prerequisite}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-gray-400 text-xs">{t.description}</p>
+                          </div>
+                          <div className="ml-3 flex-shrink-0 mt-0.5">
+                            <Tooltip content={t.tooltip} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── Habilidades ────────────────────────────────────────────────── */}
         <SkillsPanel
           skills={character.skills ?? []}
           edition={character.edition}
         />
 
-        {/* Background */}
+        {/* ── Background ─────────────────────────────────────────────────── */}
         <BackgroundForm
           characterID={Number(id)}
           background={character.background}
         />
 
-        {/* Ações */}
+        {/* ── Ações ──────────────────────────────────────────────────────── */}
         <div className="flex flex-wrap gap-3 pb-6">
           <button
             onClick={() => navigate(`/characters/${id}/edit`)}

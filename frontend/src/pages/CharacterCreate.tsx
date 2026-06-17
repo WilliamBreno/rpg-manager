@@ -431,7 +431,7 @@ export default function CharacterCreate() {
             )}
 
             {/* ── PASSO 5 — Perícias Treinadas (NOVO) ───────────────────── */}
-            {is4e && selectedClass && selectedRace && allPericias && allPericias.length > 0 && (
+            {is4e && selectedClass && allPericias && allPericias.length > 0 && (
               <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
                 <div className="flex items-center justify-between mb-1">
                   <h2 className="text-base font-semibold text-white">Passo {S()} — Perícias Treinadas</h2>
