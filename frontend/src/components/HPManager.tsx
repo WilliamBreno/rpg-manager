@@ -4,7 +4,7 @@ import { characterService } from '../services/characterService'
 import type { Character } from '../types'
 import './HPManager.css'
 
-const DICE_TYPES = [4, 6, 8, 10, 12, 20, 100] as const
+const DICE_TYPES = [4, 6, 8, 10, 12, 20] as const
 
 interface Props { character: Character }
 
@@ -383,7 +383,7 @@ export default function HPManager({ character }: Props) {
                     type="button"
                     onClick={() => setSelectedDie(d)}
                     className={`rpg-die-btn ${selectedDie === d ? 'active' : ''}`}
-                    style={{ gridColumn: d === 100 ? 'span 2' : undefined }}
+                    style={{ gridColumn: d === 20 ? 'span 2' : undefined }}
                   >
                     d{d}
                   </button>

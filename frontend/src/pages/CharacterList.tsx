@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { characterService } from '../services/characterService'
 
-const API_BASE = (import.meta.env.VITE_API_URL ?? 'http://localhost:8080/api').replace('/api', '')
+const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
 
 export default function CharacterList() {
   const navigate = useNavigate()
