@@ -26,11 +26,11 @@ export default function HPManager({ character }: Props) {
   const [rollHistory, setRollHistory] = useState<string[]>([])
 
   // ── Refs ────────────────────────────────────────────────────────────────────
-  const diceRef       = useRef<HTMLDivElement>(null)
-  const wrapperRef    = useRef<HTMLDivElement>(null)
-  const diceAngleRef  = useRef({ x: 20, y: 30, z: 0 })
-  const animFrameRef  = useRef<number | null>(null)
-  const tickerRef     = useRef<ReturnType<typeof setInterval> | null>(null)
+  const diceRef      = useRef<HTMLDivElement>(null)
+  const wrapperRef   = useRef<HTMLDivElement>(null)
+  const diceAngleRef = useRef({ x: -15, y: 15, z: 0 })
+  const animFrameRef = useRef<number | null>(null)
+  const tickerRef    = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     return () => {
@@ -78,7 +78,7 @@ export default function HPManager({ character }: Props) {
   }
   const status = getHPStatus()
 
-  // ── Easing functions ────────────────────────────────────────────────────────
+  // ── Easing ──────────────────────────────────────────────────────────────────
   const easeOutElastic = (t: number) => {
     if (t === 0 || t === 1) return t
     return Math.pow(2, -10 * t) * Math.sin((t - .3 / 4) * (2 * Math.PI) / .3) + 1
@@ -115,8 +115,9 @@ export default function HPManager({ character }: Props) {
     setIsRolling(true)
     setRollResult(null)
 
-    const dice   = diceRef.current
-    const faces  = dice.querySelectorAll<HTMLDivElement>('.rpg-face')
+    const dice  = diceRef.current
+    dice.style.transition = '' // limpa transição anterior
+    const faces = dice.querySelectorAll<HTMLDivElement>('.rpg-face')
     const { x: cx, y: cy, z: cz } = diceAngleRef.current
 
     // Trajetória completamente aleatória a cada rolagem
@@ -127,7 +128,7 @@ export default function HPManager({ character }: Props) {
     const tX    = cx + dirX * spins * 360 + (Math.random() - .5) * 200
     const tY    = cy + dirY * spins * 360 + (Math.random() - .5) * 200
     const tZ    = cz + dirZ * (2 + Math.floor(Math.random() * 3)) * 360 + (Math.random() - .5) * 120
-    const dur   = 820 + Math.floor(Math.random() * 480) // 820-1300ms
+    const dur   = 820 + Math.floor(Math.random() * 480)
     const t0    = performance.now()
 
     // Faces piscam números aleatórios durante a animação
@@ -147,19 +148,27 @@ export default function HPManager({ character }: Props) {
         animFrameRef.current = requestAnimationFrame(frame)
       } else {
         if (tickerRef.current) clearInterval(tickerRef.current)
-        diceAngleRef.current = { x: tX, y: tY, z: tZ }
 
+        // Calcula resultado
         const rolls = Array.from({ length: numDice }, () =>
           Math.floor(Math.random() * selectedDie) + 1
         )
         const total = rolls.reduce((a, b) => a + b, 0)
 
-        // Mostra resultado na face frontal
+        // Atualiza só a face frontal
         const front = diceRef.current?.querySelector<HTMLDivElement>('.rpg-face-front')
         if (front) front.textContent = numDice === 1 ? String(total) : '∑'
-        faces.forEach(f => {
-          f.textContent = numDice === 1 ? String(total) : '∑'
-        })
+
+        // Assenta suavemente mostrando a face frontal
+        if (diceRef.current) {
+          diceRef.current.style.transition = 'transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+          diceRef.current.style.transform  = 'rotateX(-15deg) rotateY(15deg)'
+        }
+        setTimeout(() => {
+          if (diceRef.current) diceRef.current.style.transition = ''
+          diceAngleRef.current = { x: -15, y: 15, z: 0 }
+        }, 470)
+
         setRollResult({ rolls, total })
         const entry = numDice === 1
           ? `${total} (d${selectedDie})`
@@ -339,7 +348,7 @@ export default function HPManager({ character }: Props) {
               ref={wrapperRef}
               style={{ width: 148, height: 148, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
-              {/* Anéis concêntricos estilo logo */}
+              {/* Anéis concêntricos */}
               <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#060606', border: '1.5px solid rgba(201,168,76,.55)', pointerEvents: 'none' }} />
               <div style={{ position: 'absolute', inset: 10, borderRadius: '50%', border: '.5px solid rgba(201,168,76,.18)', pointerEvents: 'none' }} />
               <div style={{ position: 'absolute', inset: 20, borderRadius: '50%', border: '.5px dashed rgba(201,168,76,.1)', pointerEvents: 'none' }} />
