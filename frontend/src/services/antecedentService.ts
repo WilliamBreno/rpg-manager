@@ -1,15 +1,13 @@
 import api from './api'
-import type { Background } from '../types'
+import type { Antecedent } from '../types'
 
-// antecedentService gerencia os Antecedentes D&D 5e
-// (rota: GET /antecedentes?edition=5e)
 export const antecedentService = {
-  getAll: async (edition: string): Promise<Background[]> => {
-    const { data } = await api.get<Background[]>('/antecedentes', { params: { edition } })
+  getAll: async (edition: string): Promise<Antecedent[]> => {
+    const { data } = await api.get<Antecedent[]>(`/antecedentes?edition=${edition}`)
     return data
   },
-  getById: async (id: number): Promise<Background> => {
-    const { data } = await api.get<Background>(`/antecedentes/${id}`)
+  getById: async (id: number): Promise<Antecedent> => {
+    const { data } = await api.get<Antecedent>(`/antecedentes/${id}`)
     return data
   },
 }

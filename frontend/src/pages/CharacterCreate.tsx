@@ -14,7 +14,8 @@ import { talentoService } from '../services/talentoService'
 import { antecedentService } from '../services/antecedentService'
 import { SkillCard, powerConfig } from '../components/SkillCard'
 import { Tooltip } from '../components/Tooltip'
-import type { Class, Armor, Skill, PowerType, Race, Talento, Background } from '../types'
+// FIX 1: import único, Background removido, Antecedent adicionado
+import type { Class, Armor, Skill, PowerType, Race, Talento, Antecedent } from '../types'
 
 const schema = z.object({
   name:               z.string().min(1, 'Nome é obrigatório'),
@@ -29,7 +30,8 @@ const schema = z.object({
   wisdom:             z.coerce.number().min(1).max(20),
   charisma:           z.coerce.number().min(1).max(20),
   armor_id:           z.coerce.number().optional(),
-  background_id:      z.coerce.number().optional(),
+  // FIX 4a: background_id → antecedent_id (bate com json:"antecedent_id" no Go)
+  antecedent_id:      z.coerce.number().optional(),
   alignment:          z.string().optional(),
   personality_traits: z.string().optional(),
   ideals:             z.string().optional(),
@@ -74,7 +76,7 @@ export default function CharacterCreate() {
   const [selectedClassData, setSelectedClassData] = useState<Class | null>(null)
   const [selectedRaceData,  setSelectedRaceData]  = useState<Race | null>(null)
   const [selectedArmorData, setSelectedArmorData] = useState<Armor | null>(null)
-  const [selectedBackground, setSelectedBackground] = useState<Background | null>(null)
+  const [selectedBackground, setSelectedBackground] = useState<Antecedent | null>(null)
   const [selectedAlignment,  setSelectedAlignment]  = useState<string>('')
 
   const [selectedSkills, setSelectedSkills] = useState<Record<PowerType, Skill[]>>({
@@ -217,7 +219,8 @@ export default function CharacterCreate() {
     mutationFn: async (data: FormData) => {
       const characterData = {
         ...data,
-        background_id: selectedBackground?.ID ?? undefined,
+        // FIX 4b: background_id → antecedent_id para bater com o backend Go
+        antecedent_id: selectedBackground?.ID ?? undefined,
         alignment:     selectedAlignment || undefined,
       }
       const character = await characterService.create(characterData)
@@ -267,12 +270,14 @@ export default function CharacterCreate() {
     setSelectedRace(raceId || null)
     setSelectedRaceData(races?.find(r => r.ID === raceId) ?? null)
   }
-  const handleBackgroundChange = (bg: Background) => {
+  // FIX 4c: parâmetro tipado como Antecedent (não Background)
+  const handleBackgroundChange = (bg: Antecedent) => {
     const newBgSkills: string[] = (() => {
       try { return JSON.parse(bg.skill_proficiencies) } catch { return [] }
     })()
     setSelectedBackground(bg)
-    setValue('background_id', bg.ID)
+    // FIX 4d: setValue usa antecedent_id (não background_id)
+    setValue('antecedent_id', bg.ID)
     setSelectedPericias(newBgSkills)
   }
 
@@ -310,20 +315,22 @@ export default function CharacterCreate() {
     })
   }
 
+  // FIX 2: classInfo agora tem a chave } de fechamento correta
   const classInfo = () => {
     if (!selectedClassData) return null
-    if (is4e) return \`PV base: \${selectedClassData.base_hp ?? '?'} + CON — \${selectedClassData.description}\`
+    if (is4e) return `PV base: ${selectedClassData.base_hp ?? '?'} + CON — ${selectedClassData.description}`
     const saves = savingThrows.length > 0 ? savingThrows.join(', ') : '—'
-    return \`Hit Die: d\${selectedClassData.hit_die ?? '?'} · Salvaguardas: \${saves} — \${selectedClassData.description}\`
-  }
+    return `Hit Die: d${selectedClassData.hit_die ?? '?'} · Salvaguardas: ${saves} — ${selectedClassData.description}`
+  } // ← CHAVE QUE ESTAVA FALTANDO
 
+  // FIX 3: hpLabel com template literals corretos (sem \`)
   const hpLabel = () => {
     if (!selectedClassData) return null
     const conValue = Number(constitution)
     const conMod = getConMod(conValue)
     return is4e
-      ? \`\${selectedClassData.base_hp ?? '?'} + \${conValue} CON = \${Math.max(1, (selectedClassData.base_hp ?? 0) + conValue)} PV\`
-      : \`d\${selectedClassData.hit_die ?? '?'} + mod CON (\${conMod >= 0 ? '+' : ''}\${conMod})\`
+      ? `${selectedClassData.base_hp ?? '?'} + ${conValue} CON = ${Math.max(1, (selectedClassData.base_hp ?? 0) + conValue)} PV`
+      : `d${selectedClassData.hit_die ?? '?'} + mod CON (${conMod >= 0 ? '+' : ''}${conMod})`
   }
 
   const attrFields = [
@@ -371,7 +378,7 @@ export default function CharacterCreate() {
 
         {/* PASSO 1 — Edição */}
         <div className="bg-gray-800 rounded-xl p-5 border border-gray-700 mb-5">
-          {sectionHeader(\`Passo \${S()} — Edição\`)}
+          {sectionHeader(`Passo ${S()} — Edição`)}
           <div className="grid grid-cols-2 gap-3">
             {EDITIONS.map(e => (
               <button key={e.value} type="button" disabled={e.disabled}
@@ -393,14 +400,14 @@ export default function CharacterCreate() {
 
             {/* PASSO 2 — Nome */}
             <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
-              {sectionHeader(\`Passo \${S()} — Nome do Personagem\`)}
+              {sectionHeader(`Passo ${S()} — Nome do Personagem`)}
               <input {...register('name')} className="rpg-input" placeholder="Ex: Aragorn" />
               {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name.message}</p>}
             </div>
 
             {/* PASSO 3 — Classe e Raça */}
             <div className="bg-gray-800 rounded-xl p-5 border border-gray-700 flex flex-col gap-4">
-              {sectionHeader(\`Passo \${S()} — Classe e Raça\`)}
+              {sectionHeader(`Passo ${S()} — Classe e Raça`)}
               <div>
                 <label className="text-gray-500 text-xs mb-1.5 block uppercase tracking-wider">Classe</label>
                 <select {...register('class_id', { valueAsNumber: true })}
@@ -436,7 +443,7 @@ export default function CharacterCreate() {
             {/* PASSO 4 — Antecedente (só 5e) */}
             {is5e && allBackgrounds && allBackgrounds.length > 0 && (
               <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
-                {sectionHeader(\`Passo \${S()} — Antecedente\`)}
+                {sectionHeader(`Passo ${S()} — Antecedente`)}
                 <p className="text-gray-500 text-xs mb-4">
                   O antecedente revela de onde você vem. Concede{' '}
                   <span style={{ color: '#c9a84c' }}>2 proficiências em perícias automáticas</span>,
@@ -489,7 +496,7 @@ export default function CharacterCreate() {
             {/* PASSO 5 — Personalidade (só 5e) */}
             {is5e && selectedBackground && (
               <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
-                {sectionHeader(\`Passo \${S()} — Tendência e Personalidade\`)}
+                {sectionHeader(`Passo ${S()} — Tendência e Personalidade`)}
                 <p className="text-gray-500 text-xs mb-4">Campos opcionais que definem como seu personagem pensa e age.</p>
                 <div className="mb-5">
                   <label className="text-gray-500 text-xs mb-2 block uppercase tracking-wider">Tendência</label>
@@ -523,7 +530,7 @@ export default function CharacterCreate() {
             {/* PASSO 6 — Características (4e e 5e) */}
             {selectedClass && hasSkills && hasAnyFeatures && (
               <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
-                {sectionHeader(\`Passo \${S()} — Características\`)}
+                {sectionHeader(`Passo ${S()} — Características`)}
                 <div className="flex flex-col gap-6">
                   {classFeatures.length > 0 && (
                     <div>
@@ -593,7 +600,7 @@ export default function CharacterCreate() {
             {(is4e || is5e) && selectedClass && allPericias && allPericias.length > 0 && (
               <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
                 <div className="flex items-center justify-between mb-1">
-                  {sectionHeader(\`Passo \${S()} — Perícias Treinadas\`)}
+                  {sectionHeader(`Passo ${S()} — Perícias Treinadas`)}
                   {is5e
                     ? counterBadge(selectedPericias.filter(p => !backgroundSkills.includes(p)).length, totalTrainable)
                     : counterBadge(selectedPericias.length, totalTrainable)
@@ -687,12 +694,12 @@ export default function CharacterCreate() {
             {is4e && selectedClass && allTalentos && allTalentos.length > 0 && (
               <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
                 <div className="flex items-center justify-between mb-1">
-                  {sectionHeader(\`Passo \${S()} — Talentos\`)}
+                  {sectionHeader(`Passo ${S()} — Talentos`)}
                   {counterBadge(selectedTalentos.length, totalTalentos)}
                 </div>
                 <p className="text-gray-500 text-xs mb-5">
                   Escolha {totalTalentos} talento{totalTalentos !== 1 ? 's' : ''}.
-                  {selectedRaceData?.bonus_talentos ? \` Sua raça concede +\${selectedRaceData.bonus_talentos} extra.\` : ''}
+                  {selectedRaceData?.bonus_talentos ? ` Sua raça concede +${selectedRaceData.bonus_talentos} extra.` : ''}
                 </p>
                 <div className="flex flex-col gap-6">
                   {Object.entries(CATEGORY_CONFIG).map(([category, cfg]) => {
@@ -700,7 +707,7 @@ export default function CharacterCreate() {
                     if (items.length === 0) return null
                     return (
                       <div key={category}>
-                        <h3 className={\`text-xs font-bold uppercase tracking-wider mb-2 \${cfg.color}\`}>{cfg.icon} {category}</h3>
+                        <h3 className={`text-xs font-bold uppercase tracking-wider mb-2 ${cfg.color}`}>{cfg.icon} {category}</h3>
                         <div className="flex flex-col gap-2">
                           {items.map(t => {
                             const isTalSelected = selectedTalentos.some(st => st.ID === t.ID)
@@ -752,7 +759,7 @@ export default function CharacterCreate() {
             {is4e && selectedClass && hasSkills && allChoicesMade && (
               <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
                 <div className="flex justify-between items-center mb-1">
-                  {sectionHeader(\`Passo \${S()} — Poderes\`)}
+                  {sectionHeader(`Passo ${S()} — Poderes`)}
                   <span className="text-xs text-gray-500 bg-gray-700/60 px-3 py-1 rounded-full">{totalNormal} selecionado{totalNormal !== 1 ? 's' : ''}</span>
                 </div>
                 <p className="text-gray-500 text-xs mb-5">Clique no card para ver detalhes. Clique no círculo para selecionar.</p>
@@ -802,7 +809,7 @@ export default function CharacterCreate() {
 
             {/* PASSO 10 — Armadura */}
             <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
-              {sectionHeader(\`Passo \${S()} — Armadura\`)}
+              {sectionHeader(`Passo ${S()} — Armadura`)}
               <select {...register('armor_id')} className="rpg-select"
                 onChange={e => { const v = Number(e.target.value); setValue('armor_id', v); setSelectedArmorData(armors?.find((a: Armor) => a.ID === v) ?? null) }}>
                 <option value="">Sem armadura</option>
@@ -815,7 +822,7 @@ export default function CharacterCreate() {
 
             {/* PASSO 11 — Atributos */}
             <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
-              {sectionHeader(\`Passo \${S()} — Atributos\`)}
+              {sectionHeader(`Passo ${S()} — Atributos`)}
               <p className="text-gray-500 text-xs mb-4">
                 Alterar a <span style={{ color: '#c9a84c' }}>Constituição</span> recalcula o HP automaticamente.
                 {is5e && ' Array padrão sugerido: 15, 14, 13, 12, 10, 8.'}
@@ -823,7 +830,7 @@ export default function CharacterCreate() {
               <div className="grid grid-cols-2 gap-3">
                 {attrFields.map(attr => (
                   <div key={attr.key}>
-                    <label className={\`text-xs mb-1.5 block uppercase tracking-wider \${attr.key === 'constitution' ? 'font-semibold' : 'text-gray-500'}\`}
+                    <label className={`text-xs mb-1.5 block uppercase tracking-wider ${attr.key === 'constitution' ? 'font-semibold' : 'text-gray-500'}`}
                       style={attr.key === 'constitution' ? { color: '#c9a84c' } : {}}>
                       {attr.label}
                     </label>
@@ -837,7 +844,7 @@ export default function CharacterCreate() {
             {/* PASSO 12 — Hit Points */}
             <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
               <div className="flex justify-between items-center mb-3">
-                {sectionHeader(\`Passo \${S()} — Hit Points\`)}
+                {sectionHeader(`Passo ${S()} — Hit Points`)}
                 {selectedClassData && <span className="text-xs text-gray-500 bg-gray-700/60 px-3 py-1 rounded-full">{hpLabel()}</span>}
               </div>
               <input type="number" {...register('hit_points')} min={1} className="rpg-input" />
@@ -857,10 +864,10 @@ export default function CharacterCreate() {
                     <span key={s.ID} className="text-xs px-2 py-1 rounded-full bg-amber-900/60 text-amber-300">{s.name}</span>
                   ))}
                   {Object.values(selectedSkills).flat().map(s => (
-                    <span key={s.ID} className={\`text-xs px-2 py-1 rounded-full \${powerConfig[(s.power_type as PowerType) ?? 'unlimited'].badge}\`}>{s.name}</span>
+                    <span key={s.ID} className={`text-xs px-2 py-1 rounded-full ${powerConfig[(s.power_type as PowerType) ?? 'unlimited'].badge}`}>{s.name}</span>
                   ))}
                   {selectedPericias.map(name => (
-                    <span key={name} className={\`text-xs px-2 py-1 rounded-full \${backgroundSkills.includes(name) ? 'bg-indigo-900/60 text-indigo-300' : 'bg-teal-900/60 text-teal-300'}\`}>📚 {name}</span>
+                    <span key={name} className={`text-xs px-2 py-1 rounded-full ${backgroundSkills.includes(name) ? 'bg-indigo-900/60 text-indigo-300' : 'bg-teal-900/60 text-teal-300'}`}>📚 {name}</span>
                   ))}
                   {selectedTalentos.map(t => <span key={t.ID} className="text-xs px-2 py-1 rounded-full bg-orange-900/60 text-orange-300">🏆 {t.name}</span>)}
                 </div>

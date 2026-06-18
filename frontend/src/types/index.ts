@@ -192,3 +192,18 @@ export interface CreateCharacterDTO {
   bonds?: string
   flaws?: string
 }
+export interface Antecedent {
+  ID: number
+  name: string
+  edition: string
+  description: string
+  skill_proficiencies: string
+  tool_proficiencies: string
+  languages: string
+  equipment: string
+  feature: string
+  feature_description: string
+  is_default: boolean
+  CreatedAt?: string
+  UpdatedAt?: string
+}
