@@ -150,7 +150,7 @@ export default function CharacterDetail() {
   const hasPericias = (characterPericias ?? []).length > 0
   const hasTalentos = (characterTalentos ?? []).length > 0
 
-  const bg5e = is5e ? character.antecedent : undefined
+ const bg5e: Antecedent | undefined = is5e ? character.antecedent : undefined
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
