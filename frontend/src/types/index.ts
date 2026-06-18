@@ -17,6 +17,7 @@ export interface Class {
   available_skills: string       // JSON: '["Atletismo","Percepção"]'
   // Talentos (4e)
   talentos_count: number
+  automatic_pericias?: string
 }
 
 export interface Race {

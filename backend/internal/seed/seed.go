@@ -43,52 +43,164 @@ func upsertSkill(db *gorm.DB, s domain.Skill, classID uint) {
 }
 
 func seedClasses(db *gorm.DB) {
-	classes := []domain.Class{
-		{Name: "Bardo", Edition: "4e", Description: "Líder arcano que usa música e conhecimento como armas.", BaseHP: 12, HPPerLevel: 5, SurgesPerDay: 7, ReflBonus: 1, WillBonus: 1, IsDefault: true},
-		{Name: "Bárbaro", Edition: "4e", Description: "Combatente primitivo de força e fúria selvagem.", BaseHP: 15, HPPerLevel: 6, SurgesPerDay: 8, FortBonus: 2, IsDefault: true},
-		{Name: "Clérigo", Edition: "4e", Description: "Líder divino que canaliza o poder de sua divindade.", BaseHP: 12, HPPerLevel: 5, SurgesPerDay: 6, WillBonus: 1, IsDefault: true},
-		{Name: "Druida", Edition: "4e", Description: "Controlador primitivo com maestria da natureza.", BaseHP: 12, HPPerLevel: 5, SurgesPerDay: 7, ReflBonus: 1, WillBonus: 1, IsDefault: true},
-		{Name: "Feiticeiro", Edition: "4e", Description: "Arcano que canaliza poder dracônico ou do caos.", BaseHP: 12, HPPerLevel: 5, SurgesPerDay: 6, WillBonus: 2, IsDefault: true},
-		{Name: "Guardião", Edition: "4e", Description: "Defensor primitivo e protetor do mundo natural.", BaseHP: 17, HPPerLevel: 7, SurgesPerDay: 9, FortBonus: 1, WillBonus: 1, IsDefault: true},
-		{Name: "Guerreiro", Edition: "4e", Description: "Defensor marcial especialista em combate corpo a corpo.", BaseHP: 15, HPPerLevel: 6, SurgesPerDay: 9, FortBonus: 2, IsDefault: true},
-		{Name: "Invocador", Edition: "4e", Description: "Controlador divino que invoca o poder dos deuses.", BaseHP: 12, HPPerLevel: 5, SurgesPerDay: 6, WillBonus: 2, IsDefault: true},
-		{Name: "Ladino", Edition: "4e", Description: "Agressor furtivo especializado em ataques precisos.", BaseHP: 12, HPPerLevel: 5, SurgesPerDay: 6, ReflBonus: 2, IsDefault: true},
-		{Name: "Mago", Edition: "4e", Description: "Controlador arcano de grande poder mágico.", BaseHP: 10, HPPerLevel: 4, SurgesPerDay: 6, WillBonus: 2, IsDefault: true},
-		{Name: "Monge", Edition: "4e", Description: "Agressor psiônico de disciplina e artes marciais.", BaseHP: 12, HPPerLevel: 5, SurgesPerDay: 7, FortBonus: 1, ReflBonus: 1, WillBonus: 1, IsDefault: true},
-		{Name: "Paladino", Edition: "4e", Description: "Defensor divino e campeão sagrado.", BaseHP: 15, HPPerLevel: 6, SurgesPerDay: 10, FortBonus: 1, ReflBonus: 1, WillBonus: 1, IsDefault: true},
-		{Name: "Patrulheiro", Edition: "4e", Description: "Agressor marcial e batedor das regiões ermas.", BaseHP: 12, HPPerLevel: 5, SurgesPerDay: 6, FortBonus: 1, ReflBonus: 1, IsDefault: true},
-		{Name: "Psionista", Edition: "4e", Description: "Controlador psiônico de grande poder mental.", BaseHP: 12, HPPerLevel: 4, SurgesPerDay: 6, WillBonus: 2, IsDefault: true},
-		{Name: "Rastreador", Edition: "4e", Description: "Controlador primitivo especialista em emboscadas.", BaseHP: 12, HPPerLevel: 5, SurgesPerDay: 7, ReflBonus: 1, WillBonus: 1, IsDefault: true},
-		{Name: "Vingador", Edition: "4e", Description: "Agressor divino executor da vontade dos deuses.", BaseHP: 14, HPPerLevel: 6, SurgesPerDay: 7, FortBonus: 1, ReflBonus: 1, WillBonus: 1, IsDefault: true},
-		{Name: "Xamã", Edition: "4e", Description: "Líder primitivo que canaliza espíritos do mundo natural.", BaseHP: 12, HPPerLevel: 5, SurgesPerDay: 7, FortBonus: 1, WillBonus: 1, IsDefault: true},
-		{Name: "Bárbaro", Edition: "5e", Description: "Guerreiro furioso de força bruta.", HitDie: 12, IsDefault: true},
-		{Name: "Bardo", Edition: "5e", Description: "Conjurador versátil com magia e música.", HitDie: 8, IsDefault: true},
-		{Name: "Bruxo", Edition: "5e", Description: "Conjurador com poder concedido por um patrono.", HitDie: 8, IsDefault: true},
-		{Name: "Clérigo", Edition: "5e", Description: "Servidor divino com poderes de cura e combate.", HitDie: 8, IsDefault: true},
-		{Name: "Druida", Edition: "5e", Description: "Guardião da natureza com magia elemental.", HitDie: 8, IsDefault: true},
-		{Name: "Feiticeiro", Edition: "5e", Description: "Conjurador de magia inata e poderosa.", HitDie: 6, IsDefault: true},
-		{Name: "Guerreiro", Edition: "5e", Description: "Mestre do combate e das armas.", HitDie: 10, IsDefault: true},
-		{Name: "Ladino", Edition: "5e", Description: "Especialista furtivo e hábil.", HitDie: 8, IsDefault: true},
-		{Name: "Mago", Edition: "5e", Description: "Estudioso da magia arcana.", HitDie: 6, IsDefault: true},
-		{Name: "Monge", Edition: "5e", Description: "Combatente de artes marciais e energia mística.", HitDie: 8, IsDefault: true},
-		{Name: "Paladino", Edition: "5e", Description: "Guerreiro sagrado jurado a um ideal.", HitDie: 10, IsDefault: true},
-		{Name: "Patrulheiro", Edition: "5e", Description: "Caçador e rastreador das regiões selvagens.", HitDie: 10, IsDefault: true},
-		{Name: "Xamã", Edition: "5e", Description: "Líder espiritual conectado ao mundo natural.", HitDie: 8, IsDefault: true},
-	}
-	for _, c := range classes {
-		var existing domain.Class
-		if db.Where("name = ? AND edition = ?", c.Name, c.Edition).First(&existing).Error != nil {
-			db.Create(&c)
-		} else {
-			db.Model(&existing).Updates(map[string]interface{}{
-				"base_hp": c.BaseHP, "hp_per_level": c.HPPerLevel,
-				"surges_per_day": c.SurgesPerDay, "fort_bonus": c.FortBonus,
-				"refl_bonus": c.ReflBonus, "will_bonus": c.WillBonus,
-				"hit_die": c.HitDie, "description": c.Description,
-			})
-		}
-	}
-	log.Println("  ✓ Classes seedadas")
+    type classData struct {
+        Name              string
+        Description       string
+        BaseHP, HPPerLevel, SurgesPerDay int
+        FortBonus, ReflBonus, WillBonus  int
+        TrainedSkillsCount               int
+        AvailableSkills                  string
+        AutomaticPericias                string
+    }
+
+    classes := []classData{
+        // ⚠️ Verificar cada linha contra o PDF LJ1/LJ2/LJ3
+        {
+            Name: "Bardo", Description: "Líder arcano que usa música e conhecimento como armas.",
+            BaseHP: 12, HPPerLevel: 5, SurgesPerDay: 7, ReflBonus: 1, WillBonus: 1,
+            TrainedSkillsCount: 4,
+            AutomaticPericias:  `["Arcanismo"]`,
+            AvailableSkills:    `["Acrobacia","Atletismo","Blefe","Diplomacia","Exploração","História","Intimidação","Intuição","Manha","Natureza","Percepção","Religião","Socorro"]`,
+        },
+        {
+            Name: "Bárbaro", Description: "Combatente primitivo de força e fúria selvagem.",
+            BaseHP: 15, HPPerLevel: 6, SurgesPerDay: 8, FortBonus: 2,
+            TrainedSkillsCount: 3,
+            AutomaticPericias:  `[]`,
+            AvailableSkills:    `["Acrobacia","Atletismo","Intimidação","Natureza","Percepção","Socorro","Tolerância"]`,
+        },
+        {
+            Name: "Clérigo", Description: "Líder divino que canaliza o poder de sua divindade.",
+            BaseHP: 12, HPPerLevel: 5, SurgesPerDay: 6, WillBonus: 1,
+            TrainedSkillsCount: 3,
+            AutomaticPericias:  `["Religião"]`,
+            AvailableSkills:    `["Diplomacia","Dungeon","História","Intuição","Natureza","Percepção","Socorro"]`,
+        },
+        {
+            Name: "Druida", Description: "Controlador primitivo com maestria da natureza.",
+            BaseHP: 12, HPPerLevel: 5, SurgesPerDay: 7, ReflBonus: 1, WillBonus: 1,
+            TrainedSkillsCount: 3,
+            AutomaticPericias:  `["Natureza"]`,
+            AvailableSkills:    `["Acrobacia","Arcanismo","Atletismo","Dungeon","Endurance","Exploração","História","Intuição","Percepção","Religião","Socorro"]`,
+        },
+        {
+            Name: "Feiticeiro", Description: "Arcano que canaliza poder dracônico ou do caos.",
+            BaseHP: 12, HPPerLevel: 5, SurgesPerDay: 6, WillBonus: 2,
+            TrainedSkillsCount: 3,
+            AutomaticPericias:  `["Arcanismo"]`,
+            AvailableSkills:    `["Blefe","Diplomacia","Dungeon","Endurance","História","Intuição","Natureza","Percepção"]`,
+        },
+        {
+            Name: "Guardião", Description: "Defensor primitivo e protetor do mundo natural.",
+            BaseHP: 17, HPPerLevel: 7, SurgesPerDay: 9, FortBonus: 1, WillBonus: 1,
+            TrainedSkillsCount: 3,
+            AutomaticPericias:  `["Natureza"]`,
+            AvailableSkills:    `["Acrobacia","Atletismo","Dungeon","Endurance","Exploração","Intimidação","Percepção","Socorro","Tolerância"]`,
+        },
+        {
+            Name: "Guerreiro", Description: "Defensor marcial especialista em combate corpo a corpo.",
+            BaseHP: 15, HPPerLevel: 6, SurgesPerDay: 9, FortBonus: 2,
+            TrainedSkillsCount: 3,
+            AutomaticPericias:  `[]`,
+            AvailableSkills:    `["Acrobacia","Atletismo","Blefe","Dungeon","Endurance","Intimidação","Percepção","Rua","Tolerância"]`,
+        },
+        {
+            Name: "Invocador", Description: "Controlador divino que invoca o poder dos deuses.",
+            BaseHP: 12, HPPerLevel: 5, SurgesPerDay: 6, WillBonus: 2,
+            TrainedSkillsCount: 3,
+            AutomaticPericias:  `["Religião"]`,
+            AvailableSkills:    `["Arcanismo","Diplomacia","Dungeon","História","Intuição","Natureza","Percepção"]`,
+        },
+        {
+            Name: "Ladino", Description: "Agressor furtivo especializado em ataques precisos.",
+            BaseHP: 12, HPPerLevel: 5, SurgesPerDay: 6, ReflBonus: 2,
+            TrainedSkillsCount: 4,
+            AutomaticPericias:  `["Destreza com Ladrão","Furtividade"]`,
+            AvailableSkills:    `["Acrobacia","Atletismo","Blefe","Diplomacia","Dungeon","Intuição","Intimidação","Manha","Percepção","Rua"]`,
+        },
+        {
+            Name: "Mago", Description: "Controlador arcano de grande poder mágico.",
+            BaseHP: 10, HPPerLevel: 4, SurgesPerDay: 6, WillBonus: 2,
+            TrainedSkillsCount: 3,
+            AutomaticPericias:  `["Arcanismo"]`,
+            AvailableSkills:    `["Diplomacia","Dungeon","Endurance","História","Intuição","Natureza","Percepção","Religião"]`,
+        },
+        {
+            Name: "Monge", Description: "Agressor psiônico de disciplina e artes marciais.",
+            BaseHP: 12, HPPerLevel: 5, SurgesPerDay: 7, FortBonus: 1, ReflBonus: 1, WillBonus: 1,
+            TrainedSkillsCount: 4,
+            AutomaticPericias:  `["Religião"]`,
+            AvailableSkills:    `["Acrobacia","Atletismo","Diplomacia","Dungeon","Endurance","Furtividade","Intuição","Percepção","Tolerância"]`,
+        },
+        {
+            Name: "Paladino", Description: "Defensor divino e campeão sagrado.",
+            BaseHP: 15, HPPerLevel: 6, SurgesPerDay: 10, FortBonus: 1, ReflBonus: 1, WillBonus: 1,
+            TrainedSkillsCount: 2,
+            AutomaticPericias:  `["Religião"]`,
+            AvailableSkills:    `["Diplomacia","Dungeon","Endurance","História","Intuição","Percepção"]`,
+        },
+        {
+            Name: "Patrulheiro", Description: "Agressor marcial e batedor das regiões ermas.",
+            BaseHP: 12, HPPerLevel: 5, SurgesPerDay: 6, FortBonus: 1, ReflBonus: 1,
+            TrainedSkillsCount: 3,
+            AutomaticPericias:  `["Natureza","Exploração"]`,
+            AvailableSkills:    `["Acrobacia","Atletismo","Dungeon","Endurance","Furtividade","Intimidação","Percepção","Socorro"]`,
+        },
+        {
+            Name: "Psionista", Description: "Controlador psiônico de grande poder mental.",
+            BaseHP: 12, HPPerLevel: 4, SurgesPerDay: 6, WillBonus: 2,
+            TrainedSkillsCount: 4,
+            AutomaticPericias:  `[]`,
+            AvailableSkills:    `["Arcanismo","Atletismo","Blefe","Diplomacia","Dungeon","Endurance","História","Intuição","Percepção","Religião","Tolerância"]`,
+        },
+        {
+            Name: "Rastreador", Description: "Controlador primitivo especialista em emboscadas.",
+            BaseHP: 12, HPPerLevel: 5, SurgesPerDay: 7, ReflBonus: 1, WillBonus: 1,
+            TrainedSkillsCount: 3,
+            AutomaticPericias:  `["Natureza"]`,
+            AvailableSkills:    `["Acrobacia","Atletismo","Dungeon","Endurance","Exploração","Furtividade","Percepção","Socorro","Tolerância"]`,
+        },
+        {
+            Name: "Vingador", Description: "Agressor divino executor da vontade dos deuses.",
+            BaseHP: 14, HPPerLevel: 6, SurgesPerDay: 7, FortBonus: 1, ReflBonus: 1, WillBonus: 1,
+            TrainedSkillsCount: 3,
+            AutomaticPericias:  `["Religião"]`,
+            AvailableSkills:    `["Acrobacia","Atletismo","Diplomacia","Dungeon","Endurance","Intimidação","Intuição","Percepção","Rua"]`,
+        },
+        {
+            Name: "Xamã", Description: "Líder primitivo que canaliza espíritos do mundo natural.",
+            BaseHP: 12, HPPerLevel: 5, SurgesPerDay: 7, FortBonus: 1, WillBonus: 1,
+            TrainedSkillsCount: 3,
+            AutomaticPericias:  `["Natureza"]`,
+            AvailableSkills:    `["Acrobacia","Atletismo","Diplomacia","Dungeon","Endurance","História","Intuição","Percepção","Religião","Socorro"]`,
+        },
+    }
+
+    for _, c := range classes {
+        var existing domain.Class
+        if db.Where("name = ? AND edition = ?", c.Name, "4e").First(&existing).Error != nil {
+            db.Create(&domain.Class{
+                Name: c.Name, Edition: "4e", Description: c.Description,
+                BaseHP: c.BaseHP, HPPerLevel: c.HPPerLevel, SurgesPerDay: c.SurgesPerDay,
+                FortBonus: c.FortBonus, ReflBonus: c.ReflBonus, WillBonus: c.WillBonus,
+                TrainedSkillsCount: c.TrainedSkillsCount,
+                AvailableSkills:    c.AvailableSkills,
+                AutomaticPericias:  c.AutomaticPericias,
+                IsDefault: true,
+            })
+        } else {
+            db.Model(&existing).Updates(map[string]interface{}{
+                "base_hp": c.BaseHP, "hp_per_level": c.HPPerLevel,
+                "surges_per_day": c.SurgesPerDay, "fort_bonus": c.FortBonus,
+                "refl_bonus": c.ReflBonus, "will_bonus": c.WillBonus,
+                "description":          c.Description,
+                "trained_skills_count": c.TrainedSkillsCount,
+                "available_skills":     c.AvailableSkills,
+                "automatic_pericias":   c.AutomaticPericias, // ← NOVO
+            })
+        }
+    }
+    log.Println("  ✓ Classes seedadas")
 }
 
 func seedSkills(db *gorm.DB) {

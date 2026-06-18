@@ -29,4 +29,5 @@ type Class struct {
 
 	IsDefault bool    `json:"is_default" gorm:"default:false"`
 	Skills    []Skill `json:"skills" gorm:"foreignKey:ClassID"`
+	AutomaticPericias string `json:"automatic_pericias"`
 }

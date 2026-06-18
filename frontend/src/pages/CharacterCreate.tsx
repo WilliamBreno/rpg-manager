@@ -149,6 +149,10 @@ export default function CharacterCreate() {
     try { return JSON.parse(selectedBackground.skill_proficiencies) } catch { return [] }
   })()
 
+  const classAutoSkills: string[] = (() => {
+    if (!is4e || !selectedClassData?.automatic_pericias) return []
+    try { return JSON.parse(selectedClassData.automatic_pericias) } catch { return [] }
+  })()
   const totalTrainable = (selectedClassData?.trained_skills_count ?? 0) + (selectedRaceData?.bonus_trained_skills ?? 0)
 
   const bonusSkillValues: Record<string, number> = (() => {
@@ -197,8 +201,11 @@ export default function CharacterCreate() {
     if (!selectedRace)   pendingItems.push('Selecione uma raça')
     if (selectedClass && hasAnyChoiceGroups && !allChoicesMade)
       pendingItems.push('Complete as escolhas de características')
-    if (selectedClass && totalTrainable > 0 && selectedPericias.length < totalTrainable)
-      pendingItems.push(`Escolha mais ${totalTrainable - selectedPericias.length} perícia(s) treinada(s)`)
+    if (selectedClass && totalTrainable > 0) {
+      const choiceMade = selectedPericias.filter(p => !classAutoSkills.includes(p)).length
+      if (choiceMade < totalTrainable)
+        pendingItems.push(`Escolha mais ${totalTrainable - choiceMade} perícia(s) treinada(s)`)
+    }
     if (selectedClass && totalTalentos > 0 && selectedTalentos.length < totalTalentos)
       pendingItems.push(`Escolha mais ${totalTalentos - selectedTalentos.length} talento(s)`)
   }
@@ -259,10 +266,16 @@ export default function CharacterCreate() {
   const handleClassChange = (classId: number) => {
     setSelectedClass(classId)
     setValue('class_id', classId)
-    setSelectedClassData(classes?.find(c => c.ID === classId) ?? null)
+    const cls = classes?.find(c => c.ID === classId) ?? null
+    setSelectedClassData(cls)
     setSelectedSkills({ unlimited: [], encounter: [], daily: [], utility: [] })
     setChoiceSelections({})
-    setSelectedPericias(backgroundSkills)
+    // 4e: pré-seleciona as pericias automáticas da classe
+    const autoP: string[] = (() => {
+      if (!cls?.automatic_pericias) return []
+      try { return JSON.parse(cls.automatic_pericias) } catch { return [] }
+    })()
+    setSelectedPericias(is4e ? autoP : backgroundSkills)
     setSelectedTalentos([])
   }
   const handleRaceChange = (raceId: number) => {
@@ -368,7 +381,7 @@ export default function CharacterCreate() {
       setValue('edition', selectedEdition)
     }
   }, [selectedEdition, setValue])
-  
+
   return (
     <div className="min-h-screen bg-gray-900 px-4 py-6 sm:px-8 sm:py-8">
       <div className="max-w-2xl mx-auto">
@@ -605,6 +618,17 @@ export default function CharacterCreate() {
               </div>
             )}
 
+            {is4e && classAutoSkills.length > 0 && (
+              <div className="mb-4 rounded-lg p-3" style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.25)' }}>
+                <p className="text-indigo-400 text-xs font-semibold mb-2">🔒 Classe — Automáticas</p>
+                <div className="flex flex-wrap gap-2">
+                  {classAutoSkills.map(s => (
+                    <span key={s} className="text-xs bg-indigo-900/60 text-indigo-300 px-2 py-1 rounded-full">📚 {s}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+            
             {/* PASSO 7 — Perícias (4e e 5e) */}
             {(is4e || is5e) && selectedClass && allPericias && allPericias.length > 0 && (
               <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">

@@ -8,6 +8,9 @@ type Character struct {
 	Edition string `json:"edition"`
 	Level   int    `json:"level"`
 
+	// XP — novo campo para o sistema de progressão
+	ExperiencePoints int `json:"experience_points"`
+
 	HitPoints int `json:"hit_points"`
 	MaxHP     int `json:"max_hp"`
 	TempHP    int `json:"temp_hp"`
@@ -35,21 +38,23 @@ type Character struct {
 	Charisma     int `json:"charisma"`
 
 	// ── Campos exclusivos do D&D 5e ──────────────────────────────────────────
-	BackgroundID      *uint  `json:"background_id"`       // FK para Background
-	Alignment         string `json:"alignment"`            // ex: "Leal e Bom"
-	PersonalityTraits string `json:"personality_traits"`   // traços de personalidade
-	Ideals            string `json:"ideals"`               // ideais
-	Bonds             string `json:"bonds"`                // ligações
-	Flaws             string `json:"flaws"`                // defeitos
-	Speed             int    `json:"speed"`                // deslocamento (pés)
-	ProficiencyBonus  int    `json:"proficiency_bonus"`    // bônus de proficiência calculado
+	AntecedentID      *uint  `json:"antecedent_id"`       // FK para Antecedent (D&D 5e)
+	BackgroundID      *uint  `json:"background_id"`        // FK para Background (biografia)
+	Alignment         string `json:"alignment"`
+	PersonalityTraits string `json:"personality_traits"`
+	Ideals            string `json:"ideals"`
+	Bonds             string `json:"bonds"`
+	Flaws             string `json:"flaws"`
+	Speed             int    `json:"speed"`
+	ProficiencyBonus  int    `json:"proficiency_bonus"`
 
 	// ── Relacionamentos ───────────────────────────────────────────────────────
-	Class      Class              `json:"class"      gorm:"foreignKey:ClassID"`
-	Race       Race               `json:"race"       gorm:"foreignKey:RaceID"`
-	Armor      *Armor             `json:"armor"      gorm:"foreignKey:ArmorID"`
-	Background *Background        `json:"background" gorm:"foreignKey:BackgroundID"`  // ← corrigido
-	Skills     []Skill            `json:"skills"     gorm:"many2many:character_skills;"`
-	Pericias   []CharacterPericia `json:"pericias"   gorm:"foreignKey:CharacterID"`
-	Talentos   []Talento          `json:"talentos"   gorm:"many2many:character_talentos;"`
+	Class      Class              `json:"class"       gorm:"foreignKey:ClassID"`
+	Race       Race               `json:"race"        gorm:"foreignKey:RaceID"`
+	Armor      *Armor             `json:"armor"       gorm:"foreignKey:ArmorID"`
+	Antecedent *Antecedent        `json:"antecedent"  gorm:"foreignKey:AntecedentID"`
+	Background *Background        `json:"background"  gorm:"foreignKey:BackgroundID"`
+	Skills     []Skill            `json:"skills"      gorm:"many2many:character_skills;"`
+	Pericias   []CharacterPericia `json:"pericias"    gorm:"foreignKey:CharacterID"`
+	Talentos   []Talento          `json:"talentos"    gorm:"many2many:character_talentos;"`
 }

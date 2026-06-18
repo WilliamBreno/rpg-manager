@@ -12,6 +12,7 @@ const schema = z.object({
   class_id:           z.coerce.number(),
   race_id:            z.coerce.number(),
   hit_points:         z.coerce.number().min(1, 'HP deve ser maior que zero'),
+  // Atributos: preservados no PUT mas não editáveis
   strength:           z.coerce.number().min(1).max(20),
   dexterity:          z.coerce.number().min(1).max(20),
   constitution:       z.coerce.number().min(1).max(20),
@@ -34,14 +35,14 @@ const ALIGNMENTS = [
   'Leal e Mau',    'Neutro e Mau',    'Caótico e Mau',
 ]
 
-const attributes = [
-  { label: 'Força',        key: 'strength'     },
-  { label: 'Destreza',     key: 'dexterity'    },
-  { label: 'Constituição', key: 'constitution' },
-  { label: 'Inteligência', key: 'intelligence' },
-  { label: 'Sabedoria',    key: 'wisdom'       },
-  { label: 'Carisma',      key: 'charisma'     },
-] as const
+const ATTR_LABELS: Record<string, string> = {
+  strength:     'Força',
+  dexterity:    'Destreza',
+  constitution: 'Constituição',
+  intelligence: 'Inteligência',
+  wisdom:       'Sabedoria',
+  charisma:     'Carisma',
+}
 
 export default function CharacterEdit() {
   const { id } = useParams()
@@ -55,9 +56,12 @@ export default function CharacterEdit() {
     queryFn: () => characterService.getByID(Number(id)),
   })
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema) as any,
   })
+
+  // Observa os valores dos atributos para exibir no display estático
+  const attrValues = watch(['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'])
 
   useEffect(() => {
     if (character) {
@@ -111,6 +115,18 @@ export default function CharacterEdit() {
     </h2>
   )
 
+  const lockedField = (label: string, value: string | undefined) => (
+    <div>
+      <label className="text-gray-500 text-xs mb-1.5 block uppercase tracking-wider">{label}</label>
+      <div
+        className="w-full rounded-lg px-4 py-2 text-sm cursor-not-allowed"
+        style={{ background: '#0f0f0f', border: '1px solid #2a2a2a', color: '#52525b' }}
+      >
+        {value ?? '—'}
+      </div>
+    </div>
+  )
+
   return (
     <div className="min-h-screen bg-gray-900 px-4 py-6 sm:px-8 sm:py-8">
       <div className="max-w-2xl mx-auto">
@@ -131,43 +147,57 @@ export default function CharacterEdit() {
 
         <form onSubmit={handleSubmit(data => updateMutation.mutate(data))} className="flex flex-col gap-4">
 
-          {/* ── Informações travadas ──────────────────────────────────────── */}
+          {/* ── Informações travadas ──────────────────────────────────── */}
           <div className="bg-gray-800 rounded-xl p-5 border border-gray-700 flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              {sectionHeader('Informações do Personagem')}
+              {sectionHeader('Informações Permanentes')}
               <span
                 className="text-xs px-3 py-1 rounded-full"
                 style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', color: 'rgba(201,168,76,0.5)' }}
               >
-                Não editável
+                🔒 Não editável
               </span>
             </div>
-            {[
-              { label: 'Edição', value: character?.edition,      field: 'edition'  },
-              { label: 'Classe', value: character?.class?.name,  field: 'class_id' },
-              { label: 'Raça',   value: character?.race?.name,   field: 'race_id'  },
-            ].map(item => (
-              <div key={item.field}>
-                <label className="text-gray-500 text-xs mb-1.5 block uppercase tracking-wider">{item.label}</label>
-                <div
-                  className="w-full rounded-lg px-4 py-2 text-sm cursor-not-allowed"
-                  style={{ background: '#0f0f0f', border: '1px solid #2a2a2a', color: '#52525b' }}
-                >
-                  {item.value}
-                </div>
-                <input type="hidden" {...register(item.field as any)} />
+
+            {/* Edição, Classe, Raça */}
+            {lockedField('Edição', character?.edition)}
+            {lockedField('Classe', character?.class?.name)}
+            {lockedField('Raça',   character?.race?.name)}
+
+            {/* Atributos — display estático em grid */}
+            <div>
+              <label className="text-gray-500 text-xs mb-2 block uppercase tracking-wider">Atributos</label>
+              <div className="grid grid-cols-3 gap-2">
+                {(['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'] as const).map((key, i) => (
+                  <div key={key} className="rounded-lg px-3 py-2 text-center"
+                    style={{ background: '#0f0f0f', border: '1px solid #2a2a2a' }}>
+                    <p className="text-gray-600 text-xs mb-0.5">{ATTR_LABELS[key]}</p>
+                    <p className="text-gray-500 text-sm font-semibold">{attrValues[i] ?? '—'}</p>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
+
+            {/* Hidden inputs — preservam os valores no PUT */}
+            <input type="hidden" {...register('edition')} />
+            <input type="hidden" {...register('class_id')} />
+            <input type="hidden" {...register('race_id')} />
+            <input type="hidden" {...register('strength')} />
+            <input type="hidden" {...register('dexterity')} />
+            <input type="hidden" {...register('constitution')} />
+            <input type="hidden" {...register('intelligence')} />
+            <input type="hidden" {...register('wisdom')} />
+            <input type="hidden" {...register('charisma')} />
           </div>
 
-          {/* ── Nome ─────────────────────────────────────────────────────── */}
+          {/* ── Nome ─────────────────────────────────────────────────── */}
           <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
             {sectionHeader('Nome')}
             <input {...register('name')} className="rpg-input" placeholder="Nome do personagem" />
             {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name.message}</p>}
           </div>
 
-          {/* ── Tendência (só 5e) ────────────────────────────────────────── */}
+          {/* ── Tendência (só 5e) ────────────────────────────────────── */}
           {is5e && (
             <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
               {sectionHeader('Tendência')}
@@ -188,17 +218,19 @@ export default function CharacterEdit() {
                 ))}
               </div>
               {selectedAlignment && (
-                <p className="text-gray-500 text-xs mt-2">Selecionado: <span style={{ color: '#c9a84c' }}>{selectedAlignment}</span></p>
+                <p className="text-gray-500 text-xs mt-2">
+                  Selecionado: <span style={{ color: '#c9a84c' }}>{selectedAlignment}</span>
+                </p>
               )}
             </div>
           )}
 
-          {/* ── Personalidade (só 5e) ────────────────────────────────────── */}
+          {/* ── Personalidade (só 5e) ────────────────────────────────── */}
           {is5e && (
             <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
               {sectionHeader('Personalidade')}
               <p className="text-gray-500 text-xs mb-4">
-                Estes campos são opcionais — ajudam a definir como seu personagem age e pensa.
+                Campos opcionais que definem como seu personagem age e pensa.
               </p>
               {[
                 { label: 'Traços de Personalidade', name: 'personality_traits' as const, placeholder: 'Como seu personagem age no cotidiano?' },
@@ -220,27 +252,17 @@ export default function CharacterEdit() {
             </div>
           )}
 
-          {/* ── Atributos ────────────────────────────────────────────────── */}
+          {/* ── Hit Points máximo ────────────────────────────────────── */}
           <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
-            {sectionHeader('Atributos')}
-            <div className="grid grid-cols-2 gap-3">
-              {attributes.map(attr => (
-                <div key={attr.key}>
-                  <label className="text-gray-500 text-xs mb-1.5 block uppercase tracking-wider">{attr.label}</label>
-                  <input type="number" {...register(attr.key)} min={1} max={20} className="rpg-input" />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* ── Hit Points ───────────────────────────────────────────────── */}
-          <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
-            {sectionHeader('Hit Points')}
+            {sectionHeader('Hit Points Máximo')}
+            <p className="text-gray-500 text-xs mb-3">
+              HP base do personagem. Use a ficha para aplicar dano ou cura no combate.
+            </p>
             <input type="number" {...register('hit_points')} min={1} className="rpg-input" />
             {errors.hit_points && <p className="text-red-400 text-xs mt-1">{errors.hit_points.message}</p>}
           </div>
 
-          {/* ── Botões ───────────────────────────────────────────────────── */}
+          {/* ── Botões ───────────────────────────────────────────────── */}
           <div className="flex gap-2 pt-1 pb-6">
             <button
               type="button"

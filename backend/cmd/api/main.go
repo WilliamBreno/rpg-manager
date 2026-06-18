@@ -105,7 +105,8 @@ func main() {
 		api.GET("/antecedentes", antecedentHandler.GetAll)
 		api.GET("/antecedentes/:id", antecedentHandler.GetByID)
 		api.POST("/ai/skills", ollamaHandler.GetSkills)
-
+		api.PATCH("/characters/:id/add-xp",    characterHandler.AddXP)
+		api.PATCH("/characters/:id/apply-asi", characterHandler.ApplyASI)
 		classes := api.Group("/classes")
 		{
 			classes.GET("", classHandler.GetAll)
