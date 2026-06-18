@@ -8,6 +8,101 @@ import (
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
+// ANTECEDENTES 5e  (Regras Básicas PHB)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// seedBackgrounds5e semeia os 5 antecedentes das Regras Básicas de D&D 5e.
+// Cada antecedente dá 2 proficiências em perícias, equipamento inicial e
+// uma característica especial narrativa.
+func seedBackgrounds5e(db *gorm.DB) {
+	type bg struct {
+		Name, Description, Skills, Tools, Languages, Equipment, Feature, FeatureDesc string
+	}
+
+	backgrounds := []bg{
+		{
+			Name:        "Acólito",
+			Description: "Você viveu a serviço de um templo, agindo como intermediário entre o reino divino e o mundo mortal — realizando rituais, oferendas e conduzindo pessoas à sua fé.",
+			Skills:      `["Intuição","Religião"]`,
+			Tools:       "",
+			Languages:   "Dois idiomas à sua escolha",
+			Equipment:   "Um símbolo sagrado (presente ao entrar no templo), um livro de orações ou roda de preces, 5 palitos de incenso, vestimentas, roupas comuns e 15 PO.",
+			Feature:     "Abrigo dos Fiéis",
+			FeatureDesc: "Como acólito, você desfruta do respeito daqueles que compartilham sua fé. Você e seus companheiros podem receber cura e abrigo em templos e santuários de sua religião, desde que forneçam componentes materiais necessários. Os fiéis custeiam um estilo de vida modesto para você enquanto estiver próximo ao seu templo.",
+		},
+		{
+			Name:        "Criminoso",
+			Description: "Você é um criminoso experiente com um histórico de contravenções. Você gastou bom tempo entre outros criminosos e ainda mantém contatos no submundo.",
+			Skills:      `["Enganação","Furtividade"]`,
+			Tools:       "Ferramentas de ladrão, 1 tipo de jogo (dados ou cartas)",
+			Languages:   "",
+			Equipment:   "Um pé de cabra, um conjunto de roupas escuras comuns com capuz e uma algibeira contendo 15 PO.",
+			Feature:     "Contato no Crime",
+			FeatureDesc: "Você possui contatos de confiança que agem como informantes em uma rede criminosa. Você sabe como se comunicar com eles a grandes distâncias — via mensageiros locais, mestres de caravana corruptos e marinheiros escusos que podem transmitir suas mensagens.",
+		},
+		{
+			Name:        "Herói do Povo",
+			Description: "Você veio de uma classe humilde da sociedade, mas está destinado a coisas maiores. As pessoas de sua vila já o reconhecem como campeão, e seu destino o conduz a batalhas contra tiranos e monstros.",
+			Skills:      `["Lidar com Animais","Sobrevivência"]`,
+			Tools:       "1 tipo de ferramentas de artesão, veículos terrestres",
+			Languages:   "",
+			Equipment:   "Um conjunto de ferramentas de artesão (à sua escolha), uma pá, uma panela de ferro, roupas comuns e uma algibeira contendo 10 PO.",
+			Feature:     "Hospitalidade Rústica",
+			FeatureDesc: "Por ter ascendido das pessoas comuns, você se mistura facilmente com elas. Você pode encontrar abrigo, descanso e recuperação entre camponeses, a menos que isso ofereça risco direto a eles. Eles o esconderão da lei e de qualquer um que pergunte por você, contanto que não precisem arriscar suas vidas.",
+		},
+		{
+			Name:        "Sábio",
+			Description: "Você passou anos aprendendo sobre o conhecimento do multiverso, decifrando manuscritos, estudando pergaminhos e escutando grandes especialistas. Seus esforços fizeram de você um mestre em seu campo.",
+			Skills:      `["Arcanismo","História"]`,
+			Tools:       "",
+			Languages:   "Dois idiomas à sua escolha",
+			Equipment:   "Um vidro de tinta negra, uma pena, uma faca pequena, uma carta de um falecido colega com uma questão sem resposta, roupas comuns e uma algibeira contendo 10 PO.",
+			Feature:     "Pesquisador",
+			FeatureDesc: "Quando tenta recuperar algum conhecimento que não possui, você sabe onde e com quem pode obtê-lo — bibliotecas, arquivos de escribas, universidades ou outros sábios. Se a informação existir, o Mestre pode dizer onde encontrá-la; pode estar em lugares perigosos ou quase inacessíveis.",
+		},
+		{
+			Name:        "Soldado",
+			Description: "A guerra esteve em sua vida desde que você se recorda. Você foi treinado desde jovem no uso de armas e armaduras, aprendeu técnicas de sobrevivência e sobreviveu ao campo de batalha.",
+			Skills:      `["Atletismo","Intimidação"]`,
+			Tools:       "1 tipo de jogo (dados ou cartas), veículos terrestres",
+			Languages:   "",
+			Equipment:   "Uma insígnia de patente, um troféu de um inimigo caído (adaga, lâmina quebrada ou tira de estandarte), um conjunto de dados ou cartas, roupas comuns e uma algibeira contendo 10 PO.",
+			Feature:     "Patente Militar",
+			FeatureDesc: "Você possui uma patente militar reconhecida. Soldados leais à sua antiga organização reconhecem sua autoridade e prestam deferência se tiverem patente inferior. Você pode invocar sua patente para exercer influência sobre soldados e requisitar equipamentos simples ou cavalos para uso temporário.",
+		},
+	}
+
+	for _, b := range backgrounds {
+		var existing domain.Background
+		if db.Where("name = ? AND edition = ?", b.Name, "5e").First(&existing).Error != nil {
+			db.Create(&domain.Background{
+				Name:               b.Name,
+				Edition:            "5e",
+				Description:        b.Description,
+				SkillProficiencies: b.Skills,
+				ToolProficiencies:  b.Tools,
+				Languages:          b.Languages,
+				Equipment:          b.Equipment,
+				Feature:            b.Feature,
+				FeatureDescription: b.FeatureDesc,
+				IsDefault:          true,
+			})
+		} else {
+			db.Model(&existing).Updates(map[string]interface{}{
+				"description":         b.Description,
+				"skill_proficiencies": b.Skills,
+				"tool_proficiencies":  b.Tools,
+				"languages":           b.Languages,
+				"equipment":           b.Equipment,
+				"feature":             b.Feature,
+				"feature_description": b.FeatureDesc,
+			})
+		}
+	}
+	log.Println("  ✓ Antecedentes 5e: 5 antecedentes seedados (Regras Básicas)")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // CLASSES 5e
 // ─────────────────────────────────────────────────────────────────────────────
 

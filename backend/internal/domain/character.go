@@ -15,6 +15,7 @@ type Character struct {
 	SurgeValue   int `json:"surge_value"`
 	SurgesPerDay int `json:"surges_per_day"`
 
+	// Defesas 4e
 	Defense_AC   int `json:"defense_ac"`
 	Defense_Fort int `json:"defense_fort"`
 	Defense_Refl int `json:"defense_refl"`
@@ -33,12 +34,22 @@ type Character struct {
 	Wisdom       int `json:"wisdom"`
 	Charisma     int `json:"charisma"`
 
-	// Relacionamentos
+	// ── Campos exclusivos do D&D 5e ──────────────────────────────────────────
+	BackgroundID      *uint  `json:"background_id"`       // FK para Background
+	Alignment         string `json:"alignment"`            // ex: "Leal e Bom"
+	PersonalityTraits string `json:"personality_traits"`   // traços de personalidade
+	Ideals            string `json:"ideals"`               // ideais
+	Bonds             string `json:"bonds"`                // ligações
+	Flaws             string `json:"flaws"`                // defeitos
+	Speed             int    `json:"speed"`                // deslocamento (pés)
+	ProficiencyBonus  int    `json:"proficiency_bonus"`    // bônus de proficiência calculado
+
+	// ── Relacionamentos ───────────────────────────────────────────────────────
 	Class      Class              `json:"class"      gorm:"foreignKey:ClassID"`
 	Race       Race               `json:"race"       gorm:"foreignKey:RaceID"`
 	Armor      *Armor             `json:"armor"      gorm:"foreignKey:ArmorID"`
+	Background *Background        `json:"background" gorm:"foreignKey:BackgroundID"`  // ← corrigido
 	Skills     []Skill            `json:"skills"     gorm:"many2many:character_skills;"`
-	Background *Background        `json:"background" gorm:"foreignKey:CharacterID"`
 	Pericias   []CharacterPericia `json:"pericias"   gorm:"foreignKey:CharacterID"`
 	Talentos   []Talento          `json:"talentos"   gorm:"many2many:character_talentos;"`
 }

@@ -1,40 +1,45 @@
 package service
 
 import (
-    "errors"
-    "rpg-manager/internal/domain"
-    "rpg-manager/internal/repository"
+	"rpg-manager/internal/domain"
+
+	"gorm.io/gorm"
 )
 
+// BackgroundService gerencia a biografia/notas do personagem
+// (rota: GET/POST /characters/:id/background)
 type BackgroundService struct {
-    Repo *repository.BackgroundRepository
+	db *gorm.DB
 }
 
-func NewBackgroundService(repo *repository.BackgroundRepository) *BackgroundService {
-    return &BackgroundService{Repo: repo}
+func NewBackgroundService(db *gorm.DB) *BackgroundService {
+	return &BackgroundService{db: db}
 }
 
-func (s *BackgroundService) GetByCharacterID(characterID uint) (domain.Background, error) {
-    return s.Repo.FindByCharacterID(characterID)
+// Get retorna os campos de biografia do personagem
+func (s *BackgroundService) Get(characterID uint) (map[string]interface{}, error) {
+	var char domain.Character
+	if err := s.db.
+		Select("id", "personality_traits", "ideals", "bonds", "flaws").
+		First(&char, characterID).Error; err != nil {
+		return nil, err
+	}
+	return map[string]interface{}{
+		"personality_traits": char.PersonalityTraits,
+		"ideals":             char.Ideals,
+		"bonds":              char.Bonds,
+		"flaws":              char.Flaws,
+	}, nil
 }
 
-func (s *BackgroundService) Save(background *domain.Background) error {
-    if background.CharacterID == 0 {
-        return errors.New("personagem é obrigatório")
-    }
-
-    // Verifica se já existe um background para esse personagem
-    existing, err := s.Repo.FindByCharacterID(background.CharacterID)
-    if err == nil {
-        // Já existe — atualiza
-        background.ID = existing.ID
-        return s.Repo.Update(background)
-    }
-
-    // Não existe — cria
-    return s.Repo.Create(background)
-}
-
-func (s *BackgroundService) Delete(characterID uint) error {
-    return s.Repo.Delete(characterID)
+// Save atualiza os campos de biografia do personagem
+func (s *BackgroundService) Save(characterID uint, data map[string]interface{}) error {
+	allowed := []string{"personality_traits", "ideals", "bonds", "flaws"}
+	updates := map[string]interface{}{}
+	for _, key := range allowed {
+		if val, ok := data[key]; ok {
+			updates[key] = val
+		}
+	}
+	return s.db.Model(&domain.Character{}).Where("id = ?", characterID).Updates(updates).Error
 }

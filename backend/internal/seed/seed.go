@@ -10,6 +10,7 @@ func Run(db *gorm.DB) {
 	log.Println("🌱 Rodando seed...")
 	seedClasses(db)
 	seedClasses5e(db) 
+	seedAntecedents5e(db)
 	seedSkills(db)
 	seedSkills5e(db)
 	seedRaceSkills(db)

@@ -13,13 +13,19 @@ import (
 var DB *gorm.DB
 
 func ConnectDatabase() {
+    ssl := os.Getenv("DB_SSL")
+    if ssl == "" {
+        ssl = "disable" // local: disable | Render: configure DB_SSL=require
+    }
+
     dsn := fmt.Sprintf(
-        "host=%s port=%s user=%s password=%s dbname=%s sslmode=require",
+        "host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
         os.Getenv("DB_HOST"),
         os.Getenv("DB_PORT"),
         os.Getenv("DB_USER"),
         os.Getenv("DB_PASSWORD"),
         os.Getenv("DB_NAME"),
+        ssl,
     )
 
     db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
@@ -35,6 +41,7 @@ func ConnectDatabase() {
         &domain.Skill{},
         &domain.Character{},
         &domain.Background{},
+        &domain.Antecedent{}, // ← NOVO: cria tabela antecedents
         &domain.Pericia{},
         &domain.CharacterPericia{},
         &domain.Talento{},
@@ -42,9 +49,6 @@ func ConnectDatabase() {
     if err != nil {
         log.Fatal("Erro ao executar AutoMigrate: ", err)
     }
-
-    // Popula o banco com dados padrão
-    SeedDatabase(db)
 
     log.Println("Banco de dados conectado com sucesso!")
     DB = db

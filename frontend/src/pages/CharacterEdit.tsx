@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
@@ -7,20 +7,32 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { characterService } from '../services/characterService'
 
 const schema = z.object({
-  name:         z.string().min(1, 'Nome é obrigatório'),
-  edition:      z.string(),
-  class_id:     z.coerce.number(),
-  race_id:      z.coerce.number(),
-  hit_points:   z.coerce.number().min(1, 'HP deve ser maior que zero'),
-  strength:     z.coerce.number().min(1).max(20),
-  dexterity:    z.coerce.number().min(1).max(20),
-  constitution: z.coerce.number().min(1).max(20),
-  intelligence: z.coerce.number().min(1).max(20),
-  wisdom:       z.coerce.number().min(1).max(20),
-  charisma:     z.coerce.number().min(1).max(20),
+  name:               z.string().min(1, 'Nome é obrigatório'),
+  edition:            z.string(),
+  class_id:           z.coerce.number(),
+  race_id:            z.coerce.number(),
+  hit_points:         z.coerce.number().min(1, 'HP deve ser maior que zero'),
+  strength:           z.coerce.number().min(1).max(20),
+  dexterity:          z.coerce.number().min(1).max(20),
+  constitution:       z.coerce.number().min(1).max(20),
+  intelligence:       z.coerce.number().min(1).max(20),
+  wisdom:             z.coerce.number().min(1).max(20),
+  charisma:           z.coerce.number().min(1).max(20),
+  // 5e
+  alignment:          z.string().optional(),
+  personality_traits: z.string().optional(),
+  ideals:             z.string().optional(),
+  bonds:              z.string().optional(),
+  flaws:              z.string().optional(),
 })
 
 type FormData = z.infer<typeof schema>
+
+const ALIGNMENTS = [
+  'Leal e Bom',    'Neutro e Bom',    'Caótico e Bom',
+  'Leal e Neutro', 'Neutro',          'Caótico e Neutro',
+  'Leal e Mau',    'Neutro e Mau',    'Caótico e Mau',
+]
 
 const attributes = [
   { label: 'Força',        key: 'strength'     },
@@ -36,6 +48,8 @@ export default function CharacterEdit() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
+  const [selectedAlignment, setSelectedAlignment] = useState<string>('')
+
   const { data: character, isLoading } = useQuery({
     queryKey: ['character', id],
     queryFn: () => characterService.getByID(Number(id)),
@@ -48,23 +62,34 @@ export default function CharacterEdit() {
   useEffect(() => {
     if (character) {
       reset({
-        name:         character.name,
-        edition:      character.edition,
-        class_id:     character.class_id,
-        race_id:      character.race_id,
-        hit_points:   character.hit_points,
-        strength:     character.strength,
-        dexterity:    character.dexterity,
-        constitution: character.constitution,
-        intelligence: character.intelligence,
-        wisdom:       character.wisdom,
-        charisma:     character.charisma,
+        name:               character.name,
+        edition:            character.edition,
+        class_id:           character.class_id,
+        race_id:            character.race_id,
+        hit_points:         character.hit_points,
+        strength:           character.strength,
+        dexterity:          character.dexterity,
+        constitution:       character.constitution,
+        intelligence:       character.intelligence,
+        wisdom:             character.wisdom,
+        charisma:           character.charisma,
+        personality_traits: character.personality_traits ?? '',
+        ideals:             character.ideals ?? '',
+        bonds:              character.bonds ?? '',
+        flaws:              character.flaws ?? '',
       })
+      setSelectedAlignment(character.alignment ?? '')
     }
   }, [character, reset])
 
+  const is5e = character?.edition === '5e'
+
   const updateMutation = useMutation({
-    mutationFn: (data: FormData) => characterService.update(Number(id), data),
+    mutationFn: (data: FormData) =>
+      characterService.update(Number(id), {
+        ...data,
+        alignment: selectedAlignment || undefined,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['character', id] })
       queryClient.invalidateQueries({ queryKey: ['characters'] })
@@ -80,11 +105,16 @@ export default function CharacterEdit() {
     )
   }
 
+  const sectionHeader = (label: string) => (
+    <h2 className="text-sm font-semibold uppercase tracking-widest mb-3" style={{ color: 'rgba(201,168,76,0.7)' }}>
+      {label}
+    </h2>
+  )
+
   return (
     <div className="min-h-screen bg-gray-900 px-4 py-6 sm:px-8 sm:py-8">
       <div className="max-w-2xl mx-auto">
 
-        {/* Voltar */}
         <button
           onClick={() => navigate(`/characters/${id}`)}
           className="transition mb-6 block text-sm"
@@ -101,12 +131,10 @@ export default function CharacterEdit() {
 
         <form onSubmit={handleSubmit(data => updateMutation.mutate(data))} className="flex flex-col gap-4">
 
-          {/* ── Informações travadas ─────────────────────────────────────────── */}
+          {/* ── Informações travadas ──────────────────────────────────────── */}
           <div className="bg-gray-800 rounded-xl p-5 border border-gray-700 flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold uppercase tracking-widest" style={{ color: 'rgba(201,168,76,0.7)' }}>
-                Informações do Personagem
-              </h2>
+              {sectionHeader('Informações do Personagem')}
               <span
                 className="text-xs px-3 py-1 rounded-full"
                 style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', color: 'rgba(201,168,76,0.5)' }}
@@ -114,16 +142,13 @@ export default function CharacterEdit() {
                 Não editável
               </span>
             </div>
-
             {[
-              { label: 'Edição',  value: character?.edition,     field: 'edition'  },
-              { label: 'Classe',  value: character?.class?.name, field: 'class_id' },
-              { label: 'Raça',    value: character?.race?.name,  field: 'race_id'  },
+              { label: 'Edição', value: character?.edition,      field: 'edition'  },
+              { label: 'Classe', value: character?.class?.name,  field: 'class_id' },
+              { label: 'Raça',   value: character?.race?.name,   field: 'race_id'  },
             ].map(item => (
               <div key={item.field}>
-                <label className="text-gray-500 text-xs mb-1.5 block uppercase tracking-wider">
-                  {item.label}
-                </label>
+                <label className="text-gray-500 text-xs mb-1.5 block uppercase tracking-wider">{item.label}</label>
                 <div
                   className="w-full rounded-lg px-4 py-2 text-sm cursor-not-allowed"
                   style={{ background: '#0f0f0f', border: '1px solid #2a2a2a', color: '#52525b' }}
@@ -135,59 +160,87 @@ export default function CharacterEdit() {
             ))}
           </div>
 
-          {/* ── Nome ────────────────────────────────────────────────────────── */}
+          {/* ── Nome ─────────────────────────────────────────────────────── */}
           <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
-            <h2 className="text-sm font-semibold uppercase tracking-widest mb-3" style={{ color: 'rgba(201,168,76,0.7)' }}>
-              Nome
-            </h2>
-            <input
-              {...register('name')}
-              className="rpg-input"
-              placeholder="Nome do personagem"
-            />
+            {sectionHeader('Nome')}
+            <input {...register('name')} className="rpg-input" placeholder="Nome do personagem" />
             {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name.message}</p>}
           </div>
 
-          {/* ── Atributos ───────────────────────────────────────────────────── */}
+          {/* ── Tendência (só 5e) ────────────────────────────────────────── */}
+          {is5e && (
+            <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
+              {sectionHeader('Tendência')}
+              <div className="grid grid-cols-3 gap-1.5">
+                {ALIGNMENTS.map(al => (
+                  <button
+                    key={al}
+                    type="button"
+                    onClick={() => setSelectedAlignment(al === selectedAlignment ? '' : al)}
+                    className="py-2 rounded-lg text-xs font-medium transition border"
+                    style={selectedAlignment === al
+                      ? { background: 'rgba(201,168,76,0.15)', borderColor: 'rgba(201,168,76,0.5)', color: '#c9a84c' }
+                      : { background: '#27272a', borderColor: '#3f3f46', color: '#a1a1aa' }
+                    }
+                  >
+                    {al}
+                  </button>
+                ))}
+              </div>
+              {selectedAlignment && (
+                <p className="text-gray-500 text-xs mt-2">Selecionado: <span style={{ color: '#c9a84c' }}>{selectedAlignment}</span></p>
+              )}
+            </div>
+          )}
+
+          {/* ── Personalidade (só 5e) ────────────────────────────────────── */}
+          {is5e && (
+            <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
+              {sectionHeader('Personalidade')}
+              <p className="text-gray-500 text-xs mb-4">
+                Estes campos são opcionais — ajudam a definir como seu personagem age e pensa.
+              </p>
+              {[
+                { label: 'Traços de Personalidade', name: 'personality_traits' as const, placeholder: 'Como seu personagem age no cotidiano?' },
+                { label: 'Ideais',   name: 'ideals' as const,  placeholder: 'O que move seu personagem?' },
+                { label: 'Ligações', name: 'bonds' as const,   placeholder: 'O que ou quem seu personagem protegeria?' },
+                { label: 'Defeitos', name: 'flaws' as const,   placeholder: 'Qual a fraqueza ou medo do personagem?' },
+              ].map(field => (
+                <div key={field.name} className="mb-3">
+                  <label className="text-gray-500 text-xs mb-1.5 block uppercase tracking-wider">{field.label}</label>
+                  <textarea
+                    {...register(field.name)}
+                    placeholder={field.placeholder}
+                    rows={2}
+                    className="rpg-input resize-none text-sm w-full"
+                    style={{ minHeight: '52px' }}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* ── Atributos ────────────────────────────────────────────────── */}
           <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
-            <h2 className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: 'rgba(201,168,76,0.7)' }}>
-              Atributos
-            </h2>
+            {sectionHeader('Atributos')}
             <div className="grid grid-cols-2 gap-3">
               {attributes.map(attr => (
                 <div key={attr.key}>
-                  <label className="text-gray-500 text-xs mb-1.5 block uppercase tracking-wider">
-                    {attr.label}
-                  </label>
-                  <input
-                    type="number"
-                    {...register(attr.key)}
-                    min={1}
-                    max={20}
-                    className="rpg-input"
-                  />
+                  <label className="text-gray-500 text-xs mb-1.5 block uppercase tracking-wider">{attr.label}</label>
+                  <input type="number" {...register(attr.key)} min={1} max={20} className="rpg-input" />
                 </div>
               ))}
             </div>
           </div>
 
-          {/* ── Hit Points ──────────────────────────────────────────────────── */}
+          {/* ── Hit Points ───────────────────────────────────────────────── */}
           <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
-            <h2 className="text-sm font-semibold uppercase tracking-widest mb-3" style={{ color: 'rgba(201,168,76,0.7)' }}>
-              Hit Points
-            </h2>
-            <input
-              type="number"
-              {...register('hit_points')}
-              min={1}
-              className="rpg-input"
-            />
-            {errors.hit_points && (
-              <p className="text-red-400 text-xs mt-1">{errors.hit_points.message}</p>
-            )}
+            {sectionHeader('Hit Points')}
+            <input type="number" {...register('hit_points')} min={1} className="rpg-input" />
+            {errors.hit_points && <p className="text-red-400 text-xs mt-1">{errors.hit_points.message}</p>}
           </div>
 
-          {/* ── Botões ──────────────────────────────────────────────────────── */}
+          {/* ── Botões ───────────────────────────────────────────────────── */}
           <div className="flex gap-2 pt-1 pb-6">
             <button
               type="button"

@@ -25,39 +25,43 @@ func main() {
 	seed.Run(config.DB)
 
 	// Repositories
-	userRepo      := repository.NewUserRepository(config.DB)
-	classRepo     := repository.NewClassRepository(config.DB)
-	raceRepo      := repository.NewRaceRepository(config.DB)
-	skillRepo     := repository.NewSkillRepository(config.DB)
-	characterRepo := repository.NewCharacterRepository(config.DB)
+	userRepo       := repository.NewUserRepository(config.DB)
+	classRepo      := repository.NewClassRepository(config.DB)
+	raceRepo       := repository.NewRaceRepository(config.DB)
+	skillRepo      := repository.NewSkillRepository(config.DB)
+	characterRepo  := repository.NewCharacterRepository(config.DB)
 	backgroundRepo := repository.NewBackgroundRepository(config.DB)
-	armorRepo     := repository.NewArmorRepository(config.DB)
-	periciaRepo   := repository.NewPericiaRepository(config.DB)   // NOVO
-	talentoRepo   := repository.NewTalentoRepository(config.DB)   // NOVO
+	armorRepo      := repository.NewArmorRepository(config.DB)
+	periciaRepo    := repository.NewPericiaRepository(config.DB)
+	talentoRepo    := repository.NewTalentoRepository(config.DB)
+
+	_ = backgroundRepo // usado indiretamente via backgroundService
 
 	// Services
-	authService      := service.NewAuthService(userRepo)
-	classService     := service.NewClassService(classRepo)
-	raceService      := service.NewRaceService(raceRepo)
-	skillService     := service.NewSkillService(skillRepo)
-	characterService := service.NewCharacterService(characterRepo, skillRepo)
-	backgroundService := service.NewBackgroundService(backgroundRepo)
-	armorService     := service.NewArmorService(armorRepo)
-	periciaService   := service.NewPericiaService(periciaRepo)    // NOVO
-	talentoService   := service.NewTalentoService(talentoRepo)    // NOVO
+	authService       := service.NewAuthService(userRepo)
+	classService      := service.NewClassService(classRepo)
+	raceService       := service.NewRaceService(raceRepo)
+	skillService      := service.NewSkillService(skillRepo)
+	characterService  := service.NewCharacterService(characterRepo, skillRepo)
+	backgroundService := service.NewBackgroundService(config.DB)
+	antecedentSvc     := service.NewAntecedentService(config.DB)
+	armorService      := service.NewArmorService(armorRepo)
+	periciaService    := service.NewPericiaService(periciaRepo)
+	talentoService    := service.NewTalentoService(talentoRepo)
 
 	// Handlers
-	authHandler      := handler.NewAuthHandler(authService)
-	classHandler     := handler.NewClassHandler(classService)
-	raceHandler      := handler.NewRaceHandler(raceService)
-	skillHandler     := handler.NewSkillHandler(skillService)
-	characterHandler := handler.NewCharacterHandler(characterService, armorService)
+	antecedentHandler := handler.NewAntecedentHandler(antecedentSvc)
+	authHandler       := handler.NewAuthHandler(authService)
+	classHandler      := handler.NewClassHandler(classService)
+	raceHandler       := handler.NewRaceHandler(raceService)
+	skillHandler      := handler.NewSkillHandler(skillService)
+	characterHandler  := handler.NewCharacterHandler(characterService, armorService)
 	backgroundHandler := handler.NewBackgroundHandler(backgroundService)
-	uploadHandler    := handler.NewUploadHandler(characterRepo)
-	armorHandler     := handler.NewArmorHandler(armorService)
-	ollamaHandler    := handler.NewOllamaHandler()
-	periciaHandler   := handler.NewPericiaHandler(periciaService) // NOVO
-	talentoHandler   := handler.NewTalentoHandler(talentoService) // NOVO
+	uploadHandler     := handler.NewUploadHandler(characterRepo)
+	armorHandler      := handler.NewArmorHandler(armorService)
+	ollamaHandler     := handler.NewOllamaHandler()
+	periciaHandler    := handler.NewPericiaHandler(periciaService)
+	talentoHandler    := handler.NewTalentoHandler(talentoService)
 
 	r := gin.Default()
 	r.Static("/uploads", "./uploads")
@@ -65,7 +69,7 @@ func main() {
 	r.Use(func(c *gin.Context) {
 		origin := c.Request.Header.Get("Origin")
 		allowed := map[string]bool{
-			"http://localhost:5173":               true,
+			"http://localhost:5173":                true,
 			"https://rpg-manager-smoky.vercel.app": true,
 		}
 		if allowed[origin] {
@@ -94,12 +98,13 @@ func main() {
 			auth.POST("/login", authHandler.Login)
 		}
 
+		// Rotas públicas
 		api.GET("/armors", armorHandler.GetByEdition)
+		api.GET("/pericias", periciaHandler.GetAll)
+		api.GET("/talentos", talentoHandler.GetAll)
+		api.GET("/antecedentes", antecedentHandler.GetAll)
+		api.GET("/antecedentes/:id", antecedentHandler.GetByID)
 		api.POST("/ai/skills", ollamaHandler.GetSkills)
-
-		// Perícias e Talentos — públicos (para leitura no CharacterCreate)
-		api.GET("/pericias", periciaHandler.GetAll)   // NOVO
-		api.GET("/talentos", talentoHandler.GetAll)   // NOVO
 
 		classes := api.Group("/classes")
 		{
@@ -117,6 +122,7 @@ func main() {
 			skills.GET("/filter", skillHandler.GetByClassAndRace)
 		}
 
+		// Rotas protegidas (JWT)
 		protected := api.Group("/")
 		protected.Use(middleware.AuthMiddleware(authService))
 		{
@@ -149,8 +155,6 @@ func main() {
 				characters.PATCH("/:id/heal", characterHandler.Heal)
 				characters.PATCH("/:id/temp-hp", characterHandler.AddTempHP)
 				characters.GET("/:id/ac", characterHandler.GetAC)
-
-				// NOVO — Perícias e Talentos do personagem
 				characters.GET("/:id/pericias", periciaHandler.GetByCharacter)
 				characters.POST("/:id/pericias", periciaHandler.Save)
 				characters.GET("/:id/talentos", talentoHandler.GetByCharacter)

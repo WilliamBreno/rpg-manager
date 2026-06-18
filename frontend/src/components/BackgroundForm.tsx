@@ -71,7 +71,7 @@ export default function BackgroundForm({ characterID, background }: Props) {
               disabled={saveMutation.isPending}
               className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold px-6 py-2 rounded-lg transition"
             >
-              {saveMutation.isPending ? 'Salvando...' : '💾 Salvar'}
+              {saveMutation.isPending ? 'Salvando...' : 'Salvar'}
             </button>
             {background && (
               <button

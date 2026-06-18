@@ -10,13 +10,13 @@ export interface Class {
   fort_bonus: number
   refl_bonus: number
   will_bonus: number
-  saving_throws?: string 
+  saving_throws?: string
   is_default: boolean
-  // Perícias (4e)
-  trained_skills_count: number  // quantas pode treinar
-  available_skills: string      // JSON: '["Atletismo","Percepção"]'
+  // Perícias
+  trained_skills_count: number
+  available_skills: string       // JSON: '["Atletismo","Percepção"]'
   // Talentos (4e)
-  talentos_count: number        // 2 na campanha
+  talentos_count: number
 }
 
 export interface Race {
@@ -26,10 +26,10 @@ export interface Race {
   description: string
   speed: number
   // Perícias (4e)
-  bonus_trained_skills: number  // 0 para maioria, 1 para Humano/Meio-Elfo
-  bonus_skill_values: string    // JSON: '{"Percepção": 2}'
+  bonus_trained_skills: number
+  bonus_skill_values: string     // JSON: '{"Percepção": 2}'
   // Talentos (4e)
-  bonus_talentos: number        // 0 para maioria, 1 para Humano
+  bonus_talentos: number
 }
 
 export type PowerType = 'utility' | 'unlimited' | 'encounter' | 'daily'
@@ -59,11 +59,11 @@ export interface Skill {
   is_race_feature: boolean
 }
 
-// ── NOVO — Perícia ──────────────────────────────────────────────────────────
+// ── Perícia ─────────────────────────────────────────────────────────────────
 export interface Pericia {
   ID: number
   name: string
-  attribute: string   // "Força", "Destreza", etc.
+  attribute: string
   description: string
   tooltip: string
   edition: string
@@ -74,18 +74,18 @@ export interface CharacterPericia {
   pericia_name: string
 }
 
-// ── NOVO — Talento ──────────────────────────────────────────────────────────
+// ── Talento ─────────────────────────────────────────────────────────────────
 export interface Talento {
   ID: number
   name: string
   edition: string
-  category: string      // "Combate", "Defesa", "Perícia", "Magia", "Armadura"
+  category: string
   description: string
-  prerequisite: string  // "" se não tiver
+  prerequisite: string
   tooltip: string
 }
 
-// ── Background ──────────────────────────────────────────────────────────────
+// ── Background — biografia/personalidade do personagem (sistema existente) ──
 export interface Background {
   ID?: number
   character_id?: number
@@ -96,6 +96,22 @@ export interface Background {
   flaws: string
 }
 
+// ── Antecedent — Antecedente D&D 5e (Acólito, Criminoso, Soldado, etc.) ────
+export interface Antecedent {
+  ID: number
+  name: string
+  edition: string
+  description: string
+  skill_proficiencies: string    // JSON: '["Intuição","Religião"]'
+  tool_proficiencies: string
+  languages: string
+  equipment: string
+  feature: string
+  feature_description: string
+  is_default: boolean
+}
+
+// ── Armor ────────────────────────────────────────────────────────────────────
 export type ArmorType = 'none' | 'light' | 'medium' | 'heavy' | 'shield'
 
 export interface Armor {
@@ -108,6 +124,7 @@ export interface Armor {
   description: string
 }
 
+// ── Character ────────────────────────────────────────────────────────────────
 export interface Character {
   ID: number
   name: string
@@ -118,6 +135,7 @@ export interface Character {
   temp_hp: number
   surge_value: number
   surges_per_day: number
+  // Defesas (4e)
   defense_ac: number
   defense_fort: number
   defense_refl: number
@@ -126,18 +144,29 @@ export interface Character {
   class_id: number
   race_id: number
   avatar_url?: string
+  // Atributos
   strength: number
   dexterity: number
   constitution: number
   intelligence: number
   wisdom: number
   charisma: number
+  // ── Campos D&D 5e ──────────────────────────────────────────────────────────
+  antecedent_id?: number          // FK para Antecedent
+  alignment?: string              // "Leal e Bom", "Neutro", etc.
+  personality_traits?: string
+  ideals?: string
+  bonds?: string
+  flaws?: string
+  speed?: number                  // deslocamento em pés (30 para maioria)
+  proficiency_bonus?: number      // calculado: +2 nos níveis 1-4
+  // ── Relacionamentos ────────────────────────────────────────────────────────
   class: Class
   race: Race
   armor?: Armor
+  background?: Background         // biografia/notas (sistema existente)
+  antecedent?: Antecedent         // Antecedente D&D 5e
   skills: Skill[]
-  background?: Background
-  // NOVO
   pericias: CharacterPericia[]
   talentos: Talento[]
 }
@@ -155,4 +184,11 @@ export interface CreateCharacterDTO {
   wisdom: number
   charisma: number
   armor_id?: number
+  // 5e
+  antecedent_id?: number
+  alignment?: string
+  personality_traits?: string
+  ideals?: string
+  bonds?: string
+  flaws?: string
 }
