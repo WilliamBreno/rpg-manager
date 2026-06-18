@@ -219,6 +219,23 @@ func seedClasses5e(db *gorm.DB) {
 			TrainedSkillsCount: 2,
 			AvailableSkills:    `["Atletismo","Intuição","Intimidação","Medicina","Persuasão","Religião"]`,
 		},
+		{
+			Name:               "Patrulheiro",
+			Description:        "Guerreiro das regiões ermas que combina combate, magia da natureza e rastreamento.",
+			HitDie:             10,
+			SavingThrows:       `["FOR","DES"]`,
+			TrainedSkillsCount: 3,
+			AvailableSkills:    `["Atletismo","Furtividade","Intuição","Investigação","Lidar com Animais","Natureza","Percepção","Sobrevivência"]`,
+		},
+		{
+			Name:               "Xamã",
+			Description:        "Conjurador que canaliza espíritos ancestrais para curar aliados e atacar inimigos.",
+			HitDie:             8,
+			SavingThrows:       `["SAB","CAR"]`,
+			TrainedSkillsCount: 3,
+			AvailableSkills:    `["Arcanismo","Intuição","Lidar com Animais","Medicina","Natureza","Percepção","Religião","Sobrevivência"]`,
+		},
+
 	}
 
 	for _, c := range classes {
@@ -316,6 +333,8 @@ func seedSkills5e(db *gorm.DB) {
 	seedMago5e(db)
 	seedMonge5e(db)
 	seedPaladino5e(db)
+	seedPatrulheiro5e(db)
+	seedXama5e(db)
 }
 
 // getClass5e busca uma classe 5e pelo nome e retorna o ID.
@@ -534,6 +553,95 @@ func seedFeiticeiro5e(db *gorm.DB) {
 	log.Println("  ✓ Feiticeiro 5e: características seedadas")
 }
 
+func seedPatrulheiro5e(db *gorm.DB) {
+	id, ok := getClass5e(db, "Patrulheiro")
+	if !ok {
+		return
+	}
+ 
+	skills := []domain.Skill{
+		{
+			Name:    "Inimigo Favorito",
+			Edition: "5e", ClassID: &id,
+			Description: "Como Ação Bônus, você designa uma criatura que possa ver a até 27 metros como seu Alvo. Você causa 1d8 de dano extra nos ataques bem-sucedidos contra ela, tem Vantagem em testes de Sabedoria (Percepção) e de Sabedoria (Sobrevivência) para localizá-la, e Vantagem em testes de Inteligência para se recordar de informações sobre ela. O Alvo persiste até você usar esse traço novamente ou completar um Descanso Longo.",
+			Keywords: "Marcial", ActionType: "Ação Bônus", Range: "27 metros",
+			Effect:       "+1d8 dano extra no Alvo designado. Vantagem em Percepção/Sobrevivência contra ele.",
+			LevelScaling: "Nível 6: +1d8 adicional ao dano.",
+			PowerType:    domain.PowerEncounter, Level: 1, IsClassFeature: true,
+		},
+		{
+			Name:    "Explorador Natural",
+			Edition: "5e", ClassID: &id,
+			Description: "Você sempre tem os feitiços Druidismo, Emaranhar e Marca do Caçador preparados. Você pode conjurar Marca do Caçador sem gastar espaço de magia um número de vezes igual ao seu Bônus de Proficiência. Recupera em Descanso Longo.",
+			Keywords: "Marcial, Magia", ActionType: "Passiva", Range: "Pessoal",
+			Effect:       "Druidismo, Emaranhar e Marca do Caçador sempre preparados. Marca do Caçador gratuita = Bônus de Proficiência usos/dia.",
+			LevelScaling: "Nível 6: Falar com Animais sempre preparado.",
+			PowerType:    domain.PowerUnlimited, Level: 1, IsClassFeature: true,
+		},
+		{
+			Name:    "Conjuração de Patrulheiro",
+			Edition: "5e", ClassID: &id,
+			Description: "Atributo de conjuração: Sabedoria. Nível 1: sem truques, 2 espaços de 1° círculo. Magias preparadas = metade do nível de Patrulheiro (arredondado para cima) + modificador de Sabedoria.",
+			Keywords: "Magia", ActionType: "Passiva", Range: "Pessoal",
+			Effect:    "Acesso a espaços de magia de Patrulheiro. Sem truques.",
+			PowerType: domain.PowerUnlimited, Level: 1, IsClassFeature: true,
+		},
+		{
+			Name:    "Maestria em Armas",
+			Edition: "5e", ClassID: &id,
+			Description: "Você pode usar as propriedades de Maestria de 3 tipos de armas Simples ou Marciais à sua escolha. Sempre que completar um Descanso Longo pode substituir uma das escolhas.",
+			Keywords: "Marcial", ActionType: "Passiva", Range: "Pessoal",
+			Effect:    "Desbloqueia propriedades de Maestria em 3 armas escolhidas.",
+			PowerType: domain.PowerUnlimited, Level: 1, IsClassFeature: true,
+		},
+	}
+	for _, s := range skills {
+		upsertSkill(db, s, id)
+	}
+	log.Println("  ✓ Patrulheiro 5e: características seedadas")
+}
+ 
+// ── Xamã ──────────────────────────────────────────────────────────────────────
+ 
+func seedXama5e(db *gorm.DB) {
+	id, ok := getClass5e(db, "Xamã")
+	if !ok {
+		return
+	}
+ 
+	skills := []domain.Skill{
+		{
+			Name:    "Companheiro Espiritual",
+			Edition: "5e", ClassID: &id,
+			Description: "Como Ação, você evoca o espírito de uma besta que assume uma forma espectral e aparece em um espaço desocupado a até 9 metros de você. Ele persiste até você ser Incapacitado, morrer, dispensá-lo ou evocar outro. O companheiro tem CA = 10 + Bônus de Proficiência + modificador de Sabedoria, PV = 5 × nível de Xamã, e pode usar sua Reação para ajudar aliados adjacentes a ele. Usos = Bônus de Proficiência; recupera em Descanso Longo.",
+			Keywords: "Conjuração", ActionType: "Ação", Range: "9 metros",
+			Effect:       "Evoca espírito de besta espectral. CA = 10 + Bônus Prof + SAB. PV = 5 × nível.",
+			LevelScaling: "Nível 3: o espírito pode realizar um ataque (SAB vs CA, 1d8 + SAB necrótico ou radiante). Nível 5: o espírito concede vantagem em um ataque por turno.",
+			PowerType:    domain.PowerDaily, Level: 1, IsClassFeature: true,
+		},
+		{
+			Name:    "Conjuração de Xamã",
+			Edition: "5e", ClassID: &id,
+			Description: "Atributo de conjuração: Sabedoria. Nível 1: 2 truques, 2 espaços de 1° círculo. Magias preparadas = nível de Xamã + modificador de Sabedoria. O Xamã usa os feitiços do Druida como lista de feitiços.",
+			Keywords: "Magia", ActionType: "Passiva", Range: "Pessoal",
+			Effect:    "Acesso a truques e espaços de magia usando a lista do Druida. Atributo: Sabedoria.",
+			PowerType: domain.PowerUnlimited, Level: 1, IsClassFeature: true,
+		},
+		{
+			Name:    "Vínculo Espiritual",
+			Edition: "5e", ClassID: &id,
+			Description: "Você pode canalizar energia espiritual através de você e do seu Companheiro Espiritual. Enquanto o companheiro estiver ativo, você e aliados a até 9 metros dele têm Vantagem em testes de resistência contra ser Enfeitiçado ou Amedrontado. Além disso, sempre que seu companheiro for a até 9 metros de uma criatura, ela sofre Desvantagem no primeiro ataque que fizer antes do início do seu próximo turno.",
+			Keywords: "Espírito", ActionType: "Passiva", Range: "9 metros",
+			Effect:    "Enquanto Companheiro ativo: aliados próximos têm Vantagem vs Enfeitiçado/Amedrontado. Inimigos próximos têm Desvantagem no primeiro ataque.",
+			PowerType: domain.PowerUnlimited, Level: 1, IsClassFeature: true,
+		},
+	}
+	for _, s := range skills {
+		upsertSkill(db, s, id)
+	}
+	log.Println("  ✓ Xamã 5e: características seedadas")
+}
+ 
 // ── Guardião ──────────────────────────────────────────────────────────────────
 
 func seedGuardiao5e(db *gorm.DB) {
