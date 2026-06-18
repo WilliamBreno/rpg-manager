@@ -9,7 +9,8 @@ type Class struct {
 	Description string `json:"description"`
 
 	// 5e
-	HitDie int `json:"hit_die"`
+	HitDie       int    `json:"hit_die"`
+	SavingThrows string `json:"saving_throws"` // JSON: ["FOR","CON"]
 
 	// 4e
 	BaseHP       int `json:"base_hp"`
@@ -19,7 +20,7 @@ type Class struct {
 	ReflBonus    int `json:"refl_bonus"`
 	WillBonus    int `json:"will_bonus"`
 
-	// Perícias treinadas (4e)
+	// Perícias treinadas (ambas edições)
 	TrainedSkillsCount int    `json:"trained_skills_count"` // quantas pode treinar
 	AvailableSkills    string `json:"available_skills"`     // JSON: ["Atletismo","Percepção"]
 

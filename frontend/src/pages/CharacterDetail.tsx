@@ -28,14 +28,12 @@ export default function CharacterDetail() {
     queryFn: () => characterService.getByID(Number(id)),
   })
 
-  // ── Péricias do personagem ─────────────────────────────────────────────────
   const { data: characterPericias } = useQuery({
     queryKey: ['character-pericias', id],
     queryFn: () => periciaService.getByCharacter(Number(id)),
     enabled: !!id,
   })
 
-  // Todas as péricias para pegar atributo + tooltip pelo nome
   const { data: allPericias } = useQuery({
     queryKey: ['pericias', character?.edition],
     queryFn: () => periciaService.getAll(character?.edition),
@@ -43,14 +41,12 @@ export default function CharacterDetail() {
     staleTime: Infinity,
   })
 
-  // ── Talentos do personagem ─────────────────────────────────────────────────
   const { data: characterTalentos } = useQuery({
     queryKey: ['character-talentos', id],
     queryFn: () => talentoService.getByCharacter(Number(id)),
     enabled: !!id,
   })
 
-  // ── Mutations ──────────────────────────────────────────────────────────────
   const levelUpMutation = useMutation({
     mutationFn: () => characterService.levelUp(Number(id)),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['character', id] }),
@@ -64,7 +60,7 @@ export default function CharacterDetail() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <p className="text-gray-400">Carregando...</p>
+        <p className="text-gray-500">Carregando...</p>
       </div>
     )
   }
@@ -89,14 +85,12 @@ export default function CharacterDetail() {
     { label: 'VONT', value: character.defense_will },
   ] : []
 
-  // Agrupa talentos por categoria para exibição
   const talentosByCategory = (characterTalentos ?? []).reduce<Record<string, Talento[]>>(
     (acc, t) => {
       const cat = t.category ?? 'Outros'
       acc[cat] = [...(acc[cat] ?? []), t]
       return acc
-    },
-    {}
+    }, {}
   )
 
   const hasPericias = (characterPericias ?? []).length > 0
@@ -106,15 +100,19 @@ export default function CharacterDetail() {
     <div className="min-h-screen bg-gray-900 px-4 py-6 sm:px-8 sm:py-8">
       <div className="max-w-3xl mx-auto">
 
+        {/* Voltar */}
         <button
           onClick={() => navigate('/characters')}
-          className="text-gray-400 hover:text-white transition mb-4 sm:mb-6 block text-sm"
+          className="transition mb-4 sm:mb-6 block text-sm"
+          style={{ color: 'rgba(201,168,76,0.5)' }}
+          onMouseEnter={e => (e.currentTarget.style.color = '#c9a84c')}
+          onMouseLeave={e => (e.currentTarget.style.color = 'rgba(201,168,76,0.5)')}
         >
           ← Voltar
         </button>
 
-        {/* ── Cabeçalho ──────────────────────────────────────────────────── */}
-        <div className="bg-gray-800 rounded-lg p-4 sm:p-6 mb-4 border border-gray-700">
+        {/* ── Cabeçalho ──────────────────────────────────────────────────────── */}
+        <div className="bg-gray-800 rounded-xl p-4 sm:p-6 mb-4 border border-gray-700">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
             <div className="flex gap-4 items-center">
               <AvatarUpload
@@ -123,13 +121,18 @@ export default function CharacterDetail() {
                 characterName={character.name}
               />
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-white">{character.name}</h1>
-                <p className="text-gray-400 text-sm mt-0.5">Edição: {character.edition}</p>
+                <h1 className="text-2xl sm:text-3xl font-bold text-white font-rpg">{character.name}</h1>
+                <p className="text-gray-500 text-xs mt-0.5 uppercase tracking-wider">D&D {character.edition}</p>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  <span className="bg-indigo-900 text-indigo-300 px-3 py-1 rounded-full text-xs sm:text-sm">
+                  {/* Badge classe — dourado */}
+                  <span
+                    className="px-3 py-1 rounded-full text-xs font-medium"
+                    style={{ background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.3)', color: '#c9a84c' }}
+                  >
                     {character.class?.name ?? 'Sem classe'}
                   </span>
-                  <span className="bg-emerald-900 text-emerald-300 px-3 py-1 rounded-full text-xs sm:text-sm">
+                  {/* Badge raça — esmeralda */}
+                  <span className="bg-emerald-900/60 text-emerald-300 border border-emerald-700/50 px-3 py-1 rounded-full text-xs font-medium">
                     {character.race?.name ?? 'Sem raça'}
                   </span>
                 </div>
@@ -138,34 +141,38 @@ export default function CharacterDetail() {
 
             <div className="flex sm:flex-col items-center sm:items-end gap-4 sm:gap-1 sm:text-right">
               <div className="text-center sm:text-right">
-                <p className="text-gray-400 text-xs">Nível</p>
-                <p className="text-4xl sm:text-5xl font-bold text-yellow-400 leading-none">{character.level}</p>
+                <p className="text-gray-500 text-xs uppercase tracking-widest">Nível</p>
+                <p className="text-4xl sm:text-5xl font-bold leading-none font-rpg" style={{ color: '#c9a84c' }}>
+                  {character.level}
+                </p>
               </div>
-              <div className="text-sm text-gray-300 space-y-0.5">
+              <div className="text-sm text-gray-400 space-y-0.5">
                 <p>HP: <span className="text-white font-semibold">{character.hit_points}/{character.max_hp}</span></p>
                 {is4e && character.surge_value > 0 && (
                   <p>Pulso: <span className="text-white font-semibold">{character.surge_value}</span></p>
                 )}
                 {is4e && character.defense_ac > 0 && (
-                  <p>CA: <span className="text-indigo-300 font-semibold">{character.defense_ac}</span></p>
+                  <p>CA: <span className="font-semibold" style={{ color: '#c9a84c' }}>{character.defense_ac}</span></p>
                 )}
               </div>
             </div>
           </div>
         </div>
 
-        {/* ── HP Manager ─────────────────────────────────────────────────── */}
+        {/* ── HP Manager ─────────────────────────────────────────────────────── */}
         <HPManager character={character} />
 
-        {/* ── Atributos ──────────────────────────────────────────────────── */}
-        <div className="bg-gray-800 rounded-lg p-4 sm:p-6 mb-4 border border-gray-700">
-          <h2 className="text-base sm:text-lg font-semibold text-white mb-3">Atributos</h2>
+        {/* ── Atributos ──────────────────────────────────────────────────────── */}
+        <div className="bg-gray-800 rounded-xl p-4 sm:p-6 mb-4 border border-gray-700">
+          <h2 className="text-sm font-semibold uppercase tracking-widest mb-3" style={{ color: 'rgba(201,168,76,0.7)' }}>
+            Atributos
+          </h2>
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-3">
             {attributes.map(attr => {
               const modVal = Math.floor((attr.value - 10) / 2)
               return (
-                <div key={attr.label} className="text-center bg-gray-700 rounded-lg p-2 sm:p-3">
-                  <p className="text-gray-400 text-xs mb-1">{attr.label}</p>
+                <div key={attr.label} className="text-center bg-gray-700/60 rounded-lg p-2 sm:p-3 border border-gray-600/50">
+                  <p className="text-gray-500 text-xs mb-1 uppercase tracking-widest">{attr.label}</p>
                   <p className="text-white font-bold text-lg sm:text-xl">{attr.value}</p>
                   <p className={`text-xs font-semibold ${modVal >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                     {modVal >= 0 ? '+' : ''}{modVal}
@@ -176,20 +183,22 @@ export default function CharacterDetail() {
           </div>
         </div>
 
-        {/* ── Defesas (4e) ───────────────────────────────────────────────── */}
+        {/* ── Defesas (4e) ───────────────────────────────────────────────────── */}
         {is4e && defenses.some(d => d.value > 0) && (
-          <div className="bg-gray-800 rounded-lg p-4 sm:p-6 mb-4 border border-gray-700">
-            <h2 className="text-base sm:text-lg font-semibold text-white mb-3">Defesas</h2>
+          <div className="bg-gray-800 rounded-xl p-4 sm:p-6 mb-4 border border-gray-700">
+            <h2 className="text-sm font-semibold uppercase tracking-widest mb-3" style={{ color: 'rgba(201,168,76,0.7)' }}>
+              Defesas
+            </h2>
             <div className="grid grid-cols-4 gap-2 sm:gap-3">
               {defenses.map(d => (
-                <div key={d.label} className="text-center bg-gray-700 rounded-lg p-2 sm:p-3">
-                  <p className="text-gray-400 text-xs mb-1">{d.label}</p>
-                  <p className="text-indigo-300 font-bold text-lg sm:text-xl">{d.value}</p>
+                <div key={d.label} className="text-center bg-gray-700/60 rounded-lg p-2 sm:p-3 border border-gray-600/50">
+                  <p className="text-gray-500 text-xs mb-1 uppercase tracking-widest">{d.label}</p>
+                  <p className="font-bold text-lg sm:text-xl" style={{ color: '#c9a84c' }}>{d.value}</p>
                 </div>
               ))}
             </div>
             {is4e && character.surges_per_day > 0 && (
-              <p className="text-gray-400 text-xs mt-3">
+              <p className="text-gray-500 text-xs mt-3">
                 Pulsos de Cura:{' '}
                 <span className="text-white font-semibold">{character.surges_per_day}/dia</span>
                 {' '}(valor:{' '}
@@ -199,10 +208,10 @@ export default function CharacterDetail() {
           </div>
         )}
 
-        {/* ── Péricias Treinadas (4e) ────────────────────────────────────── */}
+        {/* ── Péricias Treinadas (4e) ─────────────────────────────────────────── */}
         {is4e && hasPericias && (
-          <div className="bg-gray-800 rounded-lg p-4 sm:p-6 mb-4 border border-gray-700">
-            <h2 className="text-base sm:text-lg font-semibold text-white mb-3">
+          <div className="bg-gray-800 rounded-xl p-4 sm:p-6 mb-4 border border-gray-700">
+            <h2 className="text-sm font-semibold uppercase tracking-widest mb-3" style={{ color: 'rgba(201,168,76,0.7)' }}>
               📚 Perícias Treinadas
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -211,14 +220,12 @@ export default function CharacterDetail() {
                 return (
                   <div
                     key={cp.pericia_name}
-                    className="flex items-center justify-between bg-gray-700 rounded-lg px-3 py-2.5 border border-gray-600"
+                    className="flex items-center justify-between bg-gray-700/60 rounded-lg px-3 py-2.5 border border-gray-600/50"
                   >
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-white text-sm font-medium">{cp.pericia_name}</span>
-                      {info && (
-                        <span className="text-gray-400 text-xs">({info.attribute})</span>
-                      )}
-                      <span className="text-teal-400 text-xs font-semibold">+5</span>
+                      {info && <span className="text-gray-500 text-xs">({info.attribute})</span>}
+                      <span className="text-xs font-semibold" style={{ color: '#5eead4' }}>+5</span>
                     </div>
                     {info && <Tooltip content={info.tooltip} />}
                   </div>
@@ -228,10 +235,10 @@ export default function CharacterDetail() {
           </div>
         )}
 
-        {/* ── Talentos (4e) ─────────────────────────────────────────────── */}
+        {/* ── Talentos (4e) ──────────────────────────────────────────────────── */}
         {is4e && hasTalentos && (
-          <div className="bg-gray-800 rounded-lg p-4 sm:p-6 mb-4 border border-gray-700">
-            <h2 className="text-base sm:text-lg font-semibold text-white mb-4">
+          <div className="bg-gray-800 rounded-xl p-4 sm:p-6 mb-4 border border-gray-700">
+            <h2 className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: 'rgba(201,168,76,0.7)' }}>
               🏆 Talentos
             </h2>
             <div className="flex flex-col gap-5">
@@ -246,13 +253,13 @@ export default function CharacterDetail() {
                       {talentos.map((t: Talento) => (
                         <div
                           key={t.ID}
-                          className="flex items-start justify-between bg-gray-700 rounded-lg px-3 py-2.5 border border-gray-600"
+                          className="flex items-start justify-between bg-gray-700/60 rounded-lg px-3 py-2.5 border border-gray-600/50"
                         >
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap mb-0.5">
                               <span className="text-white text-sm font-medium">{t.name}</span>
                               {t.prerequisite && (
-                                <span className="text-xs bg-orange-900/60 text-orange-300 px-1.5 py-0.5 rounded">
+                                <span className="text-xs bg-orange-900/60 text-orange-300 px-1.5 py-0.5 rounded border border-orange-700/40">
                                   Req: {t.prerequisite}
                                 </span>
                               )}
@@ -272,42 +279,43 @@ export default function CharacterDetail() {
           </div>
         )}
 
-        {/* ── Habilidades ────────────────────────────────────────────────── */}
-        <SkillsPanel
-          skills={character.skills ?? []}
-          edition={character.edition}
-        />
+        {/* ── Habilidades ────────────────────────────────────────────────────── */}
+        <SkillsPanel skills={character.skills ?? []} edition={character.edition} />
 
-        {/* ── Background ─────────────────────────────────────────────────── */}
-        <BackgroundForm
-          characterID={Number(id)}
-          background={character.background}
-        />
+        {/* ── Background ─────────────────────────────────────────────────────── */}
+        <BackgroundForm characterID={Number(id)} background={character.background} />
 
-        {/* ── Ações ──────────────────────────────────────────────────────── */}
-        <div className="flex flex-wrap gap-3 pb-6">
+        {/* ── Ações ──────────────────────────────────────────────────────────── */}
+        <div className="flex flex-wrap gap-2 pb-6 pt-2">
+
+          {/* Editar — outline dourado, sem emoji */}
           <button
             onClick={() => navigate(`/characters/${id}/edit`)}
-            className="flex-1 sm:flex-none bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-lg transition text-sm"
+            className="btn-rpg-outline flex-1 sm:flex-none"
           >
-            ✏️ Editar
+            Editar
           </button>
+
+          {/* Level Up — primário dourado */}
           <button
             onClick={() => levelUpMutation.mutate()}
             disabled={levelUpMutation.isPending || character.level >= 20}
-            className="flex-1 sm:flex-none bg-yellow-600 hover:bg-yellow-700 disabled:opacity-50 text-white font-semibold px-5 py-2.5 rounded-lg transition text-sm"
+            className="btn-rpg-primary flex-1 sm:flex-none"
           >
-            {levelUpMutation.isPending ? 'Subindo...' : '⬆ Level Up'}
+            {levelUpMutation.isPending ? 'Subindo...' : '▲ Level Up'}
           </button>
+
+          {/* Deletar — destrutivo, sem emoji */}
           <button
             onClick={() => {
               if (confirm('Tem certeza que deseja deletar este personagem?')) deleteMutation.mutate()
             }}
             disabled={deleteMutation.isPending}
-            className="flex-1 sm:flex-none bg-red-700 hover:bg-red-800 disabled:opacity-50 text-white font-semibold px-5 py-2.5 rounded-lg transition text-sm"
+            className="btn-rpg-danger flex-1 sm:flex-none"
           >
-            {deleteMutation.isPending ? 'Deletando...' : '🗑️ Deletar'}
+            {deleteMutation.isPending ? 'Deletando...' : 'Deletar'}
           </button>
+
         </div>
 
       </div>

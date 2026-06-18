@@ -10,6 +10,7 @@ export interface Class {
   fort_bonus: number
   refl_bonus: number
   will_bonus: number
+  saving_throws?: string 
   is_default: boolean
   // Perícias (4e)
   trained_skills_count: number  // quantas pode treinar
