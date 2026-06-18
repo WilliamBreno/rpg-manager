@@ -107,6 +107,8 @@ func main() {
 		api.POST("/ai/skills", ollamaHandler.GetSkills)
 		api.PATCH("/characters/:id/add-xp",    characterHandler.AddXP)
 		api.PATCH("/characters/:id/apply-asi", characterHandler.ApplyASI)
+		api.PATCH("/characters/:id/death-save",        characterHandler.DeathSave)
+		api.PATCH("/characters/:id/reset-death-saves", characterHandler.ResetDeathSaves)
 		classes := api.Group("/classes")
 		{
 			classes.GET("", classHandler.GetAll)

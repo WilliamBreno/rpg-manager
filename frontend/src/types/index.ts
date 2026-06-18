@@ -170,6 +170,9 @@ export interface Character {
   skills: Skill[]
   pericias: CharacterPericia[]
   talentos: Talento[]
+  experience_points?: number
+  death_save_successes?: number
+  death_save_failures?:  number
 }
 
 export interface CreateCharacterDTO {

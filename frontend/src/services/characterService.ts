@@ -66,4 +66,22 @@ export const characterService = {
     const { data } = await api.patch(`/characters/${characterID}/temp-hp`, { amount })
     return data
   },
+
+  addXP: async (id: number, xp: number) => {
+    const { data } = await api.patch(`/characters/${id}/add-xp`, { xp })
+    return data
+  },
+
+  applyASI: async (id: number, choices: Record<string, number>) => {
+    const { data } = await api.patch(`/characters/${id}/apply-asi`, choices)
+    return data
+  },
+  deathSave: async (id: number, body: { success: boolean; critical: boolean }) => {
+    const { data } = await api.patch(`/characters/${id}/death-save`, body)
+    return data
+  },
+  resetDeathSaves: async (id: number) => {
+    const { data } = await api.patch(`/characters/${id}/reset-death-saves`, {})
+    return data
+  },
 }
