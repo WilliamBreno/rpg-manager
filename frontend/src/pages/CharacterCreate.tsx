@@ -362,7 +362,13 @@ export default function CharacterCreate() {
       >{current} / {total}</span>
     )
   }
-
+  // Sincroniza a edition do sessionStorage com o react-hook-form no mount
+  useEffect(() => {
+    if (selectedEdition) {
+      setValue('edition', selectedEdition)
+    }
+  }, [selectedEdition, setValue])
+  
   return (
     <div className="min-h-screen bg-gray-900 px-4 py-6 sm:px-8 sm:py-8">
       <div className="max-w-2xl mx-auto">
@@ -396,7 +402,10 @@ export default function CharacterCreate() {
         </div>
 
         {selectedEdition && (
-          <form onSubmit={handleSubmit(data => createMutation.mutate(data))} className="flex flex-col gap-5">
+          <form onSubmit={handleSubmit(
+            data => createMutation.mutate(data),
+            (errors) => console.log('Erros de validação:', errors)
+          )} className="flex flex-col gap-5">
 
             {/* PASSO 2 — Nome */}
             <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
