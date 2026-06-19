@@ -14,7 +14,6 @@ import { talentoService } from '../services/talentoService'
 import { antecedentService } from '../services/antecedentService'
 import { SkillCard, powerConfig } from '../components/SkillCard'
 import { Tooltip } from '../components/Tooltip'
-// FIX 1: import único, Background removido, Antecedent adicionado
 import type { Class, Armor, Skill, PowerType, Race, Talento, Antecedent } from '../types'
 
 const schema = z.object({
@@ -30,7 +29,6 @@ const schema = z.object({
   wisdom:             z.coerce.number().min(1).max(20),
   charisma:           z.coerce.number().min(1).max(20),
   armor_id:           z.coerce.number().optional(),
-  // FIX 4a: background_id → antecedent_id (bate com json:"antecedent_id" no Go)
   antecedent_id:      z.coerce.number().optional(),
   alignment:          z.string().optional(),
   personality_traits: z.string().optional(),
@@ -106,6 +104,13 @@ export default function CharacterCreate() {
     setValue('hit_points', Math.max(1, newHP))
   }, [selectedClassData, constitution, selectedEdition, setValue])
 
+  // Sincroniza a edition do sessionStorage com o react-hook-form no mount
+  useEffect(() => {
+    if (selectedEdition) {
+      setValue('edition', selectedEdition)
+    }
+  }, [selectedEdition, setValue])
+
   const { data: classes }   = useQuery({ queryKey: ['classes', selectedEdition],  queryFn: () => classService.getAll(selectedEdition!),      enabled: !!selectedEdition })
   const { data: races }     = useQuery({ queryKey: ['races', selectedEdition],    queryFn: () => raceService.getAll(selectedEdition!),        enabled: !!selectedEdition })
   const { data: armors }    = useQuery({ queryKey: ['armors', selectedEdition],   queryFn: () => armorService.getByEdition(selectedEdition!), enabled: !!selectedEdition })
@@ -149,10 +154,13 @@ export default function CharacterCreate() {
     try { return JSON.parse(selectedBackground.skill_proficiencies) } catch { return [] }
   })()
 
+  // Pericias automáticas da classe (4e) — concedidas sem ocupar vaga de escolha.
+  // Ex: Bardo recebe Arcanismo automático + escolhe mais 4 da lista.
   const classAutoSkills: string[] = (() => {
     if (!is4e || !selectedClassData?.automatic_pericias) return []
     try { return JSON.parse(selectedClassData.automatic_pericias) } catch { return [] }
   })()
+
   const totalTrainable = (selectedClassData?.trained_skills_count ?? 0) + (selectedRaceData?.bonus_trained_skills ?? 0)
 
   const bonusSkillValues: Record<string, number> = (() => {
@@ -160,7 +168,8 @@ export default function CharacterCreate() {
     try { return JSON.parse(selectedRaceData.bonus_skill_values) } catch { return {} }
   })()
 
-  const totalTalentos = (selectedClassData?.talentos_count ?? 2) + (selectedRaceData?.bonus_talentos ?? 0)
+  // FIX TALENTOS: padrão é 1 talento por nível (não 2). Classe/raça podem conceder mais.
+  const totalTalentos = (selectedClassData?.talentos_count ?? 1) + (selectedRaceData?.bonus_talentos ?? 0)
 
   const classFeatures   = (allSkills ?? []).filter(s => s.is_class_feature && !s.requires_choice)
   const choiceFeatures  = (allSkills ?? []).filter(s => s.is_class_feature && s.requires_choice)
@@ -202,6 +211,7 @@ export default function CharacterCreate() {
     if (selectedClass && hasAnyChoiceGroups && !allChoicesMade)
       pendingItems.push('Complete as escolhas de características')
     if (selectedClass && totalTrainable > 0) {
+      // Conta só as perícias ESCOLHIDAS pelo jogador, excluindo as automáticas da classe
       const choiceMade = selectedPericias.filter(p => !classAutoSkills.includes(p)).length
       if (choiceMade < totalTrainable)
         pendingItems.push(`Escolha mais ${totalTrainable - choiceMade} perícia(s) treinada(s)`)
@@ -226,7 +236,6 @@ export default function CharacterCreate() {
     mutationFn: async (data: FormData) => {
       const characterData = {
         ...data,
-        // FIX 4b: background_id → antecedent_id para bater com o backend Go
         antecedent_id: selectedBackground?.ID ?? undefined,
         alignment:     selectedAlignment || undefined,
       }
@@ -270,7 +279,7 @@ export default function CharacterCreate() {
     setSelectedClassData(cls)
     setSelectedSkills({ unlimited: [], encounter: [], daily: [], utility: [] })
     setChoiceSelections({})
-    // 4e: pré-seleciona as pericias automáticas da classe
+    // 4e: pré-seleciona as pericias automáticas da classe (não contam no limite de escolha)
     const autoP: string[] = (() => {
       if (!cls?.automatic_pericias) return []
       try { return JSON.parse(cls.automatic_pericias) } catch { return [] }
@@ -283,13 +292,11 @@ export default function CharacterCreate() {
     setSelectedRace(raceId || null)
     setSelectedRaceData(races?.find(r => r.ID === raceId) ?? null)
   }
-  // FIX 4c: parâmetro tipado como Antecedent (não Background)
   const handleBackgroundChange = (bg: Antecedent) => {
     const newBgSkills: string[] = (() => {
       try { return JSON.parse(bg.skill_proficiencies) } catch { return [] }
     })()
     setSelectedBackground(bg)
-    // FIX 4d: setValue usa antecedent_id (não background_id)
     setValue('antecedent_id', bg.ID)
     setSelectedPericias(newBgSkills)
   }
@@ -311,11 +318,14 @@ export default function CharacterCreate() {
   const selectChoice     = (skill: Skill) => setChoiceSelections(prev => ({ ...prev, [skill.choice_group ?? 'default']: skill }))
   const isChoiceSelected = (skill: Skill) => choiceSelections[skill.choice_group ?? 'default']?.ID === skill.ID
 
+  // FIX PERÍCIA: agora exclui tanto backgroundSkills (5e) quanto classAutoSkills (4e)
+  // da contagem de "vagas ocupadas". Antes, a automática da classe ocupava uma vaga
+  // no toggle mas não era contada como escolha no pendingItems — causava deadlock.
   const togglePericia = (name: string) => {
-    if (backgroundSkills.includes(name)) return
+    if (backgroundSkills.includes(name) || classAutoSkills.includes(name)) return
     setSelectedPericias(prev => {
       if (prev.includes(name)) return prev.filter(p => p !== name)
-      const classChoices = prev.filter(p => !backgroundSkills.includes(p))
+      const classChoices = prev.filter(p => !backgroundSkills.includes(p) && !classAutoSkills.includes(p))
       if (classChoices.length >= totalTrainable) return prev
       return [...prev, name]
     })
@@ -328,15 +338,13 @@ export default function CharacterCreate() {
     })
   }
 
-  // FIX 2: classInfo agora tem a chave } de fechamento correta
   const classInfo = () => {
     if (!selectedClassData) return null
     if (is4e) return `PV base: ${selectedClassData.base_hp ?? '?'} + CON — ${selectedClassData.description}`
     const saves = savingThrows.length > 0 ? savingThrows.join(', ') : '—'
     return `Hit Die: d${selectedClassData.hit_die ?? '?'} · Salvaguardas: ${saves} — ${selectedClassData.description}`
-  } // ← CHAVE QUE ESTAVA FALTANDO
+  }
 
-  // FIX 3: hpLabel com template literals corretos (sem \`)
   const hpLabel = () => {
     if (!selectedClassData) return null
     const conValue = Number(constitution)
@@ -375,12 +383,6 @@ export default function CharacterCreate() {
       >{current} / {total}</span>
     )
   }
-  // Sincroniza a edition do sessionStorage com o react-hook-form no mount
-  useEffect(() => {
-    if (selectedEdition) {
-      setValue('edition', selectedEdition)
-    }
-  }, [selectedEdition, setValue])
 
   return (
     <div className="min-h-screen bg-gray-900 px-4 py-6 sm:px-8 sm:py-8">
@@ -415,10 +417,7 @@ export default function CharacterCreate() {
         </div>
 
         {selectedEdition && (
-          <form onSubmit={handleSubmit(
-            data => createMutation.mutate(data),
-            (errors) => console.log('Erros de validação:', errors)
-          )} className="flex flex-col gap-5">
+          <form onSubmit={handleSubmit(data => createMutation.mutate(data))} className="flex flex-col gap-5">
 
             {/* PASSO 2 — Nome */}
             <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
@@ -618,17 +617,6 @@ export default function CharacterCreate() {
               </div>
             )}
 
-            {is4e && classAutoSkills.length > 0 && (
-              <div className="mb-4 rounded-lg p-3" style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.25)' }}>
-                <p className="text-indigo-400 text-xs font-semibold mb-2">🔒 Classe — Automáticas</p>
-                <div className="flex flex-wrap gap-2">
-                  {classAutoSkills.map(s => (
-                    <span key={s} className="text-xs bg-indigo-900/60 text-indigo-300 px-2 py-1 rounded-full">📚 {s}</span>
-                  ))}
-                </div>
-              </div>
-            )}
-            
             {/* PASSO 7 — Perícias (4e e 5e) */}
             {(is4e || is5e) && selectedClass && allPericias && allPericias.length > 0 && (
               <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
@@ -636,7 +624,7 @@ export default function CharacterCreate() {
                   {sectionHeader(`Passo ${S()} — Perícias Treinadas`)}
                   {is5e
                     ? counterBadge(selectedPericias.filter(p => !backgroundSkills.includes(p)).length, totalTrainable)
-                    : counterBadge(selectedPericias.length, totalTrainable)
+                    : counterBadge(selectedPericias.filter(p => !classAutoSkills.includes(p)).length, totalTrainable)
                   }
                 </div>
                 <p className="text-gray-500 text-xs mb-4">
@@ -655,6 +643,16 @@ export default function CharacterCreate() {
                   </div>
                 )}
 
+                {/* 4e: banner de perícias automáticas da classe — mesmo padrão visual do antecedente 5e */}
+                {is4e && classAutoSkills.length > 0 && (
+                  <div className="mb-4 rounded-lg p-3" style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.25)' }}>
+                    <p className="text-indigo-400 text-xs font-semibold mb-2">🔒 Classe — Automáticas</p>
+                    <div className="flex flex-wrap gap-2">
+                      {classAutoSkills.map(s => <span key={s} className="text-xs bg-indigo-900/60 text-indigo-300 px-2 py-1 rounded-full">📚 {s}</span>)}
+                    </div>
+                  </div>
+                )}
+
                 {Object.keys(bonusSkillValues).length > 0 && (
                   <div className="mb-4 rounded-lg p-3" style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)' }}>
                     <p className="text-emerald-400 text-xs font-semibold mb-2">🐉 Bônus Racial Automático</p>
@@ -668,10 +666,11 @@ export default function CharacterCreate() {
 
                 <div className="flex flex-col gap-2 mb-4">
                   {allPericias
-                    .filter(p => availableSkills.includes(p.name) && !backgroundSkills.includes(p.name))
+                    .filter(p => availableSkills.includes(p.name) && !backgroundSkills.includes(p.name) && !classAutoSkills.includes(p.name))
                     .map(p => {
                       const isPerSelected = selectedPericias.includes(p.name)
-                      const classChoicesMade = selectedPericias.filter(x => !backgroundSkills.includes(x)).length
+                      // Exclui tanto antecedente (5e) quanto automáticas da classe (4e) da contagem
+                      const classChoicesMade = selectedPericias.filter(x => !backgroundSkills.includes(x) && !classAutoSkills.includes(x)).length
                       const isDisabled = !isPerSelected && classChoicesMade >= totalTrainable
                       const racialBonus = bonusSkillValues[p.name]
                       return (
@@ -900,7 +899,7 @@ export default function CharacterCreate() {
                     <span key={s.ID} className={`text-xs px-2 py-1 rounded-full ${powerConfig[(s.power_type as PowerType) ?? 'unlimited'].badge}`}>{s.name}</span>
                   ))}
                   {selectedPericias.map(name => (
-                    <span key={name} className={`text-xs px-2 py-1 rounded-full ${backgroundSkills.includes(name) ? 'bg-indigo-900/60 text-indigo-300' : 'bg-teal-900/60 text-teal-300'}`}>📚 {name}</span>
+                    <span key={name} className={`text-xs px-2 py-1 rounded-full ${backgroundSkills.includes(name) || classAutoSkills.includes(name) ? 'bg-indigo-900/60 text-indigo-300' : 'bg-teal-900/60 text-teal-300'}`}>📚 {name}</span>
                   ))}
                   {selectedTalentos.map(t => <span key={t.ID} className="text-xs px-2 py-1 rounded-full bg-orange-900/60 text-orange-300">🏆 {t.name}</span>)}
                 </div>
