@@ -152,15 +152,19 @@ func calcLevelUpHP(c *domain.Character) int {
 }
 
 // calcDefenses4e calcula CA, FORT, REFL e VONT conforme regras do 4e
+// CA usa o maior entre o modificador de DES e INT (regra 4e pós-errata),
+// o que naturalmente aplica o atributo certo para cada classe conforme
+// o personagem tenha investido em DES ou INT — mesma lógica já usada
+// abaixo para Reflexo.
 func calcDefenses4e(c *domain.Character, armorBonus int, maxDexBonus int) {
 	half := c.Level / 2
 
-	dexMod := mod(c.Dexterity)
-	if maxDexBonus >= 0 && dexMod > maxDexBonus {
-		dexMod = maxDexBonus
+	abilityMod := maxInt(mod(c.Dexterity), mod(c.Intelligence))
+	if maxDexBonus >= 0 && abilityMod > maxDexBonus {
+		abilityMod = maxDexBonus
 	}
 
-	c.Defense_AC = 10 + half + dexMod + armorBonus
+	c.Defense_AC = 10 + half + abilityMod + armorBonus
 	c.Defense_Fort = 10 + half + maxInt(mod(c.Strength), mod(c.Constitution)) + c.Class.FortBonus
 	c.Defense_Refl = 10 + half + maxInt(mod(c.Dexterity), mod(c.Intelligence)) + c.Class.ReflBonus
 	c.Defense_Will = 10 + half + maxInt(mod(c.Wisdom), mod(c.Charisma)) + c.Class.WillBonus
@@ -297,9 +301,22 @@ func (s *CharacterService) Create(character *domain.Character) error {
 		return errors.New("raça é obrigatória")
 	}
 
+	manualHP := character.HitPoints
+
 	character.Level = 1
 	character.ExperiencePoints = 0
 	s.recalculate(character)
+
+	// Respeita o HP definido manualmente no formulário de criação, em vez de
+	// sobrescrever com o valor calculado pela fórmula de classe/CON.
+	if manualHP > 0 {
+		character.HitPoints = manualHP
+		character.MaxHP = manualHP
+		if character.Edition == "4e" {
+			character.SurgeValue = manualHP / 4
+		}
+	}
+
 	return s.Repo.Create(character)
 }
 

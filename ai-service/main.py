@@ -15,18 +15,29 @@ class SkillQuery(BaseModel):
     edition: str
     level: int
 
+def get_indexed_books() -> list[str]:
+    """Lista os livros distintos indexados na coleção (metadado 'book' de ingest.py)."""
+    result = collection.get(include=["metadatas"])
+    return sorted({m["book"] for m in result["metadatas"] if m and "book" in m})
+
+# Calculado uma vez no boot — usado para garantir que cada livro indexado
+# (ex: um sourcebook menor como "Poder Arcano") tenha uma cota garantida de
+# chunks na busca, em vez de competir por espaço no top-k global contra
+# livros muito maiores (ex: os 3 volumes do Livro do Jogador).
+INDEXED_BOOKS = get_indexed_books()
+
 def search_relevant_chunks(query: str, n_results: int = 10) -> str:
     embeddings = OllamaEmbeddings(model="nomic-embed-text")
     query_embedding = embeddings.embed_query(query)
-    
+
     results = collection.query(
         query_embeddings=[query_embedding],
         n_results=n_results
     )
-    
+
     if not results['documents'][0]:
         return ""
-    
+
     return "\n\n".join(results['documents'][0])
 
 @app.post("/skills")
@@ -41,16 +52,24 @@ async def get_skills(query: SkillQuery):
     
     embeddings = OllamaEmbeddings(model="nomic-embed-text")
     all_chunks = set()
-    
+
+    # Consulta cada livro indexado separadamente (em vez de um único top-k
+    # global) para que livros menores, como "Poder Arcano", não sejam
+    # abafados por livros muito maiores (ex: os 3 volumes do Livro do
+    # Jogador) na busca semântica.
+    books = INDEXED_BOOKS or [None]
+
     for q in search_queries:
         query_embedding = embeddings.embed_query(q)
-        results = collection.query(
-            query_embeddings=[query_embedding],
-            n_results=8
-        )
-        if results['documents'][0]:
-            for doc in results['documents'][0]:
-                all_chunks.add(doc)
+        for book in books:
+            results = collection.query(
+                query_embeddings=[query_embedding],
+                n_results=6,
+                where={"book": book} if book else None,
+            )
+            if results['documents'][0]:
+                for doc in results['documents'][0]:
+                    all_chunks.add(doc)
     
     context = "\n\n".join(list(all_chunks))
     
