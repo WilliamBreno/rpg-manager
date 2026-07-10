@@ -37,6 +37,7 @@ type Skill struct {
 	Miss         string `json:"miss"`
 	Effect       string `json:"effect"`
 	Special      string `json:"special"`
+	Special2      string `json:"special2"`
 	LevelScaling string `json:"level_scaling"`
 
 	// Características de classe
