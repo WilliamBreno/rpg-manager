@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+**Manutenção deste arquivo:** sempre que um trabalho nesta sessão alterar algo que uma seção abaixo descreve (arquitetura, comandos, comportamento das edições 4e/5e, camadas, deploy, etc.), atualize a seção correspondente antes de considerar a tarefa concluída — não crie um changelog separado; o histórico de mudanças já vive no `git log`.
+
 ## Project overview
 
 RPG Manager is a character sheet manager for tabletop D&D that supports **two editions side by side: 4e and 3.5/5e**. A character's `Edition` field ("4e" or "5e") drives which rules, fields, and calculations apply throughout the backend — this is the central architectural fact of the codebase. There are three independent apps in this repo:

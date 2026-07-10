@@ -38,8 +38,17 @@ def extract_text_from_pdf(pdf_path: str) -> str:
     print(f"\n  ✅ {pdf_path} processado!")
     return full_text
 
+def is_already_indexed(book_name: str) -> bool:
+    """Verifica se o livro já tem chunks na coleção, pra não reprocessar (OCR é caro)."""
+    existing = collection.get(where={"book": book_name}, limit=1)
+    return len(existing["ids"]) > 0
+
 def ingest_pdf(pdf_path: str, book_name: str):
     """Processa e indexa um PDF no ChromaDB"""
+    if is_already_indexed(book_name):
+        print(f"\n⏭️  {book_name} já está indexado, pulando.")
+        return
+
     print(f"\n📚 Iniciando ingestão: {book_name}")
     
     # Extrai texto
