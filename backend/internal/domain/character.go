@@ -61,4 +61,16 @@ type Character struct {
 	// Death Saving Throws (5e)
 	DeathSaveSuccesses int `json:"death_save_successes"`
 	DeathSaveFailures  int `json:"death_save_failures"`
+
+	// ── Moedas (5e) — as 5 moedas oficiais, cada uma independente (não são
+	// "trocadas" automaticamente entre si) ────────────────────────────────────
+	CopperPieces   int `json:"copper_pieces"`
+	SilverPieces   int `json:"silver_pieces"`
+	ElectrumPieces int `json:"electrum_pieces"`
+	GoldPieces     int `json:"gold_pieces"`
+	PlatinumPieces int `json:"platinum_pieces"`
+
+	// ── Inventário (5e) ──────────────────────────────────────────────────────
+	Items  []CharacterItem       `json:"items"  gorm:"foreignKey:CharacterID"`
+	Armors []CharacterArmorOwned `json:"armors" gorm:"foreignKey:CharacterID"`
 }

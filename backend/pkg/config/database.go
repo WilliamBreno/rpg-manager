@@ -45,6 +45,9 @@ func ConnectDatabase() {
         &domain.Pericia{},
         &domain.CharacterPericia{},
         &domain.Talento{},
+        &domain.Item{},
+        &domain.CharacterItem{},
+        &domain.CharacterArmorOwned{},
     )
     if err != nil {
         log.Fatal("Erro ao executar AutoMigrate: ", err)

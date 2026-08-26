@@ -11,21 +11,9 @@ import SkillsPanel from '../components/SkillsPanel'
 import { Tooltip } from '../components/Tooltip'
 import type { Pericia, Talento, Antecedent } from '../types'
 import DeathSaves from '../components/DeathSaves'
-// ── Tabelas de XP ────────────────────────────────────────────────────────────
-const XP_TABLE_4E: Record<number, number> = {
-  1: 0, 2: 1000, 3: 2250, 4: 3750, 5: 5500,
-  6: 7500, 7: 10000, 8: 13000, 9: 16500, 10: 20500,
-  11: 26000, 12: 32000, 13: 39000, 14: 47000, 15: 57000,
-  16: 69000, 17: 83000, 18: 99000, 19: 119000, 20: 143000,
-  21: 175000, 22: 210000, 23: 255000, 24: 310000, 25: 375000,
-  26: 450000, 27: 550000, 28: 675000, 29: 825000, 30: 1000000,
-}
-const XP_TABLE_5E: Record<number, number> = {
-  1: 0, 2: 300, 3: 900, 4: 2700, 5: 6500,
-  6: 14000, 7: 23000, 8: 34000, 9: 48000, 10: 64000,
-  11: 85000, 12: 100000, 13: 120000, 14: 140000, 15: 165000,
-  16: 195000, 17: 225000, 18: 265000, 19: 305000, 20: 355000,
-}
+import LevelUpCelebration from '../components/LevelUpCelebration'
+import InventoryPanel from '../components/InventoryPanel'
+import { maxLevelFor, xpProgressFor } from '../lib/xpTables'
 
 // ── Níveis ASI 5e ─────────────────────────────────────────────────────────────
 const ASI_LEVELS_5E = new Set([4, 8, 12, 16, 19])
@@ -85,6 +73,9 @@ export default function CharacterDetail() {
   const [xpFeedback, setXpFeedback] = useState<XPFeedback | null>(null)
   const [showASIModal, setShowASIModal] = useState(false)
   const [asiChoices, setAsiChoices] = useState<ASIChoices>({ ...EMPTY_ASI })
+  const [exportingPdf, setExportingPdf] = useState(false)
+  const [exportPdfError, setExportPdfError] = useState<string | null>(null)
+  const [celebrateLevel, setCelebrateLevel] = useState<number | null>(null)
 
   // ── Queries ──────────────────────────────────────────────────────────────
   const { data: character, isLoading } = useQuery({
@@ -120,6 +111,7 @@ export default function CharacterDetail() {
       queryClient.invalidateQueries({ queryKey: ['character', id] })
       setXpInput('')
       if (data.leveled_up) {
+        setCelebrateLevel(data.new_level)
         if (data.needs_asi) {
           // Nível ASI: abre modal de melhoria de atributo
           setXpFeedback({ message: `⬆️ Subiu para o nível ${data.new_level}! Escolha uma melhoria de atributo.`, type: 'level' })
@@ -147,6 +139,7 @@ export default function CharacterDetail() {
       setShowASIModal(false)
       setAsiChoices({ ...EMPTY_ASI })
       if (data.leveled_up) {
+        setCelebrateLevel(data.new_level)
         if (data.needs_asi) {
           // Outro nível ASI pendente — reabre o modal após breve pausa
           setXpFeedback({ message: `⬆️ Subiu para o nível ${data.new_level}! Escolha outra melhoria.`, type: 'level' })
@@ -168,7 +161,10 @@ export default function CharacterDetail() {
 
   const levelUpMutation = useMutation({
     mutationFn: () => characterService.levelUp(Number(id)),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['character', id] }),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['character', id] })
+      setCelebrateLevel(data.level)
+    },
   })
 
   const deleteMutation = useMutation({
@@ -188,20 +184,33 @@ export default function CharacterDetail() {
 
   const is4e = character.edition === '4e'
   const is5e = character.edition === '5e'
-  const maxLvl = is4e ? 30 : 20
+  const maxLvl = maxLevelFor(character.edition)
   const isMaxLevel = character.level >= maxLvl
 
+  // ── Export de ficha PDF (5e) ─────────────────────────────────────────────
+  const handleExportPdf = async () => {
+    setExportPdfError(null)
+    setExportingPdf(true)
+    try {
+      const blob = await characterService.exportPdf(character.ID)
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `ficha_${character.name}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    } catch {
+      setExportPdfError('Não foi possível exportar a ficha em PDF. Tente novamente em instantes.')
+    } finally {
+      setExportingPdf(false)
+    }
+  }
+
   // ── Cálculo de XP ────────────────────────────────────────────────────────
-  const xpTable = is4e ? XP_TABLE_4E : XP_TABLE_5E
-  const currentXP = character.experience_points ?? 0
-  const currentLevelXP = xpTable[character.level] ?? 0
-  const nextLevelXP = xpTable[character.level + 1] ?? 0
-  const xpNeeded = isMaxLevel ? 0 : Math.max(0, nextLevelXP - currentXP)
-  const xpProgress = isMaxLevel
-    ? 100
-    : nextLevelXP > currentLevelXP
-    ? Math.min(100, Math.max(0, ((currentXP - currentLevelXP) / (nextLevelXP - currentLevelXP)) * 100))
-    : 100
+  const { currentXP, currentLevelXP, nextLevelXP, xpNeeded, progressPercent: xpProgress } =
+    xpProgressFor(character.edition, character.level, character.experience_points ?? 0)
 
   // ── Dados 5e calculados ──────────────────────────────────────────────────
   const profBonus = profBonusFor(character.level)
@@ -269,13 +278,38 @@ export default function CharacterDetail() {
   // ── Render ───────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gray-900 px-4 py-6 sm:px-8 sm:py-8">
+      {celebrateLevel !== null && (
+        <LevelUpCelebration level={celebrateLevel} onDone={() => setCelebrateLevel(null)} />
+      )}
       <div className="max-w-3xl mx-auto">
 
-        <button onClick={() => navigate('/characters')} className="transition mb-4 sm:mb-6 block text-sm"
-          style={{ color: 'rgba(201,168,76,0.5)' }}
-          onMouseEnter={e => (e.currentTarget.style.color = '#c9a84c')}
-          onMouseLeave={e => (e.currentTarget.style.color = 'rgba(201,168,76,0.5)')}
-        >← Voltar</button>
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
+          <button onClick={() => navigate('/characters')} className="transition block text-sm"
+            style={{ color: 'rgba(201,168,76,0.5)' }}
+            onMouseEnter={e => (e.currentTarget.style.color = '#c9a84c')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(201,168,76,0.5)')}
+          >← Voltar</button>
+
+          {is5e && (
+            <div className="flex gap-2">
+              <button onClick={() => navigate(`/characters/${id}/shop`)}
+                className="text-sm px-3 py-1.5 rounded-lg border transition"
+                style={{ color: '#c9a84c', borderColor: 'rgba(201,168,76,0.4)', background: 'rgba(201,168,76,0.08)' }}
+              >
+                🛒 Loja
+              </button>
+              <button onClick={handleExportPdf} disabled={exportingPdf}
+                className="text-sm px-3 py-1.5 rounded-lg border transition disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ color: '#c9a84c', borderColor: 'rgba(201,168,76,0.4)', background: 'rgba(201,168,76,0.08)' }}
+              >
+                {exportingPdf ? 'Gerando PDF...' : '📄 Exportar ficha PDF'}
+              </button>
+            </div>
+          )}
+        </div>
+        {is5e && exportPdfError && (
+          <p className="text-red-400 text-sm mb-4 -mt-2">{exportPdfError}</p>
+        )}
 
         {/* ── Cabeçalho ──────────────────────────────────────────────────── */}
         <div className="bg-gray-800 rounded-xl p-4 sm:p-6 mb-4 border border-gray-700">
@@ -719,6 +753,20 @@ export default function CharacterDetail() {
 
         {/* ── Habilidades / Skills ─────────────────────────────────────────── */}
         <SkillsPanel skills={character.skills ?? []} edition={character.edition} />
+
+        {/* ── Inventário / Loja (5e) ───────────────────────────────────────── */}
+        {is5e && (
+          <InventoryPanel
+            characterId={character.ID}
+            currency={{
+              copper_pieces: character.copper_pieces ?? 0,
+              silver_pieces: character.silver_pieces ?? 0,
+              electrum_pieces: character.electrum_pieces ?? 0,
+              gold_pieces: character.gold_pieces ?? 0,
+              platinum_pieces: character.platinum_pieces ?? 0,
+            }}
+          />
+        )}
 
         {/* ── Background Form (biografia/notas) ───────────────────────────── */}
         <BackgroundForm characterID={Number(id)} />

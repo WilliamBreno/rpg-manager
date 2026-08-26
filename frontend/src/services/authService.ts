@@ -22,4 +22,8 @@ export const authService = {
     const { data: response } = await api.post('/auth/login', data)
     return response
   },
+
+  markWelcomeSeen: async (): Promise<void> => {
+    await api.patch('/users/me/welcome-seen')
+  },
 }

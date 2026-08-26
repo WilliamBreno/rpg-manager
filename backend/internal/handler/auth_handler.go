@@ -59,10 +59,11 @@ func (h *AuthHandler) Register(c *gin.Context) {
     c.JSON(http.StatusCreated, gin.H{
         "message": "Usuário criado com sucesso",
         "user": gin.H{
-            "id":    user.ID,
-            "name":  user.Name,
-            "email": user.Email,
-            "role":  user.Role,
+            "id":           user.ID,
+            "name":         user.Name,
+            "email":        user.Email,
+            "role":         user.Role,
+            "welcome_seen": user.WelcomeSeen,
         },
     })
 }
@@ -83,10 +84,23 @@ func (h *AuthHandler) Login(c *gin.Context) {
     c.JSON(http.StatusOK, gin.H{
         "token": token,
         "user": gin.H{
-            "id":    user.ID,
-            "name":  user.Name,
-            "email": user.Email,
-            "role":  user.Role,
+            "id":           user.ID,
+            "name":         user.Name,
+            "email":        user.Email,
+            "role":         user.Role,
+            "welcome_seen": user.WelcomeSeen,
         },
     })
+}
+
+// MarkWelcomeSeen — PATCH /users/me/welcome-seen
+// Marca que o usuário autenticado já viu o modal de boas-vindas, pra não
+// mostrar de novo em outro login (inclusive de outro navegador/dispositivo).
+func (h *AuthHandler) MarkWelcomeSeen(c *gin.Context) {
+    userID := c.GetUint("userID")
+    if err := h.Service.MarkWelcomeSeen(userID); err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao atualizar usuário"})
+        return
+    }
+    c.JSON(http.StatusOK, gin.H{"welcome_seen": true})
 }

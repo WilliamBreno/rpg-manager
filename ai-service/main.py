@@ -1,9 +1,12 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import Response
 from pydantic import BaseModel
 import chromadb
 from langchain_ollama import OllamaEmbeddings
 import ollama
 import json
+
+from pdf_export.fill_dnd5e_sheet import fill_sheet
 
 app = FastAPI()
 
@@ -138,6 +141,63 @@ JSON array of ALL {query.class_name} powers up to level {query.level}:"""
         
     except json.JSONDecodeError as e:
         return {"error": f"Erro ao parsear JSON: {str(e)}", "raw": json_str}
+
+class AbilityScore(BaseModel):
+    valor: int
+    mod: int
+
+
+class SaveOrSkill(BaseModel):
+    valor: int
+    proficiente: bool
+
+
+class DeathSaves(BaseModel):
+    sucessos: int = 0
+    falhas: int = 0
+
+
+class CharacterSheet5e(BaseModel):
+    """
+    Payload já totalmente calculado pelo backend Go (character_service.go /
+    armor_service.go) — este serviço não reimplementa nenhuma regra de D&D,
+    apenas mapeia os valores para os campos do AcroForm da ficha oficial.
+    """
+    nome: str
+    classe_nivel: str
+    antecedente: str = ""
+    raca: str = ""
+    alinhamento: str = ""
+    xp: int = 0
+    atributos: dict[str, AbilityScore]
+    bonus_proficiencia: int
+    ca: int
+    iniciativa: int
+    deslocamento: int
+    pv_maximo: int
+    pv_atual: int
+    pv_temporario: int = 0
+    dados_de_vida_total: str = ""
+    dados_de_vida: str = ""
+    resistencia_morte: DeathSaves = DeathSaves()
+    salvaguardas: dict[str, SaveOrSkill]
+    pericias: dict[str, SaveOrSkill] = {}
+    percepcao_passiva: int = 10
+    tracos_personalidade: str = ""
+    ideais: str = ""
+    vinculos: str = ""
+    defeitos: str = ""
+
+
+@app.post("/export/pdf/5e")
+async def export_pdf_5e(character: CharacterSheet5e):
+    try:
+        pdf_bytes = fill_sheet(character.model_dump())
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Falha ao preencher a ficha: {e}")
+
+    return Response(content=pdf_bytes, media_type="application/pdf")
+
 
 @app.get("/health")
 async def health():

@@ -21,7 +21,9 @@ func (r *ClassRepository) FindAll() ([]domain.Class, error) {
 
 func (r *CharacterRepository) FindByID(id uint) (domain.Character, error) {
     var character domain.Character
-    result := r.DB.Preload("Class").Preload("Race").Preload("Skills").First(&character, id)
+    result := r.DB.Preload("Class").Preload("Race").Preload("Skills").
+        Preload("Armor").Preload("Antecedent").Preload("Pericias").
+        First(&character, id)
     return character, result.Error
 }
 

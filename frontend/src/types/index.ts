@@ -123,6 +123,45 @@ export interface Armor {
   base_ac: number
   max_dex_bonus: number
   description: string
+  weight?: string
+  cost_copper?: number
+}
+
+// ── Item / Loja / Inventário (5e) ─────────────────────────────────────────────
+export type ItemCategory = 'arma' | 'equipamento' | 'item_magico'
+export type ItemRarity = '' | 'comum' | 'incomum' | 'raro' | 'muito_raro' | 'lendario'
+
+export interface Item {
+  ID: number
+  name: string
+  edition: string
+  category: ItemCategory
+  description: string
+  weight: string
+  rarity: ItemRarity
+  cost_copper: number
+}
+
+export interface CharacterItem {
+  character_id: number
+  item_id: number
+  quantity: number
+  item: Item
+}
+
+export interface CharacterArmorOwned {
+  character_id: number
+  armor_id: number
+  quantity: number
+  armor: Armor
+}
+
+export interface Currency {
+  copper_pieces: number
+  silver_pieces: number
+  electrum_pieces: number
+  gold_pieces: number
+  platinum_pieces: number
 }
 
 // ── Character ────────────────────────────────────────────────────────────────
@@ -173,6 +212,12 @@ export interface Character {
   experience_points?: number
   death_save_successes?: number
   death_save_failures?:  number
+  // ── Moedas (5e) ────────────────────────────────────────────────────────────
+  copper_pieces?:   number
+  silver_pieces?:   number
+  electrum_pieces?: number
+  gold_pieces?:     number
+  platinum_pieces?: number
 }
 
 export interface CreateCharacterDTO {

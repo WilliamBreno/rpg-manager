@@ -5,6 +5,7 @@ interface User {
   name: string
   email: string
   role: 'player' | 'master'
+  welcome_seen: boolean
 }
 
 interface AuthStore {
@@ -13,6 +14,7 @@ interface AuthStore {
   setAuth: (token: string, user: User) => void
   logout: () => void
   isAuthenticated: () => boolean
+  markWelcomeSeen: () => void
 }
 
 export const useAuthStore = create<AuthStore>((set, get) => ({
@@ -32,4 +34,14 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 
   isAuthenticated: () => !!get().token,
+
+  // Atualização otimista local — o backend já foi marcado por quem chamou isso
+  // (authService.markWelcomeSeen); aqui só sincroniza o estado em memória/cache.
+  markWelcomeSeen: () => {
+    const current = get().user
+    if (!current) return
+    const updated = { ...current, welcome_seen: true }
+    localStorage.setItem('user', JSON.stringify(updated))
+    set({ user: updated })
+  },
 }))

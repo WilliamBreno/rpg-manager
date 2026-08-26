@@ -34,6 +34,7 @@ func main() {
 	armorRepo      := repository.NewArmorRepository(config.DB)
 	periciaRepo    := repository.NewPericiaRepository(config.DB)
 	talentoRepo    := repository.NewTalentoRepository(config.DB)
+	itemRepo       := repository.NewItemRepository(config.DB)
 
 	_ = backgroundRepo // usado indiretamente via backgroundService
 
@@ -48,6 +49,8 @@ func main() {
 	armorService      := service.NewArmorService(armorRepo)
 	periciaService    := service.NewPericiaService(periciaRepo)
 	talentoService    := service.NewTalentoService(talentoRepo)
+	itemService       := service.NewItemService(itemRepo)
+	inventoryService  := service.NewInventoryService(config.DB)
 
 	// Handlers
 	antecedentHandler := handler.NewAntecedentHandler(antecedentSvc)
@@ -55,13 +58,15 @@ func main() {
 	classHandler      := handler.NewClassHandler(classService)
 	raceHandler       := handler.NewRaceHandler(raceService)
 	skillHandler      := handler.NewSkillHandler(skillService)
-	characterHandler  := handler.NewCharacterHandler(characterService, armorService)
+	characterHandler  := handler.NewCharacterHandler(characterService, armorService, periciaService)
 	backgroundHandler := handler.NewBackgroundHandler(backgroundService)
 	uploadHandler     := handler.NewUploadHandler(characterRepo)
 	armorHandler      := handler.NewArmorHandler(armorService)
 	ollamaHandler     := handler.NewOllamaHandler()
 	periciaHandler    := handler.NewPericiaHandler(periciaService)
 	talentoHandler    := handler.NewTalentoHandler(talentoService)
+	itemHandler       := handler.NewItemHandler(itemService)
+	inventoryHandler  := handler.NewInventoryHandler(inventoryService, characterService)
 
 	r := gin.Default()
 	r.Static("/uploads", "./uploads")
@@ -100,6 +105,7 @@ func main() {
 
 		// Rotas públicas
 		api.GET("/armors", armorHandler.GetByEdition)
+		api.GET("/items", itemHandler.GetAll)
 		api.GET("/pericias", periciaHandler.GetAll)
 		api.GET("/talentos", talentoHandler.GetAll)
 		api.GET("/antecedentes", antecedentHandler.GetAll)
@@ -129,6 +135,8 @@ func main() {
 		protected := api.Group("/")
 		protected.Use(middleware.AuthMiddleware(authService))
 		{
+			protected.PATCH("/users/me/welcome-seen", authHandler.MarkWelcomeSeen)
+
 			protected.POST("/classes", classHandler.Create)
 			protected.PUT("/classes/:id", classHandler.Update)
 			protected.DELETE("/classes/:id", classHandler.Delete)
@@ -158,11 +166,16 @@ func main() {
 				characters.PATCH("/:id/heal", characterHandler.Heal)
 				characters.PATCH("/:id/temp-hp", characterHandler.AddTempHP)
 				characters.GET("/:id/ac", characterHandler.GetAC)
+				characters.GET("/:id/export/pdf", characterHandler.ExportPDF5e)
 				characters.GET("/:id/pericias", periciaHandler.GetByCharacter)
 				characters.POST("/:id/pericias", periciaHandler.Save)
 				characters.GET("/:id/talentos", talentoHandler.GetByCharacter)
 				characters.POST("/:id/talentos/:talento_id", talentoHandler.Add)
 				characters.DELETE("/:id/talentos/:talento_id", talentoHandler.Remove)
+				characters.GET("/:id/inventory", inventoryHandler.GetInventory)
+				characters.POST("/:id/shop/items/:item_id", inventoryHandler.PurchaseItem)
+				characters.POST("/:id/shop/armors/:armor_id", inventoryHandler.PurchaseArmor)
+				characters.PATCH("/:id/currency", inventoryHandler.SetCurrency)
 			}
 		}
 	}

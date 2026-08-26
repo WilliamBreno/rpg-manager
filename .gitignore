@@ -8,6 +8,10 @@ frontend/dist/
 
 # AI Service
 ai-service/chroma_db/
+ai-service/chroma_db_5e/
 ai-service/books/
 ai-service/__pycache__/
+ai-service/**/__pycache__/
 ai-service/*.pyc
+ai-service/**/*.pyc
+ai-service/.pytest_cache/

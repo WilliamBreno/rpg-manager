@@ -92,6 +92,10 @@ func (s *AuthService) generateToken(user domain.User) (string, error) {
     return token.SignedString([]byte(secret))
 }
 
+func (s *AuthService) MarkWelcomeSeen(userID uint) error {
+    return s.UserRepo.MarkWelcomeSeen(userID)
+}
+
 func (s *AuthService) ValidateToken(tokenStr string) (*Claims, error) {
     secret := os.Getenv("JWT_SECRET")
     if secret == "" {

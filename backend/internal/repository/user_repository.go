@@ -28,3 +28,7 @@ func (r *UserRepository) FindByID(id uint) (domain.User, error) {
 func (r *UserRepository) Create(user *domain.User) error {
     return r.DB.Create(user).Error
 }
+
+func (r *UserRepository) MarkWelcomeSeen(id uint) error {
+    return r.DB.Model(&domain.User{}).Where("id = ?", id).Update("welcome_seen", true).Error
+}

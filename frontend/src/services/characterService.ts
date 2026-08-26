@@ -1,5 +1,5 @@
 import api from './api'
-import type { Character, CreateCharacterDTO } from '../types'
+import type { Character, CreateCharacterDTO, Currency, CharacterItem, CharacterArmorOwned } from '../types'
 
 export const characterService = {
   getAll: async (): Promise<Character[]> => {
@@ -82,6 +82,33 @@ export const characterService = {
   },
   resetDeathSaves: async (id: number) => {
     const { data } = await api.patch(`/characters/${id}/reset-death-saves`, {})
+    return data
+  },
+
+  exportPdf: async (id: number): Promise<Blob> => {
+    const { data } = await api.get(`/characters/${id}/export/pdf`, {
+      responseType: 'blob',
+    })
+    return data
+  },
+
+  getInventory: async (id: number): Promise<{ items: CharacterItem[]; armors: CharacterArmorOwned[] }> => {
+    const { data } = await api.get(`/characters/${id}/inventory`)
+    return data
+  },
+
+  buyItem: async (characterId: number, itemId: number, quantity = 1): Promise<Character> => {
+    const { data } = await api.post(`/characters/${characterId}/shop/items/${itemId}`, { quantity })
+    return data
+  },
+
+  buyArmor: async (characterId: number, armorId: number, quantity = 1): Promise<Character> => {
+    const { data } = await api.post(`/characters/${characterId}/shop/armors/${armorId}`, { quantity })
+    return data
+  },
+
+  setCurrency: async (characterId: number, currency: Currency): Promise<Character> => {
+    const { data } = await api.patch(`/characters/${characterId}/currency`, currency)
     return data
   },
 }
