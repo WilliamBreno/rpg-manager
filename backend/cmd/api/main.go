@@ -43,7 +43,7 @@ func main() {
 	classService      := service.NewClassService(classRepo)
 	raceService       := service.NewRaceService(raceRepo)
 	skillService      := service.NewSkillService(skillRepo)
-	characterService  := service.NewCharacterService(characterRepo, skillRepo, classRepo)
+	characterService  := service.NewCharacterService(characterRepo, skillRepo, classRepo, raceRepo)
 	backgroundService := service.NewBackgroundService(config.DB)
 	antecedentSvc     := service.NewAntecedentService(config.DB)
 	armorService      := service.NewArmorService(armorRepo)

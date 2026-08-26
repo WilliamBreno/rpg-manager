@@ -10,10 +10,11 @@ type CharacterService struct {
 	Repo      *repository.CharacterRepository
 	SkillRepo *repository.SkillRepository
 	ClassRepo *repository.ClassRepository
+	RaceRepo  *repository.RaceRepository
 }
 
-func NewCharacterService(repo *repository.CharacterRepository, skillRepo *repository.SkillRepository, classRepo *repository.ClassRepository) *CharacterService {
-	return &CharacterService{Repo: repo, SkillRepo: skillRepo, ClassRepo: classRepo}
+func NewCharacterService(repo *repository.CharacterRepository, skillRepo *repository.SkillRepository, classRepo *repository.ClassRepository, raceRepo *repository.RaceRepository) *CharacterService {
+	return &CharacterService{Repo: repo, SkillRepo: skillRepo, ClassRepo: classRepo, RaceRepo: raceRepo}
 }
 
 // ── Tabelas de XP ────────────────────────────────────────────────────────────
@@ -327,6 +328,21 @@ func (s *CharacterService) Create(character *domain.Character) error {
 		return errors.New("classe inválida")
 	}
 	character.Class = class
+
+	// Mesmo motivo do Class acima: o handler só recebe race_id do JSON, não a
+	// Race inteira. Sem isso, Character.Speed nunca era preenchido (não há
+	// campo de velocidade no formulário de criação) e ficava sempre no
+	// zero-value 0 — a ficha PDF exportada mostrava "Deslocamento: 0" pra
+	// todo personagem 5e, em vez do valor real da raça (`Race.Speed`, que já
+	// varia por raça no seed).
+	race, err := s.RaceRepo.FindByID(character.RaceID)
+	if err != nil {
+		return errors.New("raça inválida")
+	}
+	character.Race = race
+	if character.Edition == "5e" {
+		character.Speed = race.Speed
+	}
 
 	manualHP := character.HitPoints
 
