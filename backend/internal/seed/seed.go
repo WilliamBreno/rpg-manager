@@ -24,6 +24,7 @@ func Run(db *gorm.DB) {
 	seedRaceBonusesComplete4e(db)
 	fixClassTalentosCount4e(db)
     seedTalentos(db)
+    seedTalentos5e(db)
 	seedArmors5e(db)
 	seedItems5e(db)
 	log.Println("✅ Seed concluído!")

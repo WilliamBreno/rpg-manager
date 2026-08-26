@@ -24,6 +24,11 @@ const CATEGORY_CONFIG: Record<string, { color: string; icon: string }> = {
   'Perícia':  { color: 'text-yellow-400', icon: '📚' },
   'Magia':    { color: 'text-purple-400', icon: '✨' },
   'Armadura': { color: 'text-gray-300',   icon: '🪖' },
+  // ── Categorias de Talento 5e (PHB 2024) ─────────────────────────────────
+  'Origem':         { color: 'text-emerald-400', icon: '🌱' },
+  'Geral':          { color: 'text-orange-400',  icon: '🔧' },
+  'Estilo de Luta': { color: 'text-red-400',     icon: '⚔️' },
+  'Dádiva Épica':   { color: 'text-purple-400',  icon: '👑' },
 }
 
 // ── Helpers 5e ────────────────────────────────────────────────────────────────
