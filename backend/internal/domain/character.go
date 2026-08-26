@@ -61,6 +61,14 @@ type Character struct {
 	// Ex: {"INT": 2, "SAB": 1}. Ver CharacterService.Create.
 	AbilityBonusChoice map[string]int `json:"ability_bonus_choice" gorm:"-"`
 
+	// OriginFeatChoiceID: só usado no payload de criação (gorm:"-"), só
+	// quando o antecedente é IsLegacy (livro antigo) e por isso não tem um
+	// OriginFeatName fixo — o jogador escolhe livremente qualquer Talento
+	// da categoria "Origem" (RAW 2024, caixa "Antecedentes e Espécies de
+	// Livros Antigos"). Para antecedentes 2024 normais isso é ignorado, o
+	// talento vem de Antecedent.OriginFeatName.
+	OriginFeatChoiceID *uint `json:"origin_feat_choice_id" gorm:"-"`
+
 	// ── Relacionamentos ───────────────────────────────────────────────────────
 	Class      Class              `json:"class"       gorm:"foreignKey:ClassID"`
 	Race       Race               `json:"race"        gorm:"foreignKey:RaceID"`

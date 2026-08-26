@@ -393,14 +393,29 @@ func (s *CharacterService) Create(character *domain.Character) error {
 		return err
 	}
 
-	// Concede o talento de Origem do antecedente automaticamente — RAW 2024:
-	// "seu antecedente concede um talento", fixo por antecedente, não é uma
-	// escolha livre do jogador (capítulo 4 do Livro do Jogador 2024).
+	// Concede o talento de Origem do antecedente. RAW 2024 normal: "seu
+	// antecedente concede um talento", fixo por antecedente, não é escolha
+	// livre. Exceção (caixa "Antecedentes e Espécies de Livros Antigos",
+	// PHB 2024 cap. 2, p.38): se o antecedente é de um livro antigo e não
+	// fornece talento nenhum (IsLegacy, OriginFeatName vazio), o jogador
+	// escolhe livremente qualquer Talento de categoria "Origem".
 	if antecedent.OriginFeatName != "" {
 		talento, err := s.TalentoRepo.FindByName(antecedent.OriginFeatName, "5e")
 		if err == nil {
 			s.TalentoRepo.Add(character.ID, talento.ID)
 		}
+	} else if antecedent.IsLegacy {
+		if character.OriginFeatChoiceID == nil {
+			return errors.New("escolha um talento de Origem (antecedente de livro antigo, sem talento fixo)")
+		}
+		talento, err := s.TalentoRepo.FindByID(*character.OriginFeatChoiceID)
+		if err != nil {
+			return errors.New("talento de origem inválido")
+		}
+		if talento.Category != "Origem" || talento.Edition != "5e" {
+			return errors.New("escolha um talento da categoria Origem (5e)")
+		}
+		s.TalentoRepo.Add(character.ID, talento.ID)
 	}
 
 	return nil
@@ -409,15 +424,24 @@ func (s *CharacterService) Create(character *domain.Character) error {
 // applyAntecedentAbilityBonus aplica a distribuição de bônus de atributo do
 // Antecedente 2024 (regra de ouro deste projeto: bônus de atributo NUNCA vem
 // da raça/espécie, só do antecedente — ver domain.Race, que não tem nenhum
-// campo de bônus). Espera exatamente +2 numa habilidade e +1 em outra (das 3
-// permitidas), OU +1 nas três.
+// campo de bônus). Espera exatamente +2 numa habilidade e +1 em outra (das
+// opções permitidas), OU +1 em todas elas.
+//
+// Antecedentes 2024 normais restringem a 3 atributos nomeados
+// (AbilityBonusOptions). Antecedentes de livro antigo (IsLegacy, sem
+// AbilityBonusOptions) liberam a escolha entre os 6 atributos — caixa
+// "Antecedentes e Espécies de Livros Antigos", PHB 2024 cap. 2, p.38.
 func (s *CharacterService) applyAntecedentAbilityBonus(character *domain.Character, antecedent *domain.Antecedent) error {
-	if antecedent.AbilityBonusOptions == "" {
-		return nil
-	}
 	var allowed []string
-	if err := json.Unmarshal([]byte(antecedent.AbilityBonusOptions), &allowed); err != nil || len(allowed) != 3 {
-		return nil // dado do antecedente mal formado no seed — não bloqueia a criação
+	switch {
+	case antecedent.AbilityBonusOptions != "":
+		if err := json.Unmarshal([]byte(antecedent.AbilityBonusOptions), &allowed); err != nil || len(allowed) != 3 {
+			return nil // dado do antecedente mal formado no seed — não bloqueia a criação
+		}
+	case antecedent.IsLegacy:
+		allowed = []string{"FOR", "DES", "CON", "INT", "SAB", "CAR"}
+	default:
+		return nil
 	}
 	allowedSet := map[string]bool{}
 	for _, a := range allowed {

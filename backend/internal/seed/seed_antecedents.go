@@ -53,14 +53,14 @@ func seedAntecedents5e(db *gorm.DB) {
 			FeatureDescription: "As pessoas comuns te recebem de bom grado. Consegues comida, abrigo e proteção das pessoas do povo, que te escondem de perseguições se necessário.",
 			IsDefault:          true,
 			// "Herói do Povo" (Folk Hero) é um antecedente só de 2014 — não foi
-			// reimpresso no PHB 2024 com esse nome (os 16 antecedentes 2024 são
-			// outros: Acólito, Andarilho, Artesão, Artista, Charlatão, Criminoso,
-			// Eremita, Escriba, Fazendeiro, Guarda, Guia, Marinheiro, Mercador,
-			// Nobre, Sábio, Soldado). Fica sem AbilityBonusOptions/OriginFeatName
-			// por ora — a "regra de ouro" (2024 substitui 2014) não se aplica
-			// diretamente aqui porque não existe um "Herói do Povo" de 2024 pra
-			// substituir; decidir com o usuário se mapeia pro antecedente 2024
-			// mais parecido (ex: Fazendeiro) ou se mantém sem bônus automático.
+			// reimpresso no PHB 2024 com esse nome. Em vez de remapear pra um
+			// antecedente 2024 parecido, a regra oficial (caixa "Antecedentes e
+			// Espécies de Livros Antigos", PHB 2024 cap. 2, p.38) é manter o
+			// antecedente antigo e liberar as duas escolhas: bônus de atributo
+			// entre os 6 atributos (em vez de 3 fixos) e talento de Origem à
+			// escolha (em vez de um fixo) — daí IsLegacy em vez de
+			// AbilityBonusOptions/OriginFeatName.
+			IsLegacy: true,
 		},
 		{
 			Name:               "Sábio",
@@ -109,6 +109,7 @@ func seedAntecedents5e(db *gorm.DB) {
 				"feature_description":   a.FeatureDescription,
 				"ability_bonus_options": a.AbilityBonusOptions,
 				"origin_feat_name":      a.OriginFeatName,
+				"is_legacy":             a.IsLegacy,
 			})
 		}
 	}

@@ -25,4 +25,14 @@ type Antecedent struct {
     // antecedente concede automaticamente na criação — não é escolha livre
     // do jogador, é fixo por antecedente (RAW 2024, capítulo 4).
     OriginFeatName string `json:"origin_feat_name"`
+
+    // IsLegacy: antecedente de um livro antigo (2014), sem os 3 atributos
+    // nem o talento fixo que os antecedentes 2024 têm — ver a caixa lateral
+    // "Antecedentes e Espécies de Livros Antigos" (PHB 2024, cap. 2, p.38):
+    // o bônus de atributo vira escolha LIVRE entre os 6 atributos (mesma
+    // regra +2/+1 ou +1/+1/+1), e o talento vira um talento de Origem à
+    // escolha do jogador, em vez de ambos serem fixos. Não confundir com
+    // simplesmente remapear pra um antecedente 2024 parecido — a regra
+    // oficial é manter o antecedente antigo e liberar as duas escolhas.
+    IsLegacy bool `json:"is_legacy" gorm:"default:false"`
 }

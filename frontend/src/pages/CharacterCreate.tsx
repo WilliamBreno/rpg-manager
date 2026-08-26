@@ -82,6 +82,8 @@ export default function CharacterCreate() {
   const [bonusMode, setBonusMode] = useState<'2e1' | '1cada'>('2e1')
   const [bonusPlusTwo, setBonusPlusTwo] = useState<string | null>(null)
   const [bonusPlusOne, setBonusPlusOne] = useState<string | null>(null)
+  const [bonusTriple, setBonusTriple] = useState<string[]>([])
+  const [originFeatChoiceId, setOriginFeatChoiceId] = useState<number | null>(null)
 
   const [selectedSkills, setSelectedSkills] = useState<Record<PowerType, Skill[]>>({
     unlimited: [], encounter: [], daily: [], utility: [],
@@ -134,6 +136,14 @@ export default function CharacterCreate() {
     queryKey: ['talentos', selectedEdition],
     queryFn:  () => talentoService.getAll(selectedEdition!),
     enabled:  !!selectedEdition && selectedEdition === '4e', staleTime: Infinity,
+  })
+  // Só usado por antecedentes de livro antigo sem talento fixo (ex: Herói do
+  // Povo) — RAW 2024: escolha livre entre os talentos de categoria Origem.
+  const { data: origemTalentos5e } = useQuery({
+    queryKey: ['talentos', '5e'],
+    queryFn:  () => talentoService.getAll('5e'),
+    enabled:  selectedEdition === '5e' && !!selectedBackground?.is_legacy && !selectedBackground?.origin_feat_name,
+    staleTime: Infinity,
   })
   const { data: allBackgrounds } = useQuery({
     queryKey: ['antecedentes', selectedEdition],
@@ -210,14 +220,22 @@ export default function CharacterCreate() {
     availableSkills.includes(p.name) && !backgroundSkills.includes(p.name)
   )
 
+  const ALL_ABILITIES = ['FOR', 'DES', 'CON', 'INT', 'SAB', 'CAR']
+  // Antecedente 2024 normal: 3 atributos nomeados. Antecedente de livro
+  // antigo (is_legacy, ex: Herói do Povo): escolha livre entre os 6 — regra
+  // oficial da caixa "Antecedentes e Espécies de Livros Antigos" (PHB 2024
+  // cap. 2, p.38), não é remapear pra outro antecedente.
+  const isLegacyBackground = !!selectedBackground?.is_legacy && !selectedBackground?.ability_bonus_options
   const abilityBonusOptions: string[] = (() => {
+    if (isLegacyBackground) return ALL_ABILITIES
     if (!selectedBackground?.ability_bonus_options) return []
     try { return JSON.parse(selectedBackground.ability_bonus_options) } catch { return [] }
   })()
   const abilityBonusChoice: Record<string, number> | null = (() => {
-    if (abilityBonusOptions.length !== 3) return null
+    if (abilityBonusOptions.length < 2) return null
     if (bonusMode === '1cada') {
-      return Object.fromEntries(abilityBonusOptions.map(a => [a, 1]))
+      if (bonusTriple.length !== 3) return null
+      return Object.fromEntries(bonusTriple.map(a => [a, 1]))
     }
     if (bonusPlusTwo && bonusPlusOne && bonusPlusTwo !== bonusPlusOne) {
       return { [bonusPlusTwo]: 2, [bonusPlusOne]: 1 }
@@ -227,6 +245,7 @@ export default function CharacterCreate() {
   const ABILITY_LABELS: Record<string, string> = {
     FOR: 'Força', DES: 'Destreza', CON: 'Constituição', INT: 'Inteligência', SAB: 'Sabedoria', CAR: 'Carisma',
   }
+  const needsOriginFeatChoice = !!selectedBackground?.is_legacy && !selectedBackground?.origin_feat_name
 
   const pendingItems: string[] = []
   if (is4e) {
@@ -247,8 +266,10 @@ export default function CharacterCreate() {
     if (!selectedClass)      pendingItems.push('Selecione uma classe')
     if (!selectedRace)       pendingItems.push('Selecione uma raça')
     if (!selectedBackground) pendingItems.push('Selecione um antecedente')
-    if (selectedBackground && abilityBonusOptions.length === 3 && !abilityBonusChoice)
+    if (selectedBackground && abilityBonusOptions.length >= 2 && !abilityBonusChoice)
       pendingItems.push('Escolha a distribuição do bônus de atributo do antecedente')
+    if (selectedBackground && needsOriginFeatChoice && !originFeatChoiceId)
+      pendingItems.push('Escolha um talento de Origem (antecedente de livro antigo)')
     if (selectedClass && hasAnyChoiceGroups && !allChoicesMade)
       pendingItems.push('Complete as escolhas de características')
     if (selectedClass && pericias5eDisponiveis.length > 0) {
@@ -265,6 +286,7 @@ export default function CharacterCreate() {
         antecedent_id: selectedBackground?.ID ?? undefined,
         alignment:     selectedAlignment || undefined,
         ability_bonus_choice: abilityBonusChoice ?? undefined,
+        origin_feat_choice_id: originFeatChoiceId ?? undefined,
       }
       const character = await characterService.create(characterData)
       for (const skill of Object.values(selectedSkills).flat())
@@ -329,6 +351,8 @@ export default function CharacterCreate() {
     setBonusMode('2e1')
     setBonusPlusTwo(null)
     setBonusPlusOne(null)
+    setBonusTriple([])
+    setOriginFeatChoiceId(null)
   }
 
   const canSelect    = (type: PowerType, skill: Skill) => {
@@ -545,14 +569,18 @@ export default function CharacterCreate() {
             )}
 
             {/* PASSO 4.5 — Bônus de Atributo do Antecedente (regra 2024: nunca vem da raça) */}
-            {is5e && selectedBackground && abilityBonusOptions.length === 3 && (
+            {is5e && selectedBackground && abilityBonusOptions.length >= 2 && (
               <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
                 {sectionHeader(`Passo ${S()} — Bônus de Atributo`)}
                 <p className="text-gray-500 text-xs mb-4">
                   Pelas regras de 2024, o bônus de atributo vem do <span style={{ color: '#c9a84c' }}>antecedente</span> escolhido,
                   não da raça. Os valores digitados nos atributos abaixo são a base — este bônus soma em cima deles.
-                  Você também recebe automaticamente o talento{' '}
-                  <span style={{ color: '#c9a84c' }}>{selectedBackground.origin_feat_name}</span> deste antecedente.
+                  {isLegacyBackground ? (
+                    <> Este é um antecedente de livro antigo: escolha livremente entre os 6 atributos (em vez de 3 fixos).</>
+                  ) : (
+                    <> Você também recebe automaticamente o talento{' '}
+                    <span style={{ color: '#c9a84c' }}>{selectedBackground.origin_feat_name}</span> deste antecedente.</>
+                  )}
                 </p>
                 <div className="flex rounded-lg overflow-hidden border mb-4" style={{ borderColor: '#3f3f46' }}>
                   {(['2e1', '1cada'] as const).map(mode => (
@@ -563,17 +591,29 @@ export default function CharacterCreate() {
                         : { background: '#27272a', color: '#a1a1aa' }
                       }
                     >
-                      {mode === '2e1' ? '+2 e +1' : '+1 nas três'}
+                      {mode === '2e1' ? '+2 e +1' : '+1 em três'}
                     </button>
                   ))}
                 </div>
                 {bonusMode === '1cada' ? (
-                  <div className="flex flex-wrap gap-2">
-                    {abilityBonusOptions.map(a => (
-                      <span key={a} className="text-xs bg-emerald-900/60 text-emerald-300 px-3 py-1.5 rounded-full">
-                        {ABILITY_LABELS[a]} +1
-                      </span>
-                    ))}
+                  <div>
+                    <p className="text-gray-500 text-xs mb-1.5">Escolha exatamente 3 atributos ({bonusTriple.length}/3)</p>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {abilityBonusOptions.map(a => {
+                        const picked = bonusTriple.includes(a)
+                        const disabled = !picked && bonusTriple.length >= 3
+                        return (
+                          <button key={a} type="button" disabled={disabled}
+                            onClick={() => setBonusTriple(prev => picked ? prev.filter(x => x !== a) : [...prev, a])}
+                            className="py-2 rounded-lg text-xs font-medium transition border disabled:opacity-30 disabled:cursor-not-allowed"
+                            style={picked
+                              ? { background: 'rgba(52,211,153,0.12)', borderColor: 'rgba(52,211,153,0.5)', color: '#34d399' }
+                              : { background: '#27272a', borderColor: '#3f3f46', color: '#a1a1aa' }
+                            }
+                          >{ABILITY_LABELS[a]}{picked ? ' +1' : ''}</button>
+                        )
+                      })}
+                    </div>
                   </div>
                 ) : (
                   <div className="flex flex-col gap-3">
@@ -606,6 +646,28 @@ export default function CharacterCreate() {
                           >{ABILITY_LABELS[a]}</button>
                         ))}
                       </div>
+                    </div>
+                  </div>
+                )}
+
+                {needsOriginFeatChoice && (
+                  <div className="mt-5 pt-4 border-t" style={{ borderColor: '#3f3f46' }}>
+                    <p className="text-gray-500 text-xs mb-2">
+                      Este antecedente não tem talento fixo — escolha um <span style={{ color: '#c9a84c' }}>talento de Origem</span> livremente.
+                    </p>
+                    <div className="flex flex-col gap-1.5 max-h-56 overflow-y-auto">
+                      {(origemTalentos5e ?? []).filter(t => t.category === 'Origem').map(t => (
+                        <button key={t.ID} type="button" onClick={() => setOriginFeatChoiceId(t.ID)}
+                          className="text-left rounded-lg px-3 py-2 border transition"
+                          style={originFeatChoiceId === t.ID
+                            ? { background: 'rgba(201,168,76,0.08)', borderColor: 'rgba(201,168,76,0.4)' }
+                            : { background: '#1a1a1a', borderColor: '#3f3f46' }
+                          }
+                        >
+                          <span className="text-xs font-medium" style={{ color: originFeatChoiceId === t.ID ? '#c9a84c' : '#e4e4e7' }}>{t.name}</span>
+                        </button>
+                      ))}
+                      {!origemTalentos5e && <p className="text-gray-500 text-xs">Carregando talentos...</p>}
                     </div>
                   </div>
                 )}
