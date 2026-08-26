@@ -132,7 +132,7 @@ export default function CharacterCard({ character }: Props) {
           <img
             src={resolveAvatarSrc(character.avatar_url)}
             alt={character.name}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover object-top"
             onError={() => setAvatarFailed(true)}
           />
         ) : (

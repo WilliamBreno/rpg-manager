@@ -53,7 +53,7 @@ export default function AvatarUpload({ characterID, avatarURL, characterName }: 
         className="w-28 h-28 rounded-full overflow-hidden bg-gray-700 border-2 border-gray-600 hover:border-indigo-500 cursor-pointer transition flex items-center justify-center"
       >
         {preview && !avatarFailed ? (
-          <img src={preview} alt={characterName} className="w-full h-full object-cover" onError={() => setAvatarFailed(true)} />
+          <img src={preview} alt={characterName} className="w-full h-full object-cover object-top" onError={() => setAvatarFailed(true)} />
         ) : (
           <span className="text-4xl">🧙</span>
         )}
