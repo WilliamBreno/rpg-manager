@@ -7,14 +7,15 @@ import (
 )
 
 type CharacterService struct {
-	Repo      *repository.CharacterRepository
-	SkillRepo *repository.SkillRepository
-	ClassRepo *repository.ClassRepository
-	RaceRepo  *repository.RaceRepository
+	Repo        *repository.CharacterRepository
+	SkillRepo   *repository.SkillRepository
+	ClassRepo   *repository.ClassRepository
+	RaceRepo    *repository.RaceRepository
+	TalentoRepo *repository.TalentoRepository
 }
 
-func NewCharacterService(repo *repository.CharacterRepository, skillRepo *repository.SkillRepository, classRepo *repository.ClassRepository, raceRepo *repository.RaceRepository) *CharacterService {
-	return &CharacterService{Repo: repo, SkillRepo: skillRepo, ClassRepo: classRepo, RaceRepo: raceRepo}
+func NewCharacterService(repo *repository.CharacterRepository, skillRepo *repository.SkillRepository, classRepo *repository.ClassRepository, raceRepo *repository.RaceRepository, talentoRepo *repository.TalentoRepository) *CharacterService {
+	return &CharacterService{Repo: repo, SkillRepo: skillRepo, ClassRepo: classRepo, RaceRepo: raceRepo, TalentoRepo: talentoRepo}
 }
 
 // ── Tabelas de XP ────────────────────────────────────────────────────────────
@@ -224,7 +225,10 @@ type LevelUpResult struct {
 	NewLevel  int  `json:"new_level"`
 }
 
-// ASIChoice: melhorias de atributo escolhidas pelo jogador
+// ASIChoice: melhoria escolhida pelo jogador num nível de ASI — ou pontos de
+// atributo, ou um talento no lugar (RAW: "+2 em um atributo, +1 em dois
+// atributos, ou um talento à sua escolha" — nunca as duas coisas no mesmo
+// nível). Ver ApplyASI.
 type ASIChoice struct {
 	Strength     int `json:"strength"`
 	Dexterity    int `json:"dexterity"`
@@ -232,6 +236,11 @@ type ASIChoice struct {
 	Intelligence int `json:"intelligence"`
 	Wisdom       int `json:"wisdom"`
 	Charisma     int `json:"charisma"`
+
+	// TalentoID: se informado, o jogador escolheu pegar um talento em vez de
+	// melhorar atributos neste nível de ASI — nesse caso todos os campos de
+	// atributo acima devem ficar zerados (ver validação em ApplyASI).
+	TalentoID *uint `json:"talento_id"`
 }
 
 // ── checkAndApplyLevelUps ─────────────────────────────────────────────────────
@@ -419,44 +428,61 @@ func (s *CharacterService) ApplyASI(id uint, choice ASIChoice) (domain.Character
 		return character, LevelUpResult{}, errors.New("personagem não encontrado")
 	}
 
-	// Valida total de pontos
-	// 5e: +2 em 1 atributo OU +1 em 2 atributos
-	// 4e: +1 em 2 atributos (mesma lógica — total = 2)
+	// 5e: +2 em 1 atributo OU +1 em 2 atributos OU um talento (nunca as duas
+	// coisas no mesmo nível de ASI — RAW e decisão de produto explícita).
+	// 4e: +1 em 2 atributos (mesma lógica — total = 2); não há troca por
+	// talento no 4e, já que 4e não usa Talento (RAW 4e não tem essa opção).
 	total := choice.Strength + choice.Dexterity + choice.Constitution +
 		choice.Intelligence + choice.Wisdom + choice.Charisma
 
-	if total < 1 || total > 2 {
-		return character, LevelUpResult{}, errors.New("escolha +2 em um atributo ou +1 em dois atributos")
-	}
-
-	// Guarda o mod CON antigo para ajuste retroativo de HP (5e)
-	oldConMod := mod(character.Constitution)
-
-	// Aplica melhorias com cap em 20
-	character.Strength = capAt20(character.Strength + choice.Strength)
-	character.Dexterity = capAt20(character.Dexterity + choice.Dexterity)
-	character.Constitution = capAt20(character.Constitution + choice.Constitution)
-	character.Intelligence = capAt20(character.Intelligence + choice.Intelligence)
-	character.Wisdom = capAt20(character.Wisdom + choice.Wisdom)
-	character.Charisma = capAt20(character.Charisma + choice.Charisma)
-
-	// 5e: se o mod de CON aumentou, +1 HP por nível retroativamente
-	// Ex: CON 12→14 (mod +1→+2) no nível 4 = +4 HP permanentes
-	if character.Edition == "5e" && choice.Constitution > 0 {
-		newConMod := mod(character.Constitution)
-		if newConMod > oldConMod {
-			bonusHP := (newConMod - oldConMod) * character.Level
-			character.MaxHP += bonusHP
-			character.HitPoints += bonusHP
+	if choice.TalentoID != nil {
+		if total != 0 {
+			return character, LevelUpResult{}, errors.New("não é possível escolher atributo e talento na mesma melhoria — escolha um ou outro")
 		}
-	}
+		if character.Edition != "5e" {
+			return character, LevelUpResult{}, errors.New("troca de ASI por talento só existe no 5e")
+		}
+		talento, err := s.TalentoRepo.FindByID(*choice.TalentoID)
+		if err != nil {
+			return character, LevelUpResult{}, errors.New("talento inválido")
+		}
+		if err := s.TalentoRepo.Add(character.ID, talento.ID); err != nil {
+			return character, LevelUpResult{}, err
+		}
+	} else {
+		if total < 1 || total > 2 {
+			return character, LevelUpResult{}, errors.New("escolha +2 em um atributo ou +1 em dois atributos (ou um talento, via talento_id)")
+		}
 
-	// 4e: recalcula surges com novo CON
-	if character.Edition == "4e" {
-		character.SurgeValue = character.MaxHP / 4
-		character.SurgesPerDay = character.Class.SurgesPerDay + mod(character.Constitution)
-		if character.SurgesPerDay < 1 {
-			character.SurgesPerDay = 1
+		// Guarda o mod CON antigo para ajuste retroativo de HP (5e)
+		oldConMod := mod(character.Constitution)
+
+		// Aplica melhorias com cap em 20
+		character.Strength = capAt20(character.Strength + choice.Strength)
+		character.Dexterity = capAt20(character.Dexterity + choice.Dexterity)
+		character.Constitution = capAt20(character.Constitution + choice.Constitution)
+		character.Intelligence = capAt20(character.Intelligence + choice.Intelligence)
+		character.Wisdom = capAt20(character.Wisdom + choice.Wisdom)
+		character.Charisma = capAt20(character.Charisma + choice.Charisma)
+
+		// 5e: se o mod de CON aumentou, +1 HP por nível retroativamente
+		// Ex: CON 12→14 (mod +1→+2) no nível 4 = +4 HP permanentes
+		if character.Edition == "5e" && choice.Constitution > 0 {
+			newConMod := mod(character.Constitution)
+			if newConMod > oldConMod {
+				bonusHP := (newConMod - oldConMod) * character.Level
+				character.MaxHP += bonusHP
+				character.HitPoints += bonusHP
+			}
+		}
+
+		// 4e: recalcula surges com novo CON
+		if character.Edition == "4e" {
+			character.SurgeValue = character.MaxHP / 4
+			character.SurgesPerDay = character.Class.SurgesPerDay + mod(character.Constitution)
+			if character.SurgesPerDay < 1 {
+				character.SurgesPerDay = 1
+			}
 		}
 	}
 

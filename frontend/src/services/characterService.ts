@@ -72,7 +72,7 @@ export const characterService = {
     return data
   },
 
-  applyASI: async (id: number, choices: Record<string, number>) => {
+  applyASI: async (id: number, choices: Record<string, number | undefined>) => {
     const { data } = await api.patch(`/characters/${id}/apply-asi`, choices)
     return data
   },

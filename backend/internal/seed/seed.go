@@ -466,6 +466,39 @@ func seedBarbaro5e(db *gorm.DB) {
 			Effect:    "Desbloqueia propriedades de Maestria em 3 armas escolhidas.",
 			PowerType: domain.PowerUnlimited, Level: 1, IsClassFeature: true,
 		},
+		// ── SUBCLASSE (nível 3, PHB 2024) ───────────────────────────
+		{
+			Name: "Trilha do Berserker", Edition: "5e", ClassID: &id,
+			Description: "Uma das 4 Trilhas Primitivas de Bárbaro, escolhida no nível 3.",
+			Keywords: "Primitivo", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "trilha_barbaro",
+		},
+		{
+			Name: "Trilha do Coração Selvagem", Edition: "5e", ClassID: &id,
+			Description: "Uma das 4 Trilhas Primitivas de Bárbaro, escolhida no nível 3.",
+			Keywords: "Primitivo", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "trilha_barbaro",
+		},
+		{
+			Name: "Trilha da Árvore do Mundo", Edition: "5e", ClassID: &id,
+			Description: "Entrelace as Raízes e Ramos do Multiverso — bárbaros que seguem esta trilha conectam-se à árvore cósmica Yggdrasil por meio de sua Fúria, extraindo vitalidade e a capacidade de viajar entre dimensões.",
+			Keywords: "Primitivo", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "trilha_barbaro",
+		},
+		{
+			Name: "Trilha do Fanático", Edition: "5e", ClassID: &id,
+			Description: "Uma das 4 Trilhas Primitivas de Bárbaro, escolhida no nível 3.",
+			Keywords: "Primitivo", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "trilha_barbaro",
+		},
 	}
 	for _, s := range skills {
 		upsertSkill(db, s, id)
@@ -498,6 +531,39 @@ func seedBardo5e(db *gorm.DB) {
 			Keywords: "Arcano, Magia", ActionType: "Passiva", Range: "Pessoal",
 			Effect:    "Acesso a truques e espaços de magia de Bardo.",
 			PowerType: domain.PowerUnlimited, Level: 1, IsClassFeature: true,
+		},
+		// ── SUBCLASSE (nível 3, PHB 2024) ───────────────────────────
+		{
+			Name: "Colégio da Bravura", Edition: "5e", ClassID: &id,
+			Description: "Os Bardos do Colégio da Bravura são narradores ousados cujas histórias preservam a memória dos grandes heróis do passado, cantando seus feitos em salões suntuosos ou junto a fogueiras.",
+			Keywords: "Arcano", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "colegio_bardo",
+		},
+		{
+			Name: "Colégio da Dança", Edition: "5e", ClassID: &id,
+			Description: "Um dos 4 Colégios de Bardo, escolhido no nível 3.",
+			Keywords: "Arcano", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "colegio_bardo",
+		},
+		{
+			Name: "Colégio do Conhecimento", Edition: "5e", ClassID: &id,
+			Description: "Um dos 4 Colégios de Bardo, escolhido no nível 3.",
+			Keywords: "Arcano", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "colegio_bardo",
+		},
+		{
+			Name: "Colégio do Glamour", Edition: "5e", ClassID: &id,
+			Description: "Um dos 4 Colégios de Bardo, escolhido no nível 3.",
+			Keywords: "Arcano", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "colegio_bardo",
 		},
 	}
 	for _, s := range skills {
@@ -598,6 +664,39 @@ func seedDruida5e(db *gorm.DB) {
 			Effect:    "Conhecimento da língua secreta Druídico.",
 			PowerType: domain.PowerUnlimited, Level: 1, IsClassFeature: true,
 		},
+		// ── SUBCLASSE (nível 3, PHB 2024 — moveu do nível 2 pro 3) ──
+		{
+			Name: "Círculo da Lua", Edition: "5e", ClassID: &id,
+			Description: "Assuma Formas Animais para Proteger a Vida Selvagem — Druidas do Círculo da Lua canalizam a magia lunar para se transformarem, espreitando como um grande felino, sobrevoando como uma águia ou atravessando a vegetação como um urso.",
+			Keywords: "Primitivo", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "circulo_druida",
+		},
+		{
+			Name: "Círculo da Terra", Edition: "5e", ClassID: &id,
+			Description: "Um dos 4 Círculos Druídicos, escolhido no nível 3.",
+			Keywords: "Primitivo", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "circulo_druida",
+		},
+		{
+			Name: "Círculo das Estrelas", Edition: "5e", ClassID: &id,
+			Description: "Um dos 4 Círculos Druídicos, escolhido no nível 3.",
+			Keywords: "Primitivo", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "circulo_druida",
+		},
+		{
+			Name: "Círculo do Mar", Edition: "5e", ClassID: &id,
+			Description: "Um dos 4 Círculos Druídicos, escolhido no nível 3.",
+			Keywords: "Primitivo", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "circulo_druida",
+		},
 	}
 	for _, s := range skills {
 		upsertSkill(db, s, id)
@@ -672,6 +771,39 @@ func seedGuardiao5e(db *gorm.DB) {
 			PowerType:      domain.PowerUnlimited, Level: 1, IsClassFeature: true,
 			RequiresChoice: true, ChoiceGroup: "especialista_guardiao",
 		},
+		// ── SUBCLASSE (nível 3, PHB 2024) ───────────────────────────
+		{
+			Name: "Andarilho Feérico", Edition: "5e", ClassID: &id,
+			Description: "Empunhe o Deleite e a Fúria Feérica — uma das 4 subclasses de Guardião, escolhida no nível 3.",
+			Keywords: "Primitivo", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "subclasse_guardiao",
+		},
+		{
+			Name: "Caçador", Edition: "5e", ClassID: &id,
+			Description: "Uma das 4 subclasses de Guardião, escolhida no nível 3.",
+			Keywords: "Marcial", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "subclasse_guardiao",
+		},
+		{
+			Name: "Senhor das Feras", Edition: "5e", ClassID: &id,
+			Description: "Uma das 4 subclasses de Guardião, escolhida no nível 3.",
+			Keywords: "Primitivo", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "subclasse_guardiao",
+		},
+		{
+			Name: "Vigilante das Sombras", Edition: "5e", ClassID: &id,
+			Description: "Aproveite a Magia das Sombras para Lutar contra Seus Inimigos — Vigilantes das Sombras empunham magia extraída do Sombral para combater inimigos escondidos na escuridão.",
+			Keywords: "Arcano", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "subclasse_guardiao",
+		},
 	}
 	for _, s := range skills {
 		upsertSkill(db, s, id)
@@ -713,6 +845,39 @@ func seedGuerreiro5e(db *gorm.DB) {
 			Effect:       "Cura 1d10 + nível de Guerreiro PV. 1 uso por descanso curto.",
 			LevelScaling: "Escala com o nível de Guerreiro.",
 			PowerType:    domain.PowerEncounter, Level: 1, IsClassFeature: true,
+		},
+		// ── SUBCLASSE (nível 3, PHB 2024) ───────────────────────────
+		{
+			Name: "Campeão", Edition: "5e", ClassID: &id,
+			Description: "Busque a Excelência Física em Combate — o Campeão foca no desenvolvimento de habilidades marciais em sua busca incessante pela vitória, combinando treino rigoroso com excelência física.",
+			Keywords: "Marcial", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "arquetipo_guerreiro",
+		},
+		{
+			Name: "Cavaleiro Místico", Edition: "5e", ClassID: &id,
+			Description: "Um dos 4 Arquétipos Marciais de Guerreiro, escolhido no nível 3.",
+			Keywords: "Marcial, Arcano", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "arquetipo_guerreiro",
+		},
+		{
+			Name: "Combatente Psíquico", Edition: "5e", ClassID: &id,
+			Description: "Um dos 4 Arquétipos Marciais de Guerreiro, escolhido no nível 3.",
+			Keywords: "Marcial, Psiônico", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "arquetipo_guerreiro",
+		},
+		{
+			Name: "Mestre da Batalha", Edition: "5e", ClassID: &id,
+			Description: "Um dos 4 Arquétipos Marciais de Guerreiro, escolhido no nível 3.",
+			Keywords: "Marcial", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "arquetipo_guerreiro",
 		},
 	}
 	for _, s := range skills {
@@ -764,6 +929,43 @@ func seedLadino5e(db *gorm.DB) {
 			Effect:    "Desbloqueia propriedades de Maestria em 2 armas escolhidas.",
 			PowerType: domain.PowerUnlimited, Level: 1, IsClassFeature: true,
 		},
+		// ── SUBCLASSE (nível 3, PHB 2024) ───────────────────────────
+		// Nome "Adaga Espiritual" extraído do PDF via RAG (rag_5e.py) — nome
+		// pouco comum pra uma tradução oficial, mas apareceu de forma
+		// idêntica em duas buscas semânticas independentes; se estiver
+		// errado, é erro de extração do PDF-fonte, não invenção.
+		{
+			Name: "Adaga Espiritual", Edition: "5e", ClassID: &id,
+			Description: "Uma das 4 subclasses de Ladino, escolhida no nível 3.",
+			Keywords: "Psiônico", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "arquetipo_ladino",
+		},
+		{
+			Name: "Assassino", Edition: "5e", ClassID: &id,
+			Description: "Uma das 4 subclasses de Ladino, escolhida no nível 3.",
+			Keywords: "Marcial", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "arquetipo_ladino",
+		},
+		{
+			Name: "Ladrão", Edition: "5e", ClassID: &id,
+			Description: "Uma das 4 subclasses de Ladino, escolhida no nível 3.",
+			Keywords: "Marcial", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "arquetipo_ladino",
+		},
+		{
+			Name: "Trapaceiro Arcano", Edition: "5e", ClassID: &id,
+			Description: "Combina astúcia e agilidade com magia. Ao atingir o nível 3, aprende a conjurar magias de Mago (3 truques: Mãos Mágicas e mais 2 à escolha) usando Inteligência como atributo de conjuração.",
+			Keywords: "Arcano", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3, incluindo truques de Mago.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "arquetipo_ladino",
+		},
 	}
 	for _, s := range skills {
 		upsertSkill(db, s, id)
@@ -795,6 +997,39 @@ func seedMago5e(db *gorm.DB) {
 			Keywords: "Arcano, Ritual", ActionType: "Passiva", Range: "Pessoal",
 			Effect:    "Conjura magias de Ritual do Grimório sem gastar espaços de magia.",
 			PowerType: domain.PowerUnlimited, Level: 1, IsClassFeature: true,
+		},
+		// ── SUBCLASSE (nível 3, PHB 2024 — moveu do nível 2 pro 3) ──
+		{
+			Name: "Abjurador", Edition: "5e", ClassID: &id,
+			Description: "Proteja seus Companheiros e Bana Inimigos — o estudo do Abjurador concentra-se em magias de bloqueio, banimento e proteção, eliminando efeitos nocivos e repelindo influências malignas.",
+			Keywords: "Arcano", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "escola_mago",
+		},
+		{
+			Name: "Adivinhador", Edition: "5e", ClassID: &id,
+			Description: "Uma das 4 Escolas de Magia de Mago, escolhida no nível 3.",
+			Keywords: "Arcano", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "escola_mago",
+		},
+		{
+			Name: "Evocador", Edition: "5e", ClassID: &id,
+			Description: "Uma das 4 Escolas de Magia de Mago, escolhida no nível 3.",
+			Keywords: "Arcano", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "escola_mago",
+		},
+		{
+			Name: "Ilusionista", Edition: "5e", ClassID: &id,
+			Description: "Uma das 4 Escolas de Magia de Mago, escolhida no nível 3.",
+			Keywords: "Arcano", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "escola_mago",
 		},
 	}
 	for _, s := range skills {
@@ -837,6 +1072,39 @@ func seedMonge5e(db *gorm.DB) {
 			Effect:    "Desbloqueia propriedades de Maestria em 2 armas escolhidas.",
 			PowerType: domain.PowerUnlimited, Level: 1, IsClassFeature: true,
 		},
+		// ── SUBCLASSE (nível 3, PHB 2024) ───────────────────────────
+		{
+			Name: "Combatente da Mão Espalmada", Edition: "5e", ClassID: &id,
+			Description: "Uma das 4 Tradições Monásticas de Monge, escolhida no nível 3.",
+			Keywords: "Marcial", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "tradicao_monge",
+		},
+		{
+			Name: "Combatente da Misericórdia", Edition: "5e", ClassID: &id,
+			Description: "Uma das 4 Tradições Monásticas de Monge, escolhida no nível 3.",
+			Keywords: "Marcial", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "tradicao_monge",
+		},
+		{
+			Name: "Combatente das Sombras", Edition: "5e", ClassID: &id,
+			Description: "Uma das 4 Tradições Monásticas de Monge, escolhida no nível 3.",
+			Keywords: "Marcial, Arcano", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "tradicao_monge",
+		},
+		{
+			Name: "Combatente dos Elementos", Edition: "5e", ClassID: &id,
+			Description: "Uma das 4 Tradições Monásticas de Monge, escolhida no nível 3.",
+			Keywords: "Marcial, Arcano", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "tradicao_monge",
+		},
 	}
 	for _, s := range skills {
 		upsertSkill(db, s, id)
@@ -877,6 +1145,39 @@ func seedPaladino5e(db *gorm.DB) {
 			Keywords: "Divino, Magia", ActionType: "Passiva", Range: "Pessoal",
 			Effect:    "Acesso a espaços de magia de Paladino. Sem truques.",
 			PowerType: domain.PowerUnlimited, Level: 1, IsClassFeature: true,
+		},
+		// ── SUBCLASSE (nível 3, PHB 2024) ───────────────────────────
+		{
+			Name: "Juramento da Devoção", Edition: "5e", ClassID: &id,
+			Description: "Defenda os Ideais da Justiça — um dos 4 Juramentos Sagrados de Paladino, firmado no nível 3 como o ápice do treinamento inicial.",
+			Keywords: "Divino", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "juramento_paladino",
+		},
+		{
+			Name: "Juramento da Glória", Edition: "5e", ClassID: &id,
+			Description: "Um dos 4 Juramentos Sagrados de Paladino, firmado no nível 3.",
+			Keywords: "Divino", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "juramento_paladino",
+		},
+		{
+			Name: "Juramento de Vingança", Edition: "5e", ClassID: &id,
+			Description: "Um dos 4 Juramentos Sagrados de Paladino, firmado no nível 3.",
+			Keywords: "Divino", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "juramento_paladino",
+		},
+		{
+			Name: "Juramento dos Anciões", Edition: "5e", ClassID: &id,
+			Description: "Um dos 4 Juramentos Sagrados de Paladino, firmado no nível 3.",
+			Keywords: "Divino, Primitivo", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "juramento_paladino",
 		},
 	}
 	for _, s := range skills {

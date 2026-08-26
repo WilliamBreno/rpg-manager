@@ -73,6 +73,8 @@ export default function CharacterDetail() {
   const [xpFeedback, setXpFeedback] = useState<XPFeedback | null>(null)
   const [showASIModal, setShowASIModal] = useState(false)
   const [asiChoices, setAsiChoices] = useState<ASIChoices>({ ...EMPTY_ASI })
+  const [asiMode, setAsiMode] = useState<'atributo' | 'talento'>('atributo')
+  const [asiTalentoId, setAsiTalentoId] = useState<number | null>(null)
   const [exportingPdf, setExportingPdf] = useState(false)
   const [exportPdfError, setExportPdfError] = useState<string | null>(null)
   const [celebrateLevel, setCelebrateLevel] = useState<number | null>(null)
@@ -100,6 +102,14 @@ export default function CharacterDetail() {
     queryKey: ['character-talentos', id],
     queryFn: () => talentoService.getByCharacter(Number(id)),
     enabled: !!id,
+  })
+
+  // Lista de talentos pra troca de ASI por talento (só 5e — ver ApplyASI no backend)
+  const { data: allTalentos5e } = useQuery({
+    queryKey: ['talentos', '5e'],
+    queryFn: () => talentoService.getAll('5e'),
+    enabled: showASIModal && character?.edition === '5e',
+    staleTime: Infinity,
   })
 
   // ── Mutations ────────────────────────────────────────────────────────────
@@ -131,13 +141,16 @@ export default function CharacterDetail() {
     },
   })
 
-  // Aplicar ASI — chamado quando o jogador confirma as melhorias
+  // Aplicar ASI — chamado quando o jogador confirma as melhorias (ou a troca por talento)
   const applyASIMutation = useMutation({
-    mutationFn: (choices: ASIChoices) => characterService.applyASI(Number(id), choices),
+    mutationFn: (choices: ASIChoices | { talento_id: number }) => characterService.applyASI(Number(id), choices),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['character', id] })
+      queryClient.invalidateQueries({ queryKey: ['character-talentos', id] })
       setShowASIModal(false)
       setAsiChoices({ ...EMPTY_ASI })
+      setAsiMode('atributo')
+      setAsiTalentoId(null)
       if (data.leveled_up) {
         setCelebrateLevel(data.new_level)
         if (data.needs_asi) {
@@ -273,7 +286,9 @@ export default function CharacterDetail() {
 
   // ── ASI helpers ──────────────────────────────────────────────────────────
   const asiTotal = Object.values(asiChoices).reduce((a, b) => a + b, 0)
-  const canConfirmASI = asiTotal >= 1 && asiTotal <= 2
+  const canConfirmASI = asiMode === 'talento'
+    ? asiTalentoId !== null
+    : asiTotal >= 1 && asiTotal <= 2
 
   // ── Render ───────────────────────────────────────────────────────────────
   return (
@@ -646,8 +661,8 @@ export default function CharacterDetail() {
           </div>
         )}
 
-        {/* ── Talentos (4e) ───────────────────────────────────────────────── */}
-        {is4e && hasTalentos && (
+        {/* ── Talentos (4e e 5e) ───────────────────────────────────────────── */}
+        {hasTalentos && (
           <div className="bg-gray-800 rounded-xl p-4 sm:p-6 mb-4 border border-gray-700">
             <h2 className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: 'rgba(201,168,76,0.7)' }}>
               🏆 Talentos
@@ -814,10 +829,56 @@ export default function CharacterDetail() {
               ⬆️ Melhoria de Atributo
             </h2>
             <p className="text-gray-400 text-sm mb-4">
-              Distribua <strong className="text-white">2 pontos</strong> nos atributos.<br />
-              +2 em um único ou +1 em dois diferentes. Máximo 20 por atributo.
+              {asiMode === 'atributo' ? (
+                <>Distribua <strong className="text-white">2 pontos</strong> nos atributos.<br />
+                +2 em um único ou +1 em dois diferentes. Máximo 20 por atributo.</>
+              ) : (
+                <>Escolha um talento no lugar da melhoria de atributo deste nível.</>
+              )}
             </p>
 
+            {character?.edition === '5e' && (
+              <div className="flex rounded-lg overflow-hidden border mb-4" style={{ borderColor: '#3f3f46' }}>
+                {(['atributo', 'talento'] as const).map(mode => (
+                  <button
+                    key={mode}
+                    onClick={() => setAsiMode(mode)}
+                    className="flex-1 py-2 text-xs font-semibold uppercase tracking-wider transition"
+                    style={asiMode === mode
+                      ? { background: '#c9a84c', color: '#0a0a0a' }
+                      : { background: '#27272a', color: '#a1a1aa' }
+                    }
+                  >
+                    {mode === 'atributo' ? 'Atributo' : 'Talento'}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {asiMode === 'talento' ? (
+              <div className="mb-5 max-h-72 overflow-y-auto flex flex-col gap-2">
+                {(allTalentos5e ?? []).map(t => (
+                  <button
+                    key={t.ID}
+                    onClick={() => setAsiTalentoId(t.ID)}
+                    className="text-left rounded-lg px-3 py-2.5 border transition"
+                    style={{
+                      background: asiTalentoId === t.ID ? 'rgba(201,168,76,0.08)' : '#27272a',
+                      borderColor: asiTalentoId === t.ID ? 'rgba(201,168,76,0.4)' : '#3f3f46',
+                    }}
+                  >
+                    <p className="text-white text-sm font-medium">{t.name}</p>
+                    <p className="text-gray-400 text-xs">{t.description}</p>
+                  </button>
+                ))}
+                {(allTalentos5e ?? []).length === 0 && (
+                  <p className="text-gray-500 text-sm text-center py-4">
+                    Nenhum talento de 5e cadastrado ainda.
+                  </p>
+                )}
+              </div>
+            ) : (
+              <>
             {/* Contador de pontos */}
             <div className="flex items-center justify-center gap-3 mb-5 rounded-lg p-3"
               style={{ background: asiTotal === 2 ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', border: `1px solid ${asiTotal === 2 ? 'rgba(201,168,76,0.3)' : '#3f3f46'}` }}>
@@ -870,9 +931,18 @@ export default function CharacterDetail() {
                 )
               })}
             </div>
+              </>
+            )}
 
             <button
-              onClick={() => canConfirmASI && applyASIMutation.mutate(asiChoices)}
+              onClick={() => {
+                if (!canConfirmASI) return
+                if (asiMode === 'talento' && asiTalentoId !== null) {
+                  applyASIMutation.mutate({ talento_id: asiTalentoId })
+                } else {
+                  applyASIMutation.mutate(asiChoices)
+                }
+              }}
               disabled={!canConfirmASI || applyASIMutation.isPending}
               className="w-full py-3 rounded-lg font-semibold text-sm transition"
               style={canConfirmASI
@@ -882,7 +952,9 @@ export default function CharacterDetail() {
             >
               {applyASIMutation.isPending
                 ? 'Aplicando...'
-                : `Confirmar (+${asiTotal} ponto${asiTotal !== 1 ? 's' : ''})`
+                : asiMode === 'talento'
+                  ? 'Confirmar talento'
+                  : `Confirmar (+${asiTotal} ponto${asiTotal !== 1 ? 's' : ''})`
               }
             </button>
 

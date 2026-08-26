@@ -9,6 +9,12 @@ type TalentoRepository struct{ db *gorm.DB }
 
 func NewTalentoRepository(db *gorm.DB) *TalentoRepository { return &TalentoRepository{db: db} }
 
+func (r *TalentoRepository) FindByID(id uint) (domain.Talento, error) {
+	var talento domain.Talento
+	err := r.db.First(&talento, id).Error
+	return talento, err
+}
+
 func (r *TalentoRepository) GetAll(edition string) ([]domain.Talento, error) {
 	var talentos []domain.Talento
 	q := r.db.Order("category, name")
