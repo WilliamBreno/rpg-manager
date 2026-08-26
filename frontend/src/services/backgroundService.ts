@@ -7,6 +7,7 @@ export interface BackgroundBio {
   ideals?:             string
   bonds?:              string
   flaws?:              string
+  rumors?:             string
 }
 
 export const backgroundService = {

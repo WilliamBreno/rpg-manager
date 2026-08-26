@@ -15,8 +15,13 @@ export default function AvatarUpload({ characterID, avatarURL, characterName }: 
   const queryClient = useQueryClient()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // ✅ Monta a URL correta com a base do ambiente
-  const buildUrl = (path?: string) => path ? `${API_URL}${path}` : null
+  // ✅ Monta a URL correta com a base do ambiente. Avatares novos já vêm como
+  // data: URI (base64, guardado direto no banco) — só prefixa com API_URL
+  // caminhos relativos legados tipo "/uploads/arquivo.png".
+  const buildUrl = (path?: string) => {
+    if (!path) return null
+    return path.startsWith('data:') ? path : `${API_URL}${path}`
+  }
 
   const [preview, setPreview] = useState<string | null>(buildUrl(avatarURL))
   const [avatarFailed, setAvatarFailed] = useState(false)

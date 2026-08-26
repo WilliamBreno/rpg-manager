@@ -18,6 +18,7 @@ export default function BackgroundForm({ characterID, background }: Props) {
     ideals: background?.ideals ?? '',
     bonds: background?.bonds ?? '',
     flaws: background?.flaws ?? '',
+    rumors: background?.rumors ?? '',
   })
 
   const saveMutation = useMutation({
@@ -35,6 +36,10 @@ export default function BackgroundForm({ characterID, background }: Props) {
     { key: 'bonds', label: 'Vínculos', placeholder: 'O que seu personagem se importa?' },
     { key: 'flaws', label: 'Defeitos', placeholder: 'Quais são as fraquezas do seu personagem?' },
   ] as const
+
+  const rumorsField = {
+    key: 'rumors', label: '🗞️ Rumores', placeholder: 'O que dizem por aí sobre esse personagem pelas tavernas e ruas?',
+  } as const
 
   return (
     <div className="bg-gray-800 rounded-lg p-6 mb-4 border border-gray-700">
@@ -65,6 +70,17 @@ export default function BackgroundForm({ characterID, background }: Props) {
             </div>
           ))}
 
+          <div className="border-t border-gray-700 pt-4">
+            <label className="text-gray-400 text-sm mb-1 block">{rumorsField.label}</label>
+            <textarea
+              value={form.rumors}
+              onChange={e => setForm(prev => ({ ...prev, rumors: e.target.value }))}
+              placeholder={rumorsField.placeholder}
+              rows={3}
+              className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+            />
+          </div>
+
           <div className="flex gap-3">
             <button
               onClick={() => saveMutation.mutate()}
@@ -93,6 +109,12 @@ export default function BackgroundForm({ characterID, background }: Props) {
               </p>
             </div>
           ))}
+          <div className="border-t border-gray-700 pt-4">
+            <p className="text-gray-400 text-sm mb-1">{rumorsField.label}</p>
+            <p className="text-white text-sm bg-gray-700 rounded-lg px-4 py-3 max-h-24 overflow-y-auto">
+              {form.rumors || <span className="text-gray-500 italic">Nenhum boato registrado ainda</span>}
+            </p>
+          </div>
         </div>
       )}
     </div>

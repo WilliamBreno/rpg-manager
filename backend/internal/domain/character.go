@@ -48,6 +48,11 @@ type Character struct {
 	Speed             int    `json:"speed"`
 	ProficiencyBonus  int    `json:"proficiency_bonus"`
 
+	// Boatos/rumores que circulam sobre o personagem (edição-agnóstico,
+	// editável via /characters/:id/background junto com os outros campos
+	// de biografia).
+	Rumors string `json:"rumors"`
+
 	// ── Relacionamentos ───────────────────────────────────────────────────────
 	Class      Class              `json:"class"       gorm:"foreignKey:ClassID"`
 	Race       Race               `json:"race"        gorm:"foreignKey:RaceID"`

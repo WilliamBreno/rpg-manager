@@ -769,7 +769,17 @@ export default function CharacterDetail() {
         )}
 
         {/* ── Background Form (biografia/notas) ───────────────────────────── */}
-        <BackgroundForm characterID={Number(id)} />
+        <BackgroundForm
+          characterID={Number(id)}
+          background={{
+            history: '',
+            personality_traits: character.personality_traits ?? '',
+            ideals: character.ideals ?? '',
+            bonds: character.bonds ?? '',
+            flaws: character.flaws ?? '',
+            rumors: character.rumors ?? '',
+          }}
+        />
 
         {/* ── Ações ───────────────────────────────────────────────────────── */}
         <div className="flex flex-wrap gap-2 pb-6 pt-2">

@@ -7,6 +7,14 @@ import type { Character } from '../types'
 
 const API_BASE = (import.meta.env.VITE_API_URL ?? 'http://localhost:8080/api').replace(/\/api$/, '')
 
+// Avatares novos vêm como data: URI (base64, guardado direto no banco — ver
+// upload_handler.go). Avatares antigos ainda podem ter um caminho relativo
+// tipo "/uploads/arquivo.png" (arquivo que não existe mais em disco, cai no
+// fallback via onError abaixo); só prefixa com a API_BASE nesse caso legado.
+function resolveAvatarSrc(avatarURL: string): string {
+  return avatarURL.startsWith('data:') ? avatarURL : `${API_BASE}${avatarURL}`
+}
+
 // Cor de destaque por card — determinística por ID (não sorteia de novo a cada render).
 const ACCENTS = [
   { bar: '#c9a84c', ring: 'rgba(201,168,76,0.5)' },   // dourado (tema base)
@@ -113,10 +121,16 @@ export default function CharacterCard({ character }: Props) {
       </div>
 
       {/* Retrato */}
-      <div className="h-36 bg-gray-700 flex items-center justify-center overflow-hidden">
+      <div className="h-36 bg-gray-700 flex items-center justify-center overflow-hidden relative">
+        <span
+          className="absolute top-2 left-2 z-10 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+          style={{ background: 'rgba(0,0,0,0.6)', color: accent.bar, border: `1px solid ${accent.ring}` }}
+        >
+          D&D {character.edition}
+        </span>
         {character.avatar_url && !avatarFailed ? (
           <img
-            src={`${API_BASE}${character.avatar_url}`}
+            src={resolveAvatarSrc(character.avatar_url)}
             alt={character.name}
             className="w-full h-full object-cover"
             onError={() => setAvatarFailed(true)}

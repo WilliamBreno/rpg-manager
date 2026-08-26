@@ -69,7 +69,6 @@ func main() {
 	inventoryHandler  := handler.NewInventoryHandler(inventoryService, characterService)
 
 	r := gin.Default()
-	r.Static("/uploads", "./uploads")
 
 	r.Use(func(c *gin.Context) {
 		origin := c.Request.Header.Get("Origin")

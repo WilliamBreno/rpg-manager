@@ -20,7 +20,7 @@ func NewBackgroundService(db *gorm.DB) *BackgroundService {
 func (s *BackgroundService) Get(characterID uint) (map[string]interface{}, error) {
 	var char domain.Character
 	if err := s.db.
-		Select("id", "personality_traits", "ideals", "bonds", "flaws").
+		Select("id", "personality_traits", "ideals", "bonds", "flaws", "rumors").
 		First(&char, characterID).Error; err != nil {
 		return nil, err
 	}
@@ -29,12 +29,13 @@ func (s *BackgroundService) Get(characterID uint) (map[string]interface{}, error
 		"ideals":             char.Ideals,
 		"bonds":              char.Bonds,
 		"flaws":              char.Flaws,
+		"rumors":             char.Rumors,
 	}, nil
 }
 
 // Save atualiza os campos de biografia do personagem
 func (s *BackgroundService) Save(characterID uint, data map[string]interface{}) error {
-	allowed := []string{"personality_traits", "ideals", "bonds", "flaws"}
+	allowed := []string{"personality_traits", "ideals", "bonds", "flaws", "rumors"}
 	updates := map[string]interface{}{}
 	for _, key := range allowed {
 		if val, ok := data[key]; ok {

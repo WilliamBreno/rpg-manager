@@ -48,9 +48,14 @@ func (r *SkillRepository) FindByClassAndRace(classID uint, raceID *uint) ([]doma
     return skills, result.Error
 }
 
+// FindByLevel retorna as habilidades que a classe desbloqueia EXATAMENTE
+// neste nível (não "até este nível" — ver character_service.go, onde isso é
+// chamado uma vez por nível dentro do loop de level up; usar "<=" fazia cada
+// level up reprocessar todas as habilidades de níveis anteriores, inclusive
+// as opções de um choice_group que o jogador NÃO escolheu na criação).
 func (r *SkillRepository) FindByLevel(classID uint, level int) ([]domain.Skill, error) {
     var skills []domain.Skill
-    result := r.DB.Where("class_id = ? AND level <= ?", classID, level).Find(&skills)
+    result := r.DB.Where("class_id = ? AND level = ?", classID, level).Find(&skills)
     return skills, result.Error
 }
 

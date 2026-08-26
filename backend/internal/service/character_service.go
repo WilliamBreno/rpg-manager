@@ -271,10 +271,18 @@ func (s *CharacterService) checkAndApplyLevelUps(c *domain.Character) (leveledUp
 			s.recalcDefensas4e(c)
 		}
 
-		// Adiciona habilidades que desbloqueiam neste nível
+		// Adiciona habilidades que desbloqueiam neste nível. Habilidades que
+		// exigem escolha (RequiresChoice) não são concedidas automaticamente
+		// aqui — hoje nenhuma existe acima do nível 1 (todas são resolvidas
+		// na criação, ver CharacterCreate.tsx), mas se uma for adicionada no
+		// futuro isso evita conceder as duas opções de uma vez em vez de
+		// esperar uma escolha do jogador que ainda não existe nesta tela.
 		newSkills, err := s.SkillRepo.FindByLevel(c.ClassID, c.Level)
 		if err == nil {
 			for _, skill := range newSkills {
+				if skill.RequiresChoice {
+					continue
+				}
 				s.Repo.AddSkill(c, &skill)
 			}
 		}
@@ -482,6 +490,9 @@ func (s *CharacterService) LevelUp(id uint) (domain.Character, error) {
 	newSkills, err := s.SkillRepo.FindByLevel(character.ClassID, character.Level)
 	if err == nil {
 		for _, skill := range newSkills {
+			if skill.RequiresChoice {
+				continue
+			}
 			s.Repo.AddSkill(&character, &skill)
 		}
 	}
