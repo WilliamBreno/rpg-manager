@@ -101,7 +101,9 @@ func specialClassAC(edition, className string, dexMod, wisMod, conMod, intMod, l
     }
 }
 
-// modifier calcula o modificador de atributo padrão do D&D
+// modifier calcula o modificador de atributo padrão do D&D — delega pra mod()
+// (character_service.go, mesmo pacote) em vez de duplicar a fórmula; a versão
+// duplicada aqui tinha o mesmo bug de truncamento (mod(9) dava 0 em vez de -1).
 func modifier(attr int) int {
-    return (attr - 10) / 2
+    return mod(attr)
 }

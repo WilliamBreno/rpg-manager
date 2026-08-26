@@ -9,10 +9,11 @@ import (
 type CharacterService struct {
 	Repo      *repository.CharacterRepository
 	SkillRepo *repository.SkillRepository
+	ClassRepo *repository.ClassRepository
 }
 
-func NewCharacterService(repo *repository.CharacterRepository, skillRepo *repository.SkillRepository) *CharacterService {
-	return &CharacterService{Repo: repo, SkillRepo: skillRepo}
+func NewCharacterService(repo *repository.CharacterRepository, skillRepo *repository.SkillRepository, classRepo *repository.ClassRepository) *CharacterService {
+	return &CharacterService{Repo: repo, SkillRepo: skillRepo, ClassRepo: classRepo}
 }
 
 // ── Tabelas de XP ────────────────────────────────────────────────────────────
@@ -40,9 +41,17 @@ var asiLevels5e = map[int]bool{4: true, 8: true, 12: true, 16: true, 19: true}
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-// mod retorna o modificador de atributo padrão D&D
+// mod retorna o modificador de atributo padrão D&D — piso da divisão, não
+// truncamento em direção a zero. Para valores ímpares abaixo de 10 isso
+// importa: mod(9) deve ser -1 (tabela oficial do PHB), não 0. Go trunca
+// divisão de inteiros em direção a zero, então "(attr-10)/2" sozinho erra
+// exatamente esses casos (9,7,5,3,1) por +1.
 func mod(attr int) int {
-	return (attr - 10) / 2
+	diff := attr - 10
+	if diff < 0 {
+		return (diff - 1) / 2
+	}
+	return diff / 2
 }
 
 // maxInt retorna o maior entre dois inteiros
@@ -300,6 +309,16 @@ func (s *CharacterService) Create(character *domain.Character) error {
 	if character.RaceID == 0 {
 		return errors.New("raça é obrigatória")
 	}
+
+	// character.Class só tem o zero-value aqui (o handler só recebe class_id
+	// do JSON, não o objeto Class inteiro) — sem isso, recalculate() calcula o
+	// PV inicial como se HitDie fosse 0, dando PV = max(1, mod(CON)) pra
+	// qualquer classe. Precisa recarregar a classe antes de calcular.
+	class, err := s.ClassRepo.FindByID(character.ClassID)
+	if err != nil {
+		return errors.New("classe inválida")
+	}
+	character.Class = class
 
 	manualHP := character.HitPoints
 
