@@ -19,12 +19,14 @@ export default function AvatarUpload({ characterID, avatarURL, characterName }: 
   const buildUrl = (path?: string) => path ? `${API_URL}${path}` : null
 
   const [preview, setPreview] = useState<string | null>(buildUrl(avatarURL))
+  const [avatarFailed, setAvatarFailed] = useState(false)
 
   const uploadMutation = useMutation({
     mutationFn: (file: File) => characterService.uploadAvatar(characterID, file),
     onSuccess: (data) => {
       // ✅ Usa a mesma função para montar a URL
       setPreview(buildUrl(data.avatar_url))
+      setAvatarFailed(false)
       queryClient.invalidateQueries({ queryKey: ['character', String(characterID)] })
       queryClient.invalidateQueries({ queryKey: ['characters'] })
     },
@@ -34,7 +36,7 @@ export default function AvatarUpload({ characterID, avatarURL, characterName }: 
     const file = e.target.files?.[0]
     if (!file) return
     const reader = new FileReader()
-    reader.onloadend = () => setPreview(reader.result as string)
+    reader.onloadend = () => { setPreview(reader.result as string); setAvatarFailed(false) }
     reader.readAsDataURL(file)
     uploadMutation.mutate(file)
   }
@@ -45,8 +47,8 @@ export default function AvatarUpload({ characterID, avatarURL, characterName }: 
         onClick={() => fileInputRef.current?.click()}
         className="w-28 h-28 rounded-full overflow-hidden bg-gray-700 border-2 border-gray-600 hover:border-indigo-500 cursor-pointer transition flex items-center justify-center"
       >
-        {preview ? (
-          <img src={preview} alt={characterName} className="w-full h-full object-cover" />
+        {preview && !avatarFailed ? (
+          <img src={preview} alt={characterName} className="w-full h-full object-cover" onError={() => setAvatarFailed(true)} />
         ) : (
           <span className="text-4xl">🧙</span>
         )}

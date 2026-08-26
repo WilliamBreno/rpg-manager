@@ -22,6 +22,7 @@ export default function CharacterCard({ character }: Props) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [avatarFailed, setAvatarFailed] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
   const deleteMutation = useMutation({
@@ -113,11 +114,12 @@ export default function CharacterCard({ character }: Props) {
 
       {/* Retrato */}
       <div className="h-36 bg-gray-700 flex items-center justify-center overflow-hidden">
-        {character.avatar_url ? (
+        {character.avatar_url && !avatarFailed ? (
           <img
             src={`${API_BASE}${character.avatar_url}`}
             alt={character.name}
             className="w-full h-full object-cover"
+            onError={() => setAvatarFailed(true)}
           />
         ) : (
           <span className="text-5xl">🧙</span>
