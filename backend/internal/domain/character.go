@@ -53,6 +53,14 @@ type Character struct {
 	// de biografia).
 	Rumors string `json:"rumors"`
 
+	// AbilityBonusChoice: só usado no payload de criação (não persistido —
+	// gorm:"-"). Regra 2024: o bônus de atributo vem do Antecedente, nunca
+	// da raça. O jogador digita os 6 atributos BASE (sem o bônus) e escolhe
+	// aqui como distribuir os pontos entre as opções de
+	// Antecedent.AbilityBonusOptions: +2/+1 em duas delas, ou +1 nas três.
+	// Ex: {"INT": 2, "SAB": 1}. Ver CharacterService.Create.
+	AbilityBonusChoice map[string]int `json:"ability_bonus_choice" gorm:"-"`
+
 	// ── Relacionamentos ───────────────────────────────────────────────────────
 	Class      Class              `json:"class"       gorm:"foreignKey:ClassID"`
 	Race       Race               `json:"race"        gorm:"foreignKey:RaceID"`

@@ -77,6 +77,12 @@ export default function CharacterCreate() {
   const [selectedBackground, setSelectedBackground] = useState<Antecedent | null>(null)
   const [selectedAlignment,  setSelectedAlignment]  = useState<string>('')
 
+  // Regra 2024: bônus de atributo vem do Antecedente, nunca da raça. +2/+1
+  // em duas das 3 habilidades do antecedente, ou +1 nas três.
+  const [bonusMode, setBonusMode] = useState<'2e1' | '1cada'>('2e1')
+  const [bonusPlusTwo, setBonusPlusTwo] = useState<string | null>(null)
+  const [bonusPlusOne, setBonusPlusOne] = useState<string | null>(null)
+
   const [selectedSkills, setSelectedSkills] = useState<Record<PowerType, Skill[]>>({
     unlimited: [], encounter: [], daily: [], utility: [],
   })
@@ -204,6 +210,24 @@ export default function CharacterCreate() {
     availableSkills.includes(p.name) && !backgroundSkills.includes(p.name)
   )
 
+  const abilityBonusOptions: string[] = (() => {
+    if (!selectedBackground?.ability_bonus_options) return []
+    try { return JSON.parse(selectedBackground.ability_bonus_options) } catch { return [] }
+  })()
+  const abilityBonusChoice: Record<string, number> | null = (() => {
+    if (abilityBonusOptions.length !== 3) return null
+    if (bonusMode === '1cada') {
+      return Object.fromEntries(abilityBonusOptions.map(a => [a, 1]))
+    }
+    if (bonusPlusTwo && bonusPlusOne && bonusPlusTwo !== bonusPlusOne) {
+      return { [bonusPlusTwo]: 2, [bonusPlusOne]: 1 }
+    }
+    return null
+  })()
+  const ABILITY_LABELS: Record<string, string> = {
+    FOR: 'Força', DES: 'Destreza', CON: 'Constituição', INT: 'Inteligência', SAB: 'Sabedoria', CAR: 'Carisma',
+  }
+
   const pendingItems: string[] = []
   if (is4e) {
     if (!selectedClass)  pendingItems.push('Selecione uma classe')
@@ -223,6 +247,8 @@ export default function CharacterCreate() {
     if (!selectedClass)      pendingItems.push('Selecione uma classe')
     if (!selectedRace)       pendingItems.push('Selecione uma raça')
     if (!selectedBackground) pendingItems.push('Selecione um antecedente')
+    if (selectedBackground && abilityBonusOptions.length === 3 && !abilityBonusChoice)
+      pendingItems.push('Escolha a distribuição do bônus de atributo do antecedente')
     if (selectedClass && hasAnyChoiceGroups && !allChoicesMade)
       pendingItems.push('Complete as escolhas de características')
     if (selectedClass && pericias5eDisponiveis.length > 0) {
@@ -238,6 +264,7 @@ export default function CharacterCreate() {
         ...data,
         antecedent_id: selectedBackground?.ID ?? undefined,
         alignment:     selectedAlignment || undefined,
+        ability_bonus_choice: abilityBonusChoice ?? undefined,
       }
       const character = await characterService.create(characterData)
       for (const skill of Object.values(selectedSkills).flat())
@@ -299,6 +326,9 @@ export default function CharacterCreate() {
     setSelectedBackground(bg)
     setValue('antecedent_id', bg.ID)
     setSelectedPericias(newBgSkills)
+    setBonusMode('2e1')
+    setBonusPlusTwo(null)
+    setBonusPlusOne(null)
   }
 
   const canSelect    = (type: PowerType, skill: Skill) => {
@@ -511,6 +541,74 @@ export default function CharacterCreate() {
                     )
                   })}
                 </div>
+              </div>
+            )}
+
+            {/* PASSO 4.5 — Bônus de Atributo do Antecedente (regra 2024: nunca vem da raça) */}
+            {is5e && selectedBackground && abilityBonusOptions.length === 3 && (
+              <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
+                {sectionHeader(`Passo ${S()} — Bônus de Atributo`)}
+                <p className="text-gray-500 text-xs mb-4">
+                  Pelas regras de 2024, o bônus de atributo vem do <span style={{ color: '#c9a84c' }}>antecedente</span> escolhido,
+                  não da raça. Os valores digitados nos atributos abaixo são a base — este bônus soma em cima deles.
+                  Você também recebe automaticamente o talento{' '}
+                  <span style={{ color: '#c9a84c' }}>{selectedBackground.origin_feat_name}</span> deste antecedente.
+                </p>
+                <div className="flex rounded-lg overflow-hidden border mb-4" style={{ borderColor: '#3f3f46' }}>
+                  {(['2e1', '1cada'] as const).map(mode => (
+                    <button key={mode} type="button" onClick={() => setBonusMode(mode)}
+                      className="flex-1 py-2 text-xs font-semibold uppercase tracking-wider transition"
+                      style={bonusMode === mode
+                        ? { background: '#c9a84c', color: '#0a0a0a' }
+                        : { background: '#27272a', color: '#a1a1aa' }
+                      }
+                    >
+                      {mode === '2e1' ? '+2 e +1' : '+1 nas três'}
+                    </button>
+                  ))}
+                </div>
+                {bonusMode === '1cada' ? (
+                  <div className="flex flex-wrap gap-2">
+                    {abilityBonusOptions.map(a => (
+                      <span key={a} className="text-xs bg-emerald-900/60 text-emerald-300 px-3 py-1.5 rounded-full">
+                        {ABILITY_LABELS[a]} +1
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    <div>
+                      <p className="text-gray-500 text-xs mb-1.5">Qual atributo recebe +2?</p>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {abilityBonusOptions.map(a => (
+                          <button key={a} type="button"
+                            onClick={() => { setBonusPlusTwo(a); if (bonusPlusOne === a) setBonusPlusOne(null) }}
+                            className="py-2 rounded-lg text-xs font-medium transition border"
+                            style={bonusPlusTwo === a
+                              ? { background: 'rgba(201,168,76,0.15)', borderColor: 'rgba(201,168,76,0.5)', color: '#c9a84c' }
+                              : { background: '#27272a', borderColor: '#3f3f46', color: '#a1a1aa' }
+                            }
+                          >{ABILITY_LABELS[a]}</button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-gray-500 text-xs mb-1.5">Qual atributo recebe +1?</p>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {abilityBonusOptions.map(a => (
+                          <button key={a} type="button" disabled={a === bonusPlusTwo}
+                            onClick={() => setBonusPlusOne(a)}
+                            className="py-2 rounded-lg text-xs font-medium transition border disabled:opacity-30 disabled:cursor-not-allowed"
+                            style={bonusPlusOne === a
+                              ? { background: 'rgba(201,168,76,0.15)', borderColor: 'rgba(201,168,76,0.5)', color: '#c9a84c' }
+                              : { background: '#27272a', borderColor: '#3f3f46', color: '#a1a1aa' }
+                            }
+                          >{ABILITY_LABELS[a]}</button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

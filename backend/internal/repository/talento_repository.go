@@ -15,6 +15,12 @@ func (r *TalentoRepository) FindByID(id uint) (domain.Talento, error) {
 	return talento, err
 }
 
+func (r *TalentoRepository) FindByName(name, edition string) (domain.Talento, error) {
+	var talento domain.Talento
+	err := r.db.Where("name = ? AND edition = ?", name, edition).First(&talento).Error
+	return talento, err
+}
+
 func (r *TalentoRepository) GetAll(edition string) ([]domain.Talento, error) {
 	var talentos []domain.Talento
 	q := r.db.Order("category, name")

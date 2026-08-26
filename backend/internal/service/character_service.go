@@ -1,9 +1,13 @@
 package service
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"rpg-manager/internal/domain"
 	"rpg-manager/internal/repository"
+
+	"gorm.io/gorm"
 )
 
 type CharacterService struct {
@@ -12,10 +16,11 @@ type CharacterService struct {
 	ClassRepo   *repository.ClassRepository
 	RaceRepo    *repository.RaceRepository
 	TalentoRepo *repository.TalentoRepository
+	DB          *gorm.DB
 }
 
-func NewCharacterService(repo *repository.CharacterRepository, skillRepo *repository.SkillRepository, classRepo *repository.ClassRepository, raceRepo *repository.RaceRepository, talentoRepo *repository.TalentoRepository) *CharacterService {
-	return &CharacterService{Repo: repo, SkillRepo: skillRepo, ClassRepo: classRepo, RaceRepo: raceRepo, TalentoRepo: talentoRepo}
+func NewCharacterService(repo *repository.CharacterRepository, skillRepo *repository.SkillRepository, classRepo *repository.ClassRepository, raceRepo *repository.RaceRepository, talentoRepo *repository.TalentoRepository, db *gorm.DB) *CharacterService {
+	return &CharacterService{Repo: repo, SkillRepo: skillRepo, ClassRepo: classRepo, RaceRepo: raceRepo, TalentoRepo: talentoRepo, DB: db}
 }
 
 // ── Tabelas de XP ────────────────────────────────────────────────────────────
@@ -353,6 +358,21 @@ func (s *CharacterService) Create(character *domain.Character) error {
 		character.Speed = race.Speed
 	}
 
+	// Regra 2024: o bônus de atributo vem do Antecedente, nunca da raça (por
+	// isso não há nenhum campo de bônus em domain.Race). Se o personagem tem
+	// um antecedente com AbilityBonusOptions, o bônus é obrigatório aqui —
+	// os atributos que chegaram no payload são tratados como BASE (antes do
+	// bônus), e o valor final gravado já inclui a distribuição escolhida.
+	var antecedent domain.Antecedent
+	if character.Edition == "5e" && character.AntecedentID != nil {
+		if err := s.DB.First(&antecedent, *character.AntecedentID).Error; err != nil {
+			return errors.New("antecedente inválido")
+		}
+		if err := s.applyAntecedentAbilityBonus(character, &antecedent); err != nil {
+			return err
+		}
+	}
+
 	manualHP := character.HitPoints
 
 	character.Level = 1
@@ -369,7 +389,78 @@ func (s *CharacterService) Create(character *domain.Character) error {
 		}
 	}
 
-	return s.Repo.Create(character)
+	if err := s.Repo.Create(character); err != nil {
+		return err
+	}
+
+	// Concede o talento de Origem do antecedente automaticamente — RAW 2024:
+	// "seu antecedente concede um talento", fixo por antecedente, não é uma
+	// escolha livre do jogador (capítulo 4 do Livro do Jogador 2024).
+	if antecedent.OriginFeatName != "" {
+		talento, err := s.TalentoRepo.FindByName(antecedent.OriginFeatName, "5e")
+		if err == nil {
+			s.TalentoRepo.Add(character.ID, talento.ID)
+		}
+	}
+
+	return nil
+}
+
+// applyAntecedentAbilityBonus aplica a distribuição de bônus de atributo do
+// Antecedente 2024 (regra de ouro deste projeto: bônus de atributo NUNCA vem
+// da raça/espécie, só do antecedente — ver domain.Race, que não tem nenhum
+// campo de bônus). Espera exatamente +2 numa habilidade e +1 em outra (das 3
+// permitidas), OU +1 nas três.
+func (s *CharacterService) applyAntecedentAbilityBonus(character *domain.Character, antecedent *domain.Antecedent) error {
+	if antecedent.AbilityBonusOptions == "" {
+		return nil
+	}
+	var allowed []string
+	if err := json.Unmarshal([]byte(antecedent.AbilityBonusOptions), &allowed); err != nil || len(allowed) != 3 {
+		return nil // dado do antecedente mal formado no seed — não bloqueia a criação
+	}
+	allowedSet := map[string]bool{}
+	for _, a := range allowed {
+		allowedSet[a] = true
+	}
+
+	choice := character.AbilityBonusChoice
+	if len(choice) == 0 {
+		return fmt.Errorf("escolha a distribuição do bônus de atributo do antecedente (opções: %v)", allowed)
+	}
+
+	total := 0
+	for attr, val := range choice {
+		if !allowedSet[attr] {
+			return fmt.Errorf("%s não é uma opção de bônus deste antecedente (opções: %v)", attr, allowed)
+		}
+		if val < 1 || val > 2 {
+			return errors.New("cada atributo escolhido deve receber +1 ou +2")
+		}
+		total += val
+	}
+	// +2/+1 em duas habilidades (soma 3, 2 escolhas) OU +1 nas três (soma 3, 3 escolhas)
+	if total != 3 || (len(choice) != 2 && len(choice) != 3) {
+		return errors.New("distribua +2 em uma habilidade e +1 em outra, ou +1 nas três habilidades do antecedente")
+	}
+
+	for attr, val := range choice {
+		switch attr {
+		case "FOR":
+			character.Strength = capAt20(character.Strength + val)
+		case "DES":
+			character.Dexterity = capAt20(character.Dexterity + val)
+		case "CON":
+			character.Constitution = capAt20(character.Constitution + val)
+		case "INT":
+			character.Intelligence = capAt20(character.Intelligence + val)
+		case "SAB":
+			character.Wisdom = capAt20(character.Wisdom + val)
+		case "CAR":
+			character.Charisma = capAt20(character.Charisma + val)
+		}
+	}
+	return nil
 }
 
 func (s *CharacterService) Update(character *domain.Character) error {

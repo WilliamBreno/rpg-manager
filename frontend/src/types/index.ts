@@ -111,6 +111,8 @@ export interface Antecedent {
   feature: string
   feature_description: string
   is_default: boolean
+  ability_bonus_options?: string  // JSON: '["INT","SAB","CAR"]' — regra 2024, bônus vem do antecedente
+  origin_feat_name?: string       // nome do Talento de Origem concedido automaticamente
 }
 
 // ── Armor ────────────────────────────────────────────────────────────────────
@@ -242,6 +244,7 @@ export interface CreateCharacterDTO {
   ideals?: string
   bonds?: string
   flaws?: string
+  ability_bonus_choice?: Record<string, number>  // regra 2024: bônus vem do antecedente, ex: {"INT":2,"SAB":1}
 }
 export interface Antecedent {
   ID: number
@@ -257,4 +260,6 @@ export interface Antecedent {
   is_default: boolean
   CreatedAt?: string
   UpdatedAt?: string
+  ability_bonus_options?: string
+  origin_feat_name?: string
 }

@@ -22,6 +22,9 @@ func seedAntecedents5e(db *gorm.DB) {
 			Feature:            "Abrigo dos Fiéis",
 			FeatureDescription: "Como acólito, você comanda o respeito de outros que compartilham sua fé. Pode realizar cerimônias religiosas e receber abrigo, refeições e cuidados em qualquer templo da sua divindade.",
 			IsDefault:          true,
+			// PHB 2024, cap. 4: Valores de Atributo Inteligência/Sabedoria/Carisma, Talento Iniciado em Magia.
+			AbilityBonusOptions: `["INT","SAB","CAR"]`,
+			OriginFeatName:      "Iniciado em Magia",
 		},
 		{
 			Name:               "Criminoso",
@@ -34,6 +37,9 @@ func seedAntecedents5e(db *gorm.DB) {
 			Feature:            "Contato no Crime",
 			FeatureDescription: "Você tem um contato confiável no submundo criminal. Esse contato pode fornecer informações sobre pessoas, locais e crimes locais, além de intermediar serviços ilícitos.",
 			IsDefault:          true,
+			// PHB 2024, cap. 4: Valores de Atributo Destreza/Constituição/Inteligência, Talento Alerta.
+			AbilityBonusOptions: `["DES","CON","INT"]`,
+			OriginFeatName:      "Alerta",
 		},
 		{
 			Name:               "Herói do Povo",
@@ -46,6 +52,15 @@ func seedAntecedents5e(db *gorm.DB) {
 			Feature:            "Hospitalidade Rústica",
 			FeatureDescription: "As pessoas comuns te recebem de bom grado. Consegues comida, abrigo e proteção das pessoas do povo, que te escondem de perseguições se necessário.",
 			IsDefault:          true,
+			// "Herói do Povo" (Folk Hero) é um antecedente só de 2014 — não foi
+			// reimpresso no PHB 2024 com esse nome (os 16 antecedentes 2024 são
+			// outros: Acólito, Andarilho, Artesão, Artista, Charlatão, Criminoso,
+			// Eremita, Escriba, Fazendeiro, Guarda, Guia, Marinheiro, Mercador,
+			// Nobre, Sábio, Soldado). Fica sem AbilityBonusOptions/OriginFeatName
+			// por ora — a "regra de ouro" (2024 substitui 2014) não se aplica
+			// diretamente aqui porque não existe um "Herói do Povo" de 2024 pra
+			// substituir; decidir com o usuário se mapeia pro antecedente 2024
+			// mais parecido (ex: Fazendeiro) ou se mantém sem bônus automático.
 		},
 		{
 			Name:               "Sábio",
@@ -58,6 +73,9 @@ func seedAntecedents5e(db *gorm.DB) {
 			Feature:            "Pesquisador",
 			FeatureDescription: "Quando tenta aprender ou lembrar de uma informação, mesmo que não saiba a resposta, frequentemente sabe onde e de quem pode obtê-la. O Mestre pode decidir que a informação é obscura demais para ser encontrada.",
 			IsDefault:          true,
+			// PHB 2024, cap. 4: Valores de Atributo Constituição/Inteligência/Sabedoria, Talento Iniciado em Magia.
+			AbilityBonusOptions: `["CON","INT","SAB"]`,
+			OriginFeatName:      "Iniciado em Magia",
 		},
 		{
 			Name:               "Soldado",
@@ -70,6 +88,9 @@ func seedAntecedents5e(db *gorm.DB) {
 			Feature:            "Hierarquia Militar",
 			FeatureDescription: "Você tem uma patente reconhecida de sua carreira militar. Soldados leais ao seu antigo exército te reconhecem e prestam deferência, e você tem acesso a acampamentos e suprimentos militares.",
 			IsDefault:          true,
+			// PHB 2024, cap. 4: Valores de Atributo Força/Destreza/Constituição, Talento Atacante Selvagem.
+			AbilityBonusOptions: `["FOR","DES","CON"]`,
+			OriginFeatName:      "Atacante Selvagem",
 		},
 	}
 
@@ -79,13 +100,15 @@ func seedAntecedents5e(db *gorm.DB) {
 			db.Create(&a)
 		} else {
 			db.Model(&existing).Updates(map[string]interface{}{
-				"description":         a.Description,
-				"skill_proficiencies": a.SkillProficiencies,
-				"tool_proficiencies":  a.ToolProficiencies,
-				"languages":           a.Languages,
-				"equipment":           a.Equipment,
-				"feature":             a.Feature,
-				"feature_description": a.FeatureDescription,
+				"description":           a.Description,
+				"skill_proficiencies":   a.SkillProficiencies,
+				"tool_proficiencies":    a.ToolProficiencies,
+				"languages":             a.Languages,
+				"equipment":             a.Equipment,
+				"feature":               a.Feature,
+				"feature_description":   a.FeatureDescription,
+				"ability_bonus_options": a.AbilityBonusOptions,
+				"origin_feat_name":      a.OriginFeatName,
 			})
 		}
 	}
