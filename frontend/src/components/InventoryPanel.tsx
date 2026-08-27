@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { characterService } from '../services/characterService'
+import { parseWeaponDescription, damageAbilityMod, formatSigned, acFor } from '../lib/weaponParser'
 import type { Currency } from '../types'
 
 const COIN_LABELS: { key: keyof Currency; label: string }[] = [
@@ -14,9 +15,11 @@ const COIN_LABELS: { key: keyof Currency; label: string }[] = [
 interface Props {
   characterId: number
   currency: Currency
+  strengthMod: number
+  dexterityMod: number
 }
 
-export default function InventoryPanel({ characterId, currency }: Props) {
+export default function InventoryPanel({ characterId, currency, strengthMod, dexterityMod }: Props) {
   const navigate = useNavigate()
 
   const { data: inventory } = useQuery({
@@ -48,18 +51,29 @@ export default function InventoryPanel({ characterId, currency }: Props) {
 
       {hasItems && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {inventory?.armors?.map(a => (
-            <div key={`armor-${a.armor_id}`} className="bg-gray-900 rounded-lg px-3 py-2 flex justify-between text-sm">
-              <span className="text-gray-200">🛡️ {a.armor.name}</span>
-              <span className="text-gray-500">x{a.quantity}</span>
-            </div>
-          ))}
-          {inventory?.items?.map(i => (
-            <div key={`item-${i.item_id}`} className="bg-gray-900 rounded-lg px-3 py-2 flex justify-between text-sm">
-              <span className="text-gray-200">{i.item.category === 'item_magico' ? '✨' : i.item.category === 'arma' ? '⚔️' : '🎒'} {i.item.name}</span>
-              <span className="text-gray-500">x{i.quantity}</span>
-            </div>
-          ))}
+          {inventory?.armors?.map(a => {
+            const ca = acFor(a.armor.base_ac, a.armor.max_dex_bonus, dexterityMod)
+            return (
+              <div key={`armor-${a.armor_id}`} className="bg-gray-900 rounded-lg px-3 py-2 flex justify-between text-sm">
+                <span className="text-gray-200">🛡️ {a.armor.name} <span className="text-gray-500">— CA {ca}</span></span>
+                <span className="text-gray-500">x{a.quantity}</span>
+              </div>
+            )
+          })}
+          {inventory?.items?.map(i => {
+            const weapon = i.item.category === 'arma' ? parseWeaponDescription(i.item.description) : null
+            return (
+              <div key={`item-${i.item_id}`} className="bg-gray-900 rounded-lg px-3 py-2 flex justify-between text-sm">
+                <span className="text-gray-200">
+                  {i.item.category === 'item_magico' ? '✨' : i.item.category === 'arma' ? '⚔️' : '🎒'} {i.item.name}
+                  {weapon && (
+                    <span className="text-gray-500"> — {weapon.dice} {weapon.damageType} ({formatSigned(damageAbilityMod(weapon, strengthMod, dexterityMod))})</span>
+                  )}
+                </span>
+                <span className="text-gray-500">x{i.quantity}</span>
+              </div>
+            )
+          })}
         </div>
       )}
     </div>

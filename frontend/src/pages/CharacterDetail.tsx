@@ -14,7 +14,7 @@ import DeathSaves from '../components/DeathSaves'
 import LevelUpCelebration from '../components/LevelUpCelebration'
 import InventoryPanel from '../components/InventoryPanel'
 import { maxLevelFor, xpProgressFor } from '../lib/xpTables'
-import { spellSlotsFor, pactMagicFor } from '../lib/spellSlots'
+import { spellSlotsFor, pactMagicFor, SPELLCASTING_ABILITY } from '../lib/spellSlots'
 
 // ── Níveis ASI 5e ─────────────────────────────────────────────────────────────
 // A maioria das classes usa a progressão padrão, mas Guerreiro (+6, +14) e
@@ -122,6 +122,17 @@ export default function CharacterDetail() {
   const { data: character, isLoading } = useQuery({
     queryKey: ['character', id],
     queryFn: () => characterService.getByID(Number(id)),
+  })
+
+  // CA real (5e) — character.defense_ac nunca é calculado pro 5e (esse campo
+  // só é preenchido por calcDefenses4e); o back-end já tem a conta certa
+  // (armadura + DEX, com casos especiais de Monge/Bárbaro sem armadura) em
+  // ArmorService.CalculateAC, exposta por GET /characters/:id/ac — antes
+  // desta busca, a ficha 5e sempre mostrava "—" no lugar da CA.
+  const { data: acData } = useQuery({
+    queryKey: ['character-ac', id],
+    queryFn: () => characterService.getAC(Number(id)),
+    enabled: !!character && character.edition === '5e',
   })
 
   const { data: characterPericias } = useQuery({
@@ -344,6 +355,22 @@ export default function CharacterDetail() {
     return `Espaços: ${slots.map((n, i) => `${n}×${i + 1}º`).join(', ')}`
   })()
 
+  // CD de Resistência de Magia, Bônus de Ataque com Magia e Habilidade Chave —
+  // pedido explícito do usuário ("CD do TR, Bônus de ataque, Habilidade chave")
+  // que não existia em lugar nenhum da ficha antes disso.
+  const spellcastingStats = (() => {
+    if (!is5e || !character.class?.name) return null
+    const ability = SPELLCASTING_ABILITY[character.class.name]
+    if (!ability) return null
+    const score = character[ability as 'intelligence' | 'wisdom' | 'charisma']
+    const mod = abilityMod(score)
+    return {
+      abilityLabel: { intelligence: 'Inteligência', wisdom: 'Sabedoria', charisma: 'Carisma' }[ability],
+      saveDC: 8 + profBonus + mod,
+      attackBonus: profBonus + mod,
+    }
+  })()
+
   // ── ASI helpers ──────────────────────────────────────────────────────────
   const asiTotal = Object.values(asiChoices).reduce((a, b) => a + b, 0)
   const canConfirmASI = asiMode === 'talento'
@@ -553,7 +580,7 @@ export default function CharacterDetail() {
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
               {[
-                { label: String(character.defense_ac || '—'), sub: 'CA' },
+                { label: String(acData?.ac ?? '—'), sub: 'CA' },
                 { label: fmtMod(initiative), sub: 'Iniciativa' },
                 { label: String(speed), sub: 'Deslocamento (pés)' },
                 { label: `+${profBonus}`, sub: 'Bônus de Prof.' },
@@ -771,6 +798,20 @@ export default function CharacterDetail() {
               </h2>
               {spellSlotsText && <span className="text-xs text-gray-500 bg-gray-700/60 px-3 py-1 rounded-full">{spellSlotsText}</span>}
             </div>
+            {spellcastingStats && (
+              <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4">
+                {[
+                  { label: spellcastingStats.abilityLabel, sub: 'Habilidade Chave' },
+                  { label: String(spellcastingStats.saveDC), sub: 'CD de Resistência' },
+                  { label: fmtMod(spellcastingStats.attackBonus), sub: 'Bônus de Ataque' },
+                ].map((stat, i) => (
+                  <div key={i} className="text-center bg-gray-700/60 rounded-lg p-2.5 border border-gray-600/50">
+                    <p className="font-bold text-lg sm:text-xl" style={{ color: '#c9a84c' }}>{stat.label}</p>
+                    <p className="text-gray-500 text-xs mt-0.5 leading-tight">{stat.sub}</p>
+                  </div>
+                ))}
+              </div>
+            )}
             <div className="flex flex-col gap-4">
               {cantripsList.length > 0 && (
                 <div>
@@ -883,6 +924,8 @@ export default function CharacterDetail() {
               gold_pieces: character.gold_pieces ?? 0,
               platinum_pieces: character.platinum_pieces ?? 0,
             }}
+            strengthMod={abilityMod(character.strength)}
+            dexterityMod={abilityMod(character.dexterity)}
           />
         )}
 
