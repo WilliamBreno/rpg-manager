@@ -1,17 +1,13 @@
 package handler
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
-	"os"
 	"strconv"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"rpg-manager/internal/domain"
+	"rpg-manager/internal/pdfexport"
 	"rpg-manager/internal/service"
 )
 
@@ -415,18 +411,13 @@ func (h *CharacterHandler) ResetDeathSaves(c *gin.Context) {
 
 // ── Export de PDF (5e) ──────────────────────────────────────────────────────────
 
-// aiServiceURL retorna a base URL do serviço de IA/PDF em Python.
-// Configurável via AI_SERVICE_URL; default aponta para o uvicorn documentado no CLAUDE.md.
-func aiServiceURL() string {
-	if url := os.Getenv("AI_SERVICE_URL"); url != "" {
-		return url
-	}
-	return "http://localhost:8000"
-}
-
 // ExportPDF5e — GET /characters/:id/export/pdf
-// Só disponível para personagens de edição 5e. Todo o cálculo de regras é feito
-// aqui no Go (BuildPDF5eExportPayload); o serviço Python só preenche o AcroForm.
+// Só disponível para personagens de edição 5e. Todo o cálculo de regras
+// (BuildPDF5eExportPayload) E o preenchimento do AcroForm (pdfexport,
+// pacote Go puro embutido no binário) acontecem aqui — não depende mais do
+// ai-service Python, que nunca foi hospedado em produção e sempre fazia
+// essa rota falhar com 503 fora do ambiente local. Ver internal/pdfexport
+// para o porquê da migração.
 func (h *CharacterHandler) ExportPDF5e(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
@@ -463,32 +454,13 @@ func (h *CharacterHandler) ExportPDF5e(c *gin.Context) {
 
 	payload := service.BuildPDF5eExportPayload(character, allPericias, characterPericias, h.ArmorService)
 
-	body, err := json.Marshal(payload)
+	pdfBytes, err := pdfexport.FillCharacterSheet5e(payload)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao montar requisição de export"})
-		return
-	}
-
-	client := &http.Client{Timeout: 60 * time.Second}
-	resp, err := client.Post(aiServiceURL()+"/export/pdf/5e", "application/json", bytes.NewBuffer(body))
-	if err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Serviço de exportação de PDF não está disponível no momento"})
-		return
-	}
-	defer resp.Body.Close()
-
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao ler PDF gerado"})
-		return
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		c.Data(resp.StatusCode, "application/json", respBody)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Erro ao preencher a ficha: %v", err)})
 		return
 	}
 
 	filename := fmt.Sprintf("ficha_%s.pdf", character.Name)
 	c.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
-	c.Data(http.StatusOK, "application/pdf", respBody)
+	c.Data(http.StatusOK, "application/pdf", pdfBytes)
 }

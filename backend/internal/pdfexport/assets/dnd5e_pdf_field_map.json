@@ -1,0 +1,253 @@
+{
+  "_gerado_por": "introspecção do AcroForm (pypdf) + casamento geométrico dos Rects entre campo de valor e checkbox de proficiência (ai-service/pdf_export/build_field_map, executado uma vez) — não foi adivinhado manualmente",
+  "_pdf_origem": "D&D 5.0 - ficha-de-personagem-completavel-biblioteca-elfica.pdf",
+  "_total_campos_acroform": 334,
+  "identidade": {
+    "nome_personagem": "CharacterName",
+    "classe_nivel": "ClassLevel",
+    "antecedente": "Background",
+    "raca": "Race ",
+    "alinhamento": "Alignment",
+    "xp": "XP"
+  },
+  "atributos": {
+    "FOR": {
+      "valor": "STR",
+      "mod": "STRmod"
+    },
+    "DES": {
+      "valor": "DEX",
+      "mod": "DEXmod "
+    },
+    "CON": {
+      "valor": "CON",
+      "mod": "CONmod"
+    },
+    "INT": {
+      "valor": "INT",
+      "mod": "INTmod"
+    },
+    "SAB": {
+      "valor": "WIS",
+      "mod": "WISmod"
+    },
+    "CAR": {
+      "valor": "CHA",
+      "mod": "CHamod"
+    }
+  },
+  "combate": {
+    "bonus_proficiencia": "ProfBonus",
+    "ca": "AC",
+    "iniciativa": "Initiative",
+    "deslocamento": "Speed",
+    "pv_maximo": "HPMax",
+    "pv_atual": "HPCurrent",
+    "pv_temporario": "HPTemp",
+    "dados_de_vida_total": "HDTotal",
+    "dados_de_vida": "HD"
+  },
+  "resistencia_contra_morte": {
+    "sucessos": [
+      "Check Box 12",
+      "Check Box 13",
+      "Check Box 14"
+    ],
+    "falhas": [
+      "Check Box 15",
+      "Check Box 16",
+      "Check Box 17"
+    ]
+  },
+  "salvaguardas": [
+    {
+      "atributo": "FOR",
+      "campo_valor": "ST Strength",
+      "campo_proficiencia": "Check Box 11"
+    },
+    {
+      "atributo": "DES",
+      "campo_valor": "ST Dexterity",
+      "campo_proficiencia": "Check Box 18"
+    },
+    {
+      "atributo": "CON",
+      "campo_valor": "ST Constitution",
+      "campo_proficiencia": "Check Box 19"
+    },
+    {
+      "atributo": "INT",
+      "campo_valor": "ST Intelligence",
+      "campo_proficiencia": "Check Box 20"
+    },
+    {
+      "atributo": "SAB",
+      "campo_valor": "ST Wisdom",
+      "campo_proficiencia": "Check Box 21"
+    },
+    {
+      "atributo": "CAR",
+      "campo_valor": "ST Charisma",
+      "campo_proficiencia": "Check Box 22"
+    }
+  ],
+  "pericias": [
+    {
+      "nome_pt": "Acrobacia",
+      "atributo": "DES",
+      "campo_valor": "Acrobatics",
+      "campo_proficiencia": "Check Box 23"
+    },
+    {
+      "nome_pt": "Arcanismo",
+      "atributo": "INT",
+      "campo_valor": "Animal",
+      "campo_proficiencia": "Check Box 24"
+    },
+    {
+      "nome_pt": "Atletismo",
+      "atributo": "FOR",
+      "campo_valor": "Arcana",
+      "campo_proficiencia": "Check Box 25"
+    },
+    {
+      "nome_pt": "Atuação",
+      "atributo": "CAR",
+      "campo_valor": "Athletics",
+      "campo_proficiencia": "Check Box 26"
+    },
+    {
+      "nome_pt": "Enganação",
+      "atributo": "CAR",
+      "campo_valor": "Deception ",
+      "campo_proficiencia": "Check Box 27"
+    },
+    {
+      "nome_pt": "Furtividade",
+      "atributo": "DES",
+      "campo_valor": "History ",
+      "campo_proficiencia": "Check Box 28"
+    },
+    {
+      "nome_pt": "História",
+      "atributo": "INT",
+      "campo_valor": "Insight",
+      "campo_proficiencia": "Check Box 29"
+    },
+    {
+      "nome_pt": "Intimidação",
+      "atributo": "CAR",
+      "campo_valor": "Intimidation",
+      "campo_proficiencia": "Check Box 30"
+    },
+    {
+      "nome_pt": "Intuição",
+      "atributo": "SAB",
+      "campo_valor": "Investigation ",
+      "campo_proficiencia": "Check Box 31"
+    },
+    {
+      "nome_pt": "Investigação",
+      "atributo": "INT",
+      "campo_valor": "Medicine",
+      "campo_proficiencia": "Check Box 32"
+    },
+    {
+      "nome_pt": "Lidar com Animais",
+      "atributo": "SAB",
+      "campo_valor": "Nature",
+      "campo_proficiencia": "Check Box 33"
+    },
+    {
+      "nome_pt": "Medicina",
+      "atributo": "SAB",
+      "campo_valor": "Perception ",
+      "campo_proficiencia": "Check Box 34"
+    },
+    {
+      "nome_pt": "Natureza",
+      "atributo": "INT",
+      "campo_valor": "Performance",
+      "campo_proficiencia": "Check Box 35"
+    },
+    {
+      "nome_pt": "Percepção",
+      "atributo": "SAB",
+      "campo_valor": "Persuasion",
+      "campo_proficiencia": "Check Box 36"
+    },
+    {
+      "nome_pt": "Persuasão",
+      "atributo": "CAR",
+      "campo_valor": "Religion",
+      "campo_proficiencia": "Check Box 37"
+    },
+    {
+      "nome_pt": "Prestidigitação",
+      "atributo": "DES",
+      "campo_valor": "SleightofHand",
+      "campo_proficiencia": "Check Box 38"
+    },
+    {
+      "nome_pt": "Religião",
+      "atributo": "INT",
+      "campo_valor": "Stealth ",
+      "campo_proficiencia": "Check Box 39"
+    },
+    {
+      "nome_pt": "Sobrevivência",
+      "atributo": "SAB",
+      "campo_valor": "Survival",
+      "campo_proficiencia": "Check Box 40"
+    }
+  ],
+  "passiva": {
+    "percepcao_passiva": "Passive"
+  },
+  "personalidade": {
+    "tracos_personalidade": "PersonalityTraits ",
+    "ideais": "Ideals",
+    "vinculos": "Bonds",
+    "defeitos": "Flaws"
+  },
+  "nao_preenchido_v1": {
+    "motivo": "sem campo correspondente no domain layer (backend/internal/domain/character.go) nesta versão do sistema",
+    "campos_pdf": [
+      "PlayerName",
+      "Inspiration",
+      "Wpn Name",
+      "Wpn1 AtkBonus",
+      "Wpn1 Damage",
+      "Wpn Name 2",
+      "Wpn2 AtkBonus",
+      "Wpn2 Damage",
+      "Wpn Name 3",
+      "Wpn3 AtkBonus",
+      "Wpn3 Damage",
+      "AttacksSpellcasting",
+      "CP",
+      "SP",
+      "EP",
+      "GP",
+      "PP",
+      "Equipment",
+      "Features and Traits",
+      "ProficienciesLang",
+      "CharacterName 2",
+      "Age",
+      "Height",
+      "Weight",
+      "Eyes",
+      "Skin",
+      "Hair",
+      "Allies",
+      "FactionName",
+      "Backstory",
+      "Feat+Traits",
+      "Treasure",
+      "Faction Symbol Image",
+      "CHARACTER IMAGE"
+    ],
+    "paginas": "página 2 inteira (aparência/biografia) e página 3 inteira (conjuração de magias) não são preenchidas — o domain layer não modela spellcasting nem esses dados de biografia livre"
+  }
+}

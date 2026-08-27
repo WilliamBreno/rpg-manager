@@ -1,0 +1,3359 @@
+{
+	"header": {
+		"source": "D\u0026D 5.0 - ficha-de-personagem-completavel-biblioteca-elfica.pdf",
+		"version": "pdfcpu v0.15.0 dev",
+		"creation": "2026-08-27 10:18:04 -03",
+		"title": "Ficha de Personagem D\u0026D 5E",
+		"author": "Johny Robert",
+		"creator": "Adobe InDesign CS6 (Macintosh)",
+		"producer": "Adobe PDF Library 10.0.1"
+	},
+	"forms": [
+		{
+			"textfield": [
+				{
+					"pages": [
+						1
+					],
+					"id": "2753",
+					"name": "Deception ",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2770",
+					"name": "INTmod",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2780",
+					"name": "Medicine",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2742",
+					"name": "HD",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2752",
+					"name": "Athletics",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2761",
+					"name": "Wpn2 AtkBonus ",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2772",
+					"name": "Investigation ",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2720",
+					"name": "STR",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2727",
+					"name": "ST Strength",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2733",
+					"name": "HDTotal",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2763",
+					"name": "Wpn3 AtkBonus  ",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2781",
+					"name": "Religion",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2808",
+					"name": "Survival",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2732",
+					"name": "CON",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2744",
+					"name": "INT",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2754",
+					"name": "History ",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2762",
+					"name": "Wpn Name 3",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2774",
+					"name": "Arcana",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2748",
+					"name": "ST Wisdom",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2750",
+					"name": "Acrobatics",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2776",
+					"name": "WISmod",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2811",
+					"name": "CP",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2814",
+					"name": "EP",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2723",
+					"name": "Initiative",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2805",
+					"name": "Wpn3 Damage ",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2813",
+					"name": "SP",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2815",
+					"name": "GP",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2728",
+					"name": "DEX",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2747",
+					"name": "ST Intelligence",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2756",
+					"name": "Wpn1 AtkBonus",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2809",
+					"name": "AttacksSpellcasting",
+					"value": "",
+					"multiline": true,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2724",
+					"name": "Speed",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2729",
+					"name": "Ideals",
+					"value": "",
+					"multiline": true,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2730",
+					"name": "DEXmod ",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2773",
+					"name": "WIS",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2778",
+					"name": "Nature",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2725",
+					"name": "PersonalityTraits ",
+					"value": "",
+					"multiline": true,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2746",
+					"name": "ST Constitution",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2782",
+					"name": "Stealth ",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2803",
+					"name": "HPCurrent",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2812",
+					"name": "ProficienciesLang",
+					"value": "",
+					"multiline": true,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2719",
+					"name": "Inspiration",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2738",
+					"name": "CONmod",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2743",
+					"name": "Flaws",
+					"value": "",
+					"multiline": true,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2759",
+					"name": "Intimidation",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2760",
+					"name": "Wpn Name 2",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2802",
+					"name": "HPMax",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2710",
+					"name": "ClassLevel",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2713",
+					"name": "Background",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2755",
+					"name": "Wpn Name",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2758",
+					"name": "Insight",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2806",
+					"name": "SleightofHand",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2810",
+					"name": "Passive",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2817",
+					"name": "Equipment",
+					"value": "",
+					"multiline": true,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2714",
+					"name": "PlayerName",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2721",
+					"name": "ProfBonus",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2726",
+					"name": "STRmod",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2777",
+					"name": "CHA",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2804",
+					"name": "HPTemp",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2715",
+					"name": "CharacterName",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2718",
+					"name": "XP",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2749",
+					"name": "ST Charisma",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2751",
+					"name": "Animal",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2775",
+					"name": "Perception ",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2807",
+					"name": "CHamod",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2816",
+					"name": "PP",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2731",
+					"name": "Bonds",
+					"value": "",
+					"multiline": true,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2745",
+					"name": "ST Dexterity",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2757",
+					"name": "Wpn1 Damage",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2717",
+					"name": "Alignment",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2771",
+					"name": "Wpn2 Damage ",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2779",
+					"name": "Performance",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2801",
+					"name": "Persuasion",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2818",
+					"name": "Features and Traits",
+					"value": "",
+					"multiline": true,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2716",
+					"name": "Race ",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2722",
+					"name": "AC",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						2
+					],
+					"id": "396",
+					"name": "CharacterName 2",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						2
+					],
+					"id": "395",
+					"name": "Age",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						2
+					],
+					"id": "399",
+					"name": "Height",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						2
+					],
+					"id": "398",
+					"name": "Eyes",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						2
+					],
+					"id": "414",
+					"name": "Hair",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						2
+					],
+					"id": "418",
+					"name": "Allies",
+					"value": "",
+					"multiline": true,
+					"locked": false
+				},
+				{
+					"pages": [
+						2
+					],
+					"id": "417",
+					"name": "Backstory",
+					"value": "",
+					"multiline": true,
+					"locked": false
+				},
+				{
+					"pages": [
+						2
+					],
+					"id": "397",
+					"name": "Weight",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						2
+					],
+					"id": "416",
+					"name": "Skin",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						2
+					],
+					"id": "407",
+					"name": "FactionName",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						2
+					],
+					"id": "411",
+					"name": "Feat+Traits",
+					"value": "",
+					"multiline": true,
+					"locked": false
+				},
+				{
+					"pages": [
+						2
+					],
+					"id": "402",
+					"name": "Treasure",
+					"value": "",
+					"multiline": true,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "685",
+					"name": "SlotsTotal 27",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "777",
+					"name": "Spells 1019",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "612",
+					"name": "Spells 1067",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "857",
+					"name": "Spells 1047",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "852",
+					"name": "Spells 1060",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "779",
+					"name": "Spells 1021",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "806",
+					"name": "Spells 1023",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "646",
+					"name": "Spells 1091",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "654",
+					"name": "Spells 10101",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "519",
+					"name": "Spells 10108",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "618",
+					"name": "SlotsTotal 23",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "511",
+					"name": "Spells 10107",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "849",
+					"name": "Spells 1050",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "872",
+					"name": "SlotsTotal 22",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "655",
+					"name": "Spells 10102",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "613",
+					"name": "Spells 1069",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "772",
+					"name": "Spellcasting Class 2",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "827",
+					"name": "Spells 1030",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "835",
+					"name": "Spells 1046",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "626",
+					"name": "SlotsTotal 24",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "669",
+					"name": "Spells 10104",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "826",
+					"name": "Spells 1025",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "839",
+					"name": "Spells 1031",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "829",
+					"name": "Spells 1034",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "825",
+					"name": "Spells 1039",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "621",
+					"name": "Spells 1075",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "784",
+					"name": "SpellAtkBonus 2",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "828",
+					"name": "Spells 1029",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "861",
+					"name": "Spells 1048",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "871",
+					"name": "Spells 1054",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "622",
+					"name": "Spells 1076",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "630",
+					"name": "Spells 1080",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "625",
+					"name": "Spells 1084",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "787",
+					"name": "SpellcastingAbility 2",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "785",
+					"name": "SlotsTotal 19",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "641",
+					"name": "SlotsRemaining 25",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "637",
+					"name": "Spells 1093",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "636",
+					"name": "SlotsTotal 26",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "611",
+					"name": "Spells 1066",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "619",
+					"name": "SlotsRemaining 23",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "647",
+					"name": "Spells 1095",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "650",
+					"name": "Spells 1099",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "662",
+					"name": "Spells 10100",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "854",
+					"name": "Spells 1055",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "638",
+					"name": "Spells 1086",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "656",
+					"name": "Spells 10103",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "844",
+					"name": "SlotsTotal 20",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "624",
+					"name": "Spells 1074",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "518",
+					"name": "Spells 101012",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "533",
+					"name": "Spells 101013",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "836",
+					"name": "Spells 1024",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "863",
+					"name": "Spells 1051",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "648",
+					"name": "Spells 1097",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "780",
+					"name": "Spells 1022",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "845",
+					"name": "Spells 1040",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "617",
+					"name": "Spells 1072",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "651",
+					"name": "SlotsRemaining 26",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "775",
+					"name": "Spells 1017",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "855",
+					"name": "Spells 1058",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "649",
+					"name": "Spells 1088",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "512",
+					"name": "Spells 10109",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "783",
+					"name": "SpellSaveDC  2",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "862",
+					"name": "SlotsTotal 21",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "652",
+					"name": "Spells 1092",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "513",
+					"name": "Spells 101010",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "606",
+					"name": "Spells 1065",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "627",
+					"name": "Spells 1073",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "633",
+					"name": "Spells 1081",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "631",
+					"name": "Spells 1082",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "634",
+					"name": "Spells 1096",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "786",
+					"name": "SlotsRemaining 19",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "822",
+					"name": "Spells 1028",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "678",
+					"name": "Spells 10105",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "858",
+					"name": "Spells 1062",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "865",
+					"name": "Spells 1064",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "608",
+					"name": "Spells 1070",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "774",
+					"name": "Spells 1014",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "824",
+					"name": "Spells 1038",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "860",
+					"name": "Spells 1059",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "859",
+					"name": "Spells 1063",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "609",
+					"name": "Spells 1071",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "620",
+					"name": "SlotsRemaining 24",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "516",
+					"name": "Spells 101011",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "607",
+					"name": "Spells 1068",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "788",
+					"name": "Spells 1015",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "842",
+					"name": "SlotsRemaining 20",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "848",
+					"name": "Spells 1052",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "851",
+					"name": "Spells 1056",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "823",
+					"name": "Spells 1045",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "856",
+					"name": "SlotsRemaining 22",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "640",
+					"name": "Spells 1090",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "681",
+					"name": "SlotsRemaining 27",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "838",
+					"name": "Spells 1027",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "864",
+					"name": "Spells 1061",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "841",
+					"name": "Spells 1036",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "840",
+					"name": "Spells 1032",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "846",
+					"name": "Spells 1033",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "831",
+					"name": "Spells 1035",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "834",
+					"name": "Spells 1044",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "853",
+					"name": "Spells 1053",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "645",
+					"name": "Spells 1087",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "642",
+					"name": "Spells 1094",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "778",
+					"name": "Spells 1020",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "833",
+					"name": "Spells 1043",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "850",
+					"name": "Spells 1049",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "629",
+					"name": "Spells 1079",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "643",
+					"name": "SlotsTotal 25",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "776",
+					"name": "Spells 1018",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "684",
+					"name": "Spells 10106",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "843",
+					"name": "Spells 1037",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "644",
+					"name": "Spells 1085",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "635",
+					"name": "Spells 1098",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "773",
+					"name": "Spells 1016",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "870",
+					"name": "Spells 1057",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "837",
+					"name": "Spells 1041",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "632",
+					"name": "Spells 1077",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "623",
+					"name": "Spells 1083",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "639",
+					"name": "Spells 1089",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "847",
+					"name": "Spells 1026",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "832",
+					"name": "Spells 1042",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "866",
+					"name": "SlotsRemaining 21",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "628",
+					"name": "Spells 1078",
+					"value": "",
+					"multiline": false,
+					"locked": false
+				}
+			],
+			"checkbox": [
+				{
+					"pages": [
+						1
+					],
+					"id": "2737",
+					"name": "Check Box 14",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2741",
+					"name": "Check Box 17",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2769",
+					"name": "Check Box 22",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2767",
+					"name": "Check Box 20",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2787",
+					"name": "Check Box 27",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2800",
+					"name": "Check Box 40",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2736",
+					"name": "Check Box 13",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2766",
+					"name": "Check Box 19",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2740",
+					"name": "Check Box 16",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2788",
+					"name": "Check Box 28",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2734",
+					"name": "Check Box 12",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2797",
+					"name": "Check Box 37",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2765",
+					"name": "Check Box 18",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2795",
+					"name": "Check Box 35",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2784",
+					"name": "Check Box 24",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2764",
+					"name": "Check Box 11",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2768",
+					"name": "Check Box 21",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2790",
+					"name": "Check Box 30",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2793",
+					"name": "Check Box 33",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2799",
+					"name": "Check Box 39",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2791",
+					"name": "Check Box 31",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2739",
+					"name": "Check Box 15",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2786",
+					"name": "Check Box 26",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2789",
+					"name": "Check Box 29",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2794",
+					"name": "Check Box 34",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2785",
+					"name": "Check Box 25",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2796",
+					"name": "Check Box 36",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2783",
+					"name": "Check Box 23",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2792",
+					"name": "Check Box 32",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						1
+					],
+					"id": "2798",
+					"name": "Check Box 38",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						2
+					],
+					"id": "409",
+					"name": "CHARACTER IMAGE",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						2
+					],
+					"id": "406",
+					"name": "Faction Symbol Image",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "811",
+					"name": "Check Box 3010",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "687",
+					"name": "Check Box 3025",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "603",
+					"name": "Check Box 3029",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "514",
+					"name": "Check Box 319",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "523",
+					"name": "Check Box 3058",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "798",
+					"name": "Check Box 3062",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "675",
+					"name": "Check Box 3075",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "535",
+					"name": "Check Box 3081",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "791",
+					"name": "Check Box 3032",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "797",
+					"name": "Check Box 321",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "605",
+					"name": "Check Box 3027",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "527",
+					"name": "Check Box 3056",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "521",
+					"name": "Check Box 327",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "525",
+					"name": "Check Box 326",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "520",
+					"name": "Check Box 3059",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "789",
+					"name": "Check Box 3037",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "808",
+					"name": "Check Box 3041",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "873",
+					"name": "Check Box 3068",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "821",
+					"name": "Check Box 3015",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "874",
+					"name": "Check Box 3069",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "610",
+					"name": "Check Box 317",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "819",
+					"name": "Check Box 3018",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "661",
+					"name": "Check Box 3043",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "680",
+					"name": "Check Box 313",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "682",
+					"name": "Check Box 3022",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "614",
+					"name": "Check Box 3072",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "667",
+					"name": "Check Box 3051",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "674",
+					"name": "Check Box 3077",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "781",
+					"name": "Check Box 314",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "809",
+					"name": "Check Box 309",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "688",
+					"name": "Check Box 3026",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "604",
+					"name": "Check Box 3030",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "515",
+					"name": "Check Box 318",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "686",
+					"name": "Check Box 3023",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "805",
+					"name": "Check Box 3064",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "812",
+					"name": "Check Box 315",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "526",
+					"name": "Check Box 3055",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "663",
+					"name": "Check Box 3047",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "679",
+					"name": "Check Box 3078",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "522",
+					"name": "Check Box 3054",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "536",
+					"name": "Check Box 3079",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "615",
+					"name": "Check Box 3073",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "529",
+					"name": "Check Box 3080",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "804",
+					"name": "Check Box 3061",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "659",
+					"name": "Check Box 3042",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "664",
+					"name": "Check Box 3048",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "814",
+					"name": "Check Box 3011",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "665",
+					"name": "Check Box 3049",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "671",
+					"name": "Check Box 324",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "672",
+					"name": "Check Box 3074",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "616",
+					"name": "Check Box 3071",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "670",
+					"name": "Check Box 325",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "689",
+					"name": "Check Box 3024",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "602",
+					"name": "Check Box 3028",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "803",
+					"name": "Check Box 3063",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "869",
+					"name": "Check Box 323",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "771",
+					"name": "Check Box 3070",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "793",
+					"name": "Check Box 3036",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "660",
+					"name": "Check Box 3046",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "524",
+					"name": "Check Box 3057",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "534",
+					"name": "Check Box 3083",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "796",
+					"name": "Check Box 3031",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "815",
+					"name": "Check Box 3012",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "816",
+					"name": "Check Box 3016",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "666",
+					"name": "Check Box 3050",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "676",
+					"name": "Check Box 3021",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "801",
+					"name": "Check Box 3039",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "820",
+					"name": "Check Box 3013",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "657",
+					"name": "Check Box 3045",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "868",
+					"name": "Check Box 3067",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "790",
+					"name": "Check Box 3033",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "867",
+					"name": "Check Box 322",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "653",
+					"name": "Check Box 3044",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "799",
+					"name": "Check Box 3060",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "817",
+					"name": "Check Box 3014",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "677",
+					"name": "Check Box 3020",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "532",
+					"name": "Check Box 3082",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "795",
+					"name": "Check Box 3038",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "802",
+					"name": "Check Box 320",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "810",
+					"name": "Check Box 3065",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "807",
+					"name": "Check Box 251",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "818",
+					"name": "Check Box 3017",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "658",
+					"name": "Check Box 316",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "668",
+					"name": "Check Box 3052",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "517",
+					"name": "Check Box 3053",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "800",
+					"name": "Check Box 3040",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "830",
+					"name": "Check Box 3019",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "673",
+					"name": "Check Box 3076",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "683",
+					"name": "Check Box 310",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "794",
+					"name": "Check Box 3034",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "792",
+					"name": "Check Box 3035",
+					"default": false,
+					"value": false,
+					"locked": false
+				},
+				{
+					"pages": [
+						3
+					],
+					"id": "813",
+					"name": "Check Box 3066",
+					"default": false,
+					"value": false,
+					"locked": false
+				}
+			]
+		}
+	]
+}
