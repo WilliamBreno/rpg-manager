@@ -564,6 +564,63 @@ func (s *CharacterService) Create(character *domain.Character) error {
 		s.TalentoRepo.Add(character.ID, talento.ID)
 	}
 
+	// Concede o "Equipamento Inicial" da classe (Livro do Jogador 2024, cap.
+	// 3, tabela "Traços Básicos de X"), se o jogador escolheu uma das opções
+	// lettered (A/B/C) na criação. Opcional — sem escolha, o personagem não
+	// recebe nada aqui, igual ao comportamento anterior a esta feature.
+	if character.EquipmentOptionID != nil {
+		if err := s.grantStartingEquipment(character, *character.EquipmentOptionID); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// grantStartingEquipment aplica os itens/armaduras/PO de uma
+// ClassEquipmentOption ao personagem recém-criado. Usa a mesma lógica de
+// upsert por (character_id, item_id/armor_id) do InventoryService, pra não
+// duplicar linha se o mesmo item aparecer em mais de um componente.
+func (s *CharacterService) grantStartingEquipment(character *domain.Character, optionID uint) error {
+	var option domain.ClassEquipmentOption
+	if err := s.DB.Preload("Components").First(&option, optionID).Error; err != nil {
+		return errors.New("opção de equipamento inicial inválida")
+	}
+	if option.ClassID != character.ClassID {
+		return errors.New("opção de equipamento inicial não pertence à classe do personagem")
+	}
+
+	for _, comp := range option.Components {
+		qty := comp.Quantity
+		if qty <= 0 {
+			qty = 1
+		}
+		switch {
+		case comp.ItemID != nil:
+			var existing domain.CharacterItem
+			err := s.DB.Where("character_id = ? AND item_id = ?", character.ID, *comp.ItemID).First(&existing).Error
+			if err != nil {
+				s.DB.Create(&domain.CharacterItem{CharacterID: character.ID, ItemID: *comp.ItemID, Quantity: qty})
+			} else {
+				existing.Quantity += qty
+				s.DB.Save(&existing)
+			}
+		case comp.ArmorID != nil:
+			var existing domain.CharacterArmorOwned
+			err := s.DB.Where("character_id = ? AND armor_id = ?", character.ID, *comp.ArmorID).First(&existing).Error
+			if err != nil {
+				s.DB.Create(&domain.CharacterArmorOwned{CharacterID: character.ID, ArmorID: *comp.ArmorID, Quantity: qty})
+			} else {
+				existing.Quantity += qty
+				s.DB.Save(&existing)
+			}
+		}
+	}
+
+	if option.GoldPieces > 0 {
+		character.GoldPieces += option.GoldPieces
+		s.DB.Model(character).Update("gold_pieces", character.GoldPieces)
+	}
 	return nil
 }
 

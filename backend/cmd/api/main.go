@@ -36,6 +36,7 @@ func main() {
 	talentoRepo    := repository.NewTalentoRepository(config.DB)
 	spellRepo      := repository.NewSpellRepository(config.DB)
 	itemRepo       := repository.NewItemRepository(config.DB)
+	classEquipRepo := repository.NewClassEquipmentRepository(config.DB)
 
 	_ = backgroundRepo // usado indiretamente via backgroundService
 
@@ -53,6 +54,7 @@ func main() {
 	spellService      := service.NewSpellService(spellRepo)
 	itemService       := service.NewItemService(itemRepo)
 	inventoryService  := service.NewInventoryService(config.DB)
+	classEquipService := service.NewClassEquipmentService(classEquipRepo)
 
 	// Handlers
 	antecedentHandler := handler.NewAntecedentHandler(antecedentSvc)
@@ -70,6 +72,7 @@ func main() {
 	spellHandler      := handler.NewSpellHandler(spellService)
 	itemHandler       := handler.NewItemHandler(itemService)
 	inventoryHandler  := handler.NewInventoryHandler(inventoryService, characterService)
+	classEquipHandler := handler.NewClassEquipmentHandler(classEquipService)
 
 	r := gin.Default()
 
@@ -122,6 +125,7 @@ func main() {
 		{
 			classes.GET("", classHandler.GetAll)
 			classes.GET("/:id", classHandler.GetByID)
+			classes.GET("/:id/equipment-options", classEquipHandler.GetByClass)
 		}
 		races := api.Group("/races")
 		{

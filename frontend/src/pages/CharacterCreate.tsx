@@ -13,10 +13,12 @@ import { periciaService } from '../services/periciaService'
 import { talentoService } from '../services/talentoService'
 import { antecedentService } from '../services/antecedentService'
 import { spellService } from '../services/spellService'
+import { classEquipmentService } from '../services/classEquipmentService'
 import { SkillCard, powerConfig } from '../components/SkillCard'
 import { Tooltip } from '../components/Tooltip'
 import { SPELLCASTING_CLASSES, SPELLCASTING_ABILITY, cantripsKnownFor } from '../lib/spellSlots'
-import type { Class, Armor, Skill, PowerType, Race, Talento, Antecedent, Spell } from '../types'
+import { parseWeaponDescription, attackBonusFor, damageAbilityMod, formatSigned, acFor } from '../lib/weaponParser'
+import type { Class, Armor, Skill, PowerType, Race, Talento, Antecedent, Spell, ClassEquipmentOption } from '../types'
 
 // Quantas magias de nível 1+ um conjurador escolhe já no nível 1 — Bardo,
 // Bruxo e Feiticeiro têm uma lista "conhecida" fixa por nível (não é fórmula
@@ -110,6 +112,7 @@ export default function CharacterCreate() {
   const [selectedPericias, setSelectedPericias] = useState<string[]>([])
   const [selectedTalentos, setSelectedTalentos] = useState<Talento[]>([])
   const [selectedSpells, setSelectedSpells] = useState<Spell[]>([])
+  const [equipmentOptionId, setEquipmentOptionId] = useState<number | null>(null)
 
   const {
     register, handleSubmit, setValue, reset, control, formState: { errors },
@@ -124,6 +127,8 @@ export default function CharacterCreate() {
   const intelligenceW = useWatch({ control, name: 'intelligence' })
   const wisdomW       = useWatch({ control, name: 'wisdom' })
   const charismaW     = useWatch({ control, name: 'charisma' })
+  const strengthW     = useWatch({ control, name: 'strength' })
+  const dexterityW    = useWatch({ control, name: 'dexterity' })
 
   useEffect(() => {
     if (!selectedClassData || !selectedEdition) return
@@ -189,6 +194,11 @@ export default function CharacterCreate() {
     queryKey: ['spells', '5e'],
     queryFn:  () => spellService.getAll('5e'),
     enabled:  isSpellcastingClass, staleTime: Infinity,
+  })
+  const { data: equipmentOptions } = useQuery({
+    queryKey: ['class-equipment-options', selectedClass],
+    queryFn:  () => classEquipmentService.getByClass(selectedClass!),
+    enabled:  selectedEdition === '5e' && !!selectedClass, staleTime: Infinity,
   })
 
   const is4e = selectedEdition === '4e'
@@ -352,6 +362,7 @@ export default function CharacterCreate() {
         alignment:     selectedAlignment || undefined,
         ability_bonus_choice: abilityBonusChoice ?? undefined,
         origin_feat_choice_id: originFeatChoiceId ?? undefined,
+        equipment_option_id: equipmentOptionId ?? undefined,
       }
       const character = await characterService.create(characterData)
       for (const skill of Object.values(selectedSkills).flat())
@@ -384,6 +395,7 @@ export default function CharacterCreate() {
     setSelectedSkills({ unlimited: [], encounter: [], daily: [], utility: [] })
     setChoiceSelections({})
     setSelectedPericias([]); setSelectedTalentos([]); setSelectedSpells([])
+    setEquipmentOptionId(null)
     reset({ name: '', edition, class_id: 0, race_id: 0, hit_points: 10,
             strength: 10, dexterity: 10, constitution: 10, intelligence: 10, wisdom: 10, charisma: 10 })
     setValue('edition', edition)
@@ -403,6 +415,7 @@ export default function CharacterCreate() {
     setSelectedPericias(is4e ? autoP : backgroundSkills)
     setSelectedTalentos([])
     setSelectedSpells([])
+    setEquipmentOptionId(null)
   }
   const handleRaceChange = (raceId: number) => {
     setValue('race_id', raceId)
@@ -1083,6 +1096,81 @@ export default function CharacterCreate() {
               {selectedArmorData && <p className="text-gray-500 text-xs mt-2">{selectedArmorData.description}</p>}
             </div>
 
+            {/* PASSO 10.5 — Equipamento Inicial da Classe (só 5e) */}
+            {is5e && equipmentOptions && equipmentOptions.length > 0 && (() => {
+              const strMod = getConMod(Number(strengthW ?? 10))
+              const dexMod = getConMod(Number(dexterityW ?? 10))
+              const renderComponent = (comp: ClassEquipmentOption['components'][number]) => {
+                if (comp.item) {
+                  const weapon = comp.item.category === 'arma' ? parseWeaponDescription(comp.item.description) : null
+                  return (
+                    <li key={comp.ID} className="text-xs text-gray-300 flex flex-wrap items-baseline gap-1.5">
+                      <span>{comp.quantity > 1 ? `${comp.quantity}x ` : ''}{comp.item.name}</span>
+                      {weapon && (
+                        <span className="text-gray-500">
+                          — {weapon.dice} {weapon.damageType} ({formatSigned(damageAbilityMod(weapon, strMod, dexMod))}) ·
+                          {' '}ataque {formatSigned(attackBonusFor(weapon, strMod, dexMod))}
+                        </span>
+                      )}
+                    </li>
+                  )
+                }
+                if (comp.armor) {
+                  const ca = acFor(comp.armor.base_ac, comp.armor.max_dex_bonus, dexMod)
+                  return (
+                    <li key={comp.ID} className="text-xs text-gray-300">
+                      {comp.armor.name} <span className="text-gray-500">— CA {ca}</span>
+                    </li>
+                  )
+                }
+                return (
+                  <li key={comp.ID} className="text-xs text-gray-400 italic">{comp.extra_text}</li>
+                )
+              }
+              return (
+                <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
+                  {sectionHeader(`Passo ${S()} — Equipamento Inicial`)}
+                  <p className="text-gray-500 text-xs mb-4">
+                    Escolha o pacote de itens da sua classe, ou troque tudo por uma quantia fixa em ouro.
+                    Bônus de ataque já considera a Proficiência de nível 1 (+2).
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {equipmentOptions.map((opt: ClassEquipmentOption) => {
+                      const isSelected = equipmentOptionId === opt.ID
+                      return (
+                        <button key={opt.ID} type="button" onClick={() => setEquipmentOptionId(opt.ID)}
+                          className="text-left rounded-lg p-3 border transition"
+                          style={isSelected
+                            ? { background: 'rgba(201,168,76,0.1)', borderColor: 'rgba(201,168,76,0.5)' }
+                            : { background: '#1a1a1a', borderColor: '#3f3f46' }
+                          }
+                        >
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="font-semibold text-sm" style={{ color: isSelected ? '#c9a84c' : '#e4e4e7' }}>
+                              Opção {opt.option_label}
+                            </span>
+                            {opt.components.length === 0 && (
+                              <span className="text-xs text-gray-500">{opt.gold_pieces} PO</span>
+                            )}
+                          </div>
+                          {opt.components.length > 0 ? (
+                            <>
+                              <ul className="space-y-0.5">{opt.components.map(renderComponent)}</ul>
+                              {opt.gold_pieces > 0 && (
+                                <p className="text-xs text-gray-500 mt-1.5">+ {opt.gold_pieces} PO</p>
+                              )}
+                            </>
+                          ) : (
+                            <p className="text-xs text-gray-500">Sem itens — só o ouro pra comprar na loja depois.</p>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })()}
+
             {/* PASSO 11 — Atributos */}
             <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
               {sectionHeader(`Passo ${S()} — Atributos`)}
@@ -1181,12 +1269,16 @@ export default function CharacterCreate() {
             )}
 
             {/* Resumo */}
-            {(is4e || is5e) && (totalSelected > 0 || selectedPericias.length > 0 || selectedTalentos.length > 0 || selectedSpells.length > 0 || selectedBackground || selectedAlignment) && (
+            {(is4e || is5e) && (totalSelected > 0 || selectedPericias.length > 0 || selectedTalentos.length > 0 || selectedSpells.length > 0 || selectedBackground || selectedAlignment || equipmentOptionId) && (
               <div className="rounded-xl p-4" style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)' }}>
                 <p className="text-xs font-semibold mb-2 uppercase tracking-widest" style={{ color: '#c9a84c' }}>Resumo da Criação</p>
                 <div className="flex flex-wrap gap-2">
                   {selectedBackground && <span className="text-xs px-2 py-1 rounded-full bg-violet-900/60 text-violet-300">📜 {selectedBackground.name}</span>}
                   {selectedAlignment  && <span className="text-xs px-2 py-1 rounded-full bg-sky-900/60 text-sky-300">⚖️ {selectedAlignment}</span>}
+                  {equipmentOptionId && equipmentOptions && (() => {
+                    const opt = equipmentOptions.find(o => o.ID === equipmentOptionId)
+                    return opt ? <span className="text-xs px-2 py-1 rounded-full bg-orange-900/60 text-orange-300">🎒 Equipamento {opt.option_label}</span> : null
+                  })()}
                   {Object.entries(choiceSelections).filter(([, s]) => s.is_class_feature).map(([, s]) => (
                     <span key={s.ID} className="text-xs px-2 py-1 rounded-full bg-purple-900/60 text-purple-300">{s.name}</span>
                   ))}

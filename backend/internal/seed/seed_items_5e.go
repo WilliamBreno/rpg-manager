@@ -224,6 +224,12 @@ func seedItems5e(db *gorm.DB) {
 	items = append(items, it{"Anel de Regeneração", "item_magico", "Recupera Pontos de Vida a cada rodada.", "", "muito_raro", 1150000})
 	items = append(items, it{"Elmo da Telepatia", "item_magico", "Permite comunicação telepática e ler pensamentos superficiais.", "", "incomum", 35000})
 	items = append(items, it{"Bolsa de Contenção", "item_magico", "Espaço interdimensional para guardar itens.", "", "raro", 400000})
+	// Faltavam do Equipamento Inicial de classe (capítulo 3) — não estão nas
+	// tabelas de compra do capítulo 6, mas são referenciados por nome exato
+	// pelo pacote de equipamento de Ladino/Druida/Mago respectivamente.
+	items = append(items, it{"Ferramentas de Ladrão", "equipamento", "", "0,5 kg", "", 2500})
+	items = append(items, it{"Kit de Herbalismo", "equipamento", "", "1,5 kg", "", 500})
+	items = append(items, it{"Livro de Magias", "equipamento", "Grimório em branco com 100 páginas para um Mago registrar magias.", "1,5 kg", "", 5000})
 
 	for _, i := range items {
 		var existing domain.Item

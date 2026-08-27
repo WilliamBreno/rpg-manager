@@ -28,6 +28,7 @@ func Run(db *gorm.DB) {
 	seedArmors5e(db)
 	seedItems5e(db)
 	seedSpells5e(db)
+	seedClassEquipment5e(db)
 	log.Println("✅ Seed concluído!")
 }
 

@@ -179,6 +179,27 @@ export interface CharacterArmorOwned {
   armor: Armor
 }
 
+// ── Equipamento Inicial de Classe (5e) ────────────────────────────────────────
+export interface ClassEquipmentComponent {
+  ID: number
+  option_id: number
+  item_id?: number
+  armor_id?: number
+  quantity: number
+  extra_text?: string
+  item?: Item
+  armor?: Armor
+}
+
+export interface ClassEquipmentOption {
+  ID: number
+  class_id: number
+  edition: string
+  option_label: string
+  gold_pieces: number
+  components: ClassEquipmentComponent[]
+}
+
 export interface Currency {
   copper_pieces: number
   silver_pieces: number
@@ -274,6 +295,7 @@ export interface CreateCharacterDTO {
   flaws?: string
   ability_bonus_choice?: Record<string, number>  // regra 2024: bônus vem do antecedente, ex: {"INT":2,"SAB":1}
   origin_feat_choice_id?: number  // só antecedentes is_legacy sem origin_feat_name — talento de Origem à escolha
+  equipment_option_id?: number    // letra (A/B/C) do Equipamento Inicial da classe escolhida (ClassEquipmentOption)
 }
 export interface Antecedent {
   ID: number

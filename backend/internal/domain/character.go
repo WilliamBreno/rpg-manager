@@ -80,6 +80,13 @@ type Character struct {
 	// talento vem de Antecedent.OriginFeatName.
 	OriginFeatChoiceID *uint `json:"origin_feat_choice_id" gorm:"-"`
 
+	// EquipmentOptionID: só usado no payload de criação (gorm:"-") — a letra
+	// (A/B/C) do "Equipamento Inicial" da classe (ClassEquipmentOption) que o
+	// jogador escolheu. Opcional: se não informado, o personagem simplesmente
+	// não recebe nenhum item/armadura/PO de partida (mesmo comportamento de
+	// antes desta feature existir). Ver CharacterService.Create.
+	EquipmentOptionID *uint `json:"equipment_option_id" gorm:"-"`
+
 	// ── Relacionamentos ───────────────────────────────────────────────────────
 	Class      Class              `json:"class"       gorm:"foreignKey:ClassID"`
 	Race       Race               `json:"race"        gorm:"foreignKey:RaceID"`
