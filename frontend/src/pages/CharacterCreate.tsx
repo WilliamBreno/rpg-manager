@@ -114,6 +114,13 @@ export default function CharacterCreate() {
   const [selectedSpells, setSelectedSpells] = useState<Spell[]>([])
   const [equipmentOptionId, setEquipmentOptionId] = useState<number | null>(null)
 
+  // Criação dividida em abas — cada aba agrupa os "Passos" que já existiam
+  // (a numeração de Passo continua dentro de cada aba, só a apresentação
+  // mudou de rolagem única pra abas clicáveis). "antecedente" só existe
+  // como aba pra 5e (4e não tem antecedente/personalidade).
+  type TabKey = 'personagem' | 'antecedente' | 'habilidades' | 'equipamento' | 'atributos' | 'resumo'
+  const [activeTab, setActiveTab] = useState<TabKey>('personagem')
+
   const {
     register, handleSubmit, setValue, reset, control, formState: { errors },
   } = useForm<FormData>({
@@ -396,6 +403,7 @@ export default function CharacterCreate() {
     setChoiceSelections({})
     setSelectedPericias([]); setSelectedTalentos([]); setSelectedSpells([])
     setEquipmentOptionId(null)
+    setActiveTab('personagem')
     reset({ name: '', edition, class_id: 0, race_id: 0, hit_points: 10,
             strength: 10, dexterity: 10, constitution: 10, intelligence: 10, wisdom: 10, charisma: 10 })
     setValue('edition', edition)
@@ -519,6 +527,15 @@ export default function CharacterCreate() {
     )
   }
 
+  const TABS: { key: TabKey; label: string; icon: string }[] = [
+    { key: 'personagem',  label: 'Personagem',  icon: '🧙' },
+    ...(is5e ? [{ key: 'antecedente' as TabKey, label: 'Antecedente', icon: '📜' }] : []),
+    { key: 'habilidades', label: 'Habilidades', icon: '⚔️' },
+    { key: 'equipamento', label: 'Equipamento', icon: '🎒' },
+    { key: 'atributos',   label: 'Atributos',   icon: '📊' },
+    { key: 'resumo',      label: 'Resumo',      icon: '✦' },
+  ]
+
   return (
     <div className="min-h-screen bg-gray-900 px-4 py-6 sm:px-8 sm:py-8">
       <div className="max-w-2xl mx-auto">
@@ -554,6 +571,26 @@ export default function CharacterCreate() {
         {selectedEdition && (
           <form onSubmit={handleSubmit(data => createMutation.mutate(data))} className="flex flex-col gap-5">
 
+            {/* Navegação por abas — cada uma agrupa os Passos que antes eram
+                uma rolagem única. Clicável livremente (não trava progressão
+                linear); o botão de criar e a checklist pendente ficam fora
+                das abas, sempre visíveis, pra não esconder o que falta. */}
+            <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
+              {TABS.map(tab => {
+                const isActive = activeTab === tab.key
+                return (
+                  <button key={tab.key} type="button" onClick={() => setActiveTab(tab.key)}
+                    className="shrink-0 px-3 py-2 rounded-lg text-xs font-semibold transition border"
+                    style={isActive
+                      ? { background: '#c9a84c', borderColor: '#c9a84c', color: '#0a0a0a' }
+                      : { background: '#1a1a1a', borderColor: '#3f3f46', color: '#a1a1aa' }
+                    }
+                  >{tab.icon} {tab.label}</button>
+                )
+              })}
+            </div>
+
+            {activeTab === 'personagem' && (<>
             {/* PASSO 2 — Nome */}
             <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
               {sectionHeader(`Passo ${S()} — Nome do Personagem`)}
@@ -595,7 +632,9 @@ export default function CharacterCreate() {
                 </div>
               )}
             </div>
+            </>)}
 
+            {activeTab === 'antecedente' && is5e && (<>
             {/* PASSO 4 — Antecedente (só 5e) */}
             {is5e && allBackgrounds && allBackgrounds.length > 0 && (
               <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
@@ -792,7 +831,9 @@ export default function CharacterCreate() {
                 ))}
               </div>
             )}
+            </>)}
 
+            {activeTab === 'habilidades' && (<>
             {/* PASSO 6 — Características (4e e 5e) */}
             {selectedClass && hasSkills && hasAnyFeatures && (
               <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
@@ -1083,7 +1124,9 @@ export default function CharacterCreate() {
                 </div>
               </div>
             )}
+            </>)}
 
+            {activeTab === 'equipamento' && (<>
             {/* PASSO 10 — Armadura */}
             <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
               {sectionHeader(`Passo ${S()} — Armadura`)}
@@ -1170,7 +1213,9 @@ export default function CharacterCreate() {
                 </div>
               )
             })()}
+            </>)}
 
+            {activeTab === 'atributos' && (<>
             {/* PASSO 11 — Atributos */}
             <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
               {sectionHeader(`Passo ${S()} — Atributos`)}
@@ -1267,7 +1312,9 @@ export default function CharacterCreate() {
                 )}
               </div>
             )}
+            </>)}
 
+            {activeTab === 'resumo' && (<>
             {/* Resumo */}
             {(is4e || is5e) && (totalSelected > 0 || selectedPericias.length > 0 || selectedTalentos.length > 0 || selectedSpells.length > 0 || selectedBackground || selectedAlignment || equipmentOptionId) && (
               <div className="rounded-xl p-4" style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)' }}>
@@ -1298,6 +1345,7 @@ export default function CharacterCreate() {
                 </div>
               </div>
             )}
+            </>)}
 
             {pendingItems.length > 0 && (
               <div className="rounded-xl p-4" style={{ background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.25)' }}>
