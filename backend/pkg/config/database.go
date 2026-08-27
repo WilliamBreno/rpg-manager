@@ -45,6 +45,7 @@ func ConnectDatabase() {
         &domain.Pericia{},
         &domain.CharacterPericia{},
         &domain.Talento{},
+        &domain.Spell{},
         &domain.Item{},
         &domain.CharacterItem{},
         &domain.CharacterArmorOwned{},

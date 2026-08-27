@@ -9,11 +9,12 @@ import AvatarUpload from '../components/AvatarUpload'
 import HPManager from '../components/HPManager'
 import SkillsPanel from '../components/SkillsPanel'
 import { Tooltip } from '../components/Tooltip'
-import type { Pericia, Talento, Antecedent } from '../types'
+import type { Pericia, Talento, Antecedent, Spell } from '../types'
 import DeathSaves from '../components/DeathSaves'
 import LevelUpCelebration from '../components/LevelUpCelebration'
 import InventoryPanel from '../components/InventoryPanel'
 import { maxLevelFor, xpProgressFor } from '../lib/xpTables'
+import { spellSlotsFor, pactMagicFor } from '../lib/spellSlots'
 
 // ── Níveis ASI 5e ─────────────────────────────────────────────────────────────
 // A maioria das classes usa a progressão padrão, mas Guerreiro (+6, +14) e
@@ -321,6 +322,27 @@ export default function CharacterDetail() {
   const hasPericias = (characterPericias ?? []).length > 0
   const hasTalentos = (characterTalentos ?? []).length > 0
   const bg5e: Antecedent | undefined = is5e ? character.antecedent : undefined
+
+  const characterSpells = character.spells ?? []
+  const hasSpells = characterSpells.length > 0
+  const cantripsList = characterSpells.filter(sp => sp.level === 0).sort((a, b) => a.name.localeCompare(b.name))
+  const leveledSpellsByLevel = Object.entries(
+    characterSpells.filter(sp => sp.level > 0).reduce<Record<number, Spell[]>>((acc, sp) => {
+      acc[sp.level] = [...(acc[sp.level] ?? []), sp]; return acc
+    }, {})
+  )
+    .map(([lvl, list]): [number, Spell[]] => [Number(lvl), list.sort((a, b) => a.name.localeCompare(b.name))])
+    .sort(([a], [b]) => a - b)
+  const spellSlotsText = (() => {
+    if (!is5e || !character.class?.name) return null
+    if (character.class.name === 'Bruxo') {
+      const { slots, circle } = pactMagicFor(character.level)
+      return slots > 0 ? `Magia de Pacto: ${slots}× ${circle}º círculo` : null
+    }
+    const slots = spellSlotsFor(character.class.name, character.level)
+    if (slots.length === 0) return null
+    return `Espaços: ${slots.map((n, i) => `${n}×${i + 1}º`).join(', ')}`
+  })()
 
   // ── ASI helpers ──────────────────────────────────────────────────────────
   const asiTotal = Object.values(asiChoices).reduce((a, b) => a + b, 0)
@@ -736,6 +758,46 @@ export default function CharacterDetail() {
                   </div>
                 )
               })}
+            </div>
+          </div>
+        )}
+
+        {/* ── Magias e Truques (5e) ────────────────────────────────────────── */}
+        {is5e && hasSpells && (
+          <div className="bg-gray-800 rounded-xl p-4 sm:p-6 mb-4 border border-gray-700">
+            <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
+              <h2 className="text-sm font-semibold uppercase tracking-widest" style={{ color: 'rgba(201,168,76,0.7)' }}>
+                📖 Magias e Truques
+              </h2>
+              {spellSlotsText && <span className="text-xs text-gray-500 bg-gray-700/60 px-3 py-1 rounded-full">{spellSlotsText}</span>}
+            </div>
+            <div className="flex flex-col gap-4">
+              {cantripsList.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider mb-2 text-yellow-400">✨ Truques</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {cantripsList.map(sp => (
+                      <span key={sp.ID} className="text-xs px-2 py-1 rounded-full bg-yellow-900/40 text-yellow-200 border border-yellow-800/40">
+                        {sp.name} <span className="text-yellow-400/60">· {sp.school}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {leveledSpellsByLevel.map(([lvl, list]) => (
+                <div key={lvl}>
+                  <h3 className="text-xs font-bold uppercase tracking-wider mb-2 text-blue-400">📖 {lvl}º Círculo</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {list.map(sp => (
+                      <span key={sp.ID} className="text-xs px-2 py-1 rounded-full bg-blue-900/40 text-blue-200 border border-blue-800/40">
+                        {sp.name} <span className="text-blue-400/60">· {sp.school}</span>
+                        {sp.ritual && <span className="text-teal-400"> · Ritual</span>}
+                        {sp.concentration && <span className="text-purple-400"> · Conc.</span>}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}

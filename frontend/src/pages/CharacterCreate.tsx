@@ -12,9 +12,27 @@ import { armorService } from '../services/armorService'
 import { periciaService } from '../services/periciaService'
 import { talentoService } from '../services/talentoService'
 import { antecedentService } from '../services/antecedentService'
+import { spellService } from '../services/spellService'
 import { SkillCard, powerConfig } from '../components/SkillCard'
 import { Tooltip } from '../components/Tooltip'
-import type { Class, Armor, Skill, PowerType, Race, Talento, Antecedent } from '../types'
+import { SPELLCASTING_CLASSES, SPELLCASTING_ABILITY, cantripsKnownFor } from '../lib/spellSlots'
+import type { Class, Armor, Skill, PowerType, Race, Talento, Antecedent, Spell } from '../types'
+
+// Quantas magias de nível 1+ um conjurador escolhe já no nível 1 — Bardo,
+// Bruxo e Feiticeiro têm uma lista "conhecida" fixa por nível (não é fórmula
+// de atributo); os demais são conjuradores "preparados" (nível + mod. do
+// atributo-chave, mínimo 1). Mago é um caso à parte: começa com um Grimório
+// de 6 magias de 1º círculo (não é o número que ele prepara por dia, mas o
+// que ele *conhece*) — ver "Conjuração de Mago" no seed de habilidades.
+function spellsToPickAtLevel1(className: string, abilityMod: number): number {
+  switch (className) {
+    case 'Bardo': return 4
+    case 'Bruxo': return 2
+    case 'Feiticeiro': return 2
+    case 'Mago': return 6
+    default: return Math.max(1, 1 + abilityMod) // Clérigo, Druida, Guardião, Paladino
+  }
+}
 
 const schema = z.object({
   name:               z.string().min(1, 'Nome é obrigatório'),
@@ -91,6 +109,7 @@ export default function CharacterCreate() {
   const [choiceSelections, setChoiceSelections] = useState<Record<string, Skill>>({})
   const [selectedPericias, setSelectedPericias] = useState<string[]>([])
   const [selectedTalentos, setSelectedTalentos] = useState<Talento[]>([])
+  const [selectedSpells, setSelectedSpells] = useState<Spell[]>([])
 
   const {
     register, handleSubmit, setValue, reset, control, formState: { errors },
@@ -102,6 +121,9 @@ export default function CharacterCreate() {
     },
   })
   const constitution = useWatch({ control, name: 'constitution' })
+  const intelligenceW = useWatch({ control, name: 'intelligence' })
+  const wisdomW       = useWatch({ control, name: 'wisdom' })
+  const charismaW     = useWatch({ control, name: 'charisma' })
 
   useEffect(() => {
     if (!selectedClassData || !selectedEdition) return
@@ -162,6 +184,12 @@ export default function CharacterCreate() {
     queryFn:  () => antecedentService.getAll(selectedEdition!),
     enabled:  !!selectedEdition && selectedEdition === '5e', staleTime: Infinity,
   })
+  const isSpellcastingClass = selectedEdition === '5e' && !!selectedClassData?.name && SPELLCASTING_CLASSES.includes(selectedClassData.name)
+  const { data: allSpells5e } = useQuery({
+    queryKey: ['spells', '5e'],
+    queryFn:  () => spellService.getAll('5e'),
+    enabled:  isSpellcastingClass, staleTime: Infinity,
+  })
 
   const is4e = selectedEdition === '4e'
   const is5e = selectedEdition === '5e'
@@ -176,6 +204,25 @@ export default function CharacterCreate() {
     if (!selectedClassData?.saving_throws) return []
     try { return JSON.parse(selectedClassData.saving_throws) } catch { return [] }
   })()
+
+  // ── Magias e Truques (5e) ────────────────────────────────────────────────
+  const spellcastingAbilityMod = (() => {
+    if (!selectedClassData?.name) return 0
+    const ability = SPELLCASTING_ABILITY[selectedClassData.name]
+    const raw = ability === 'intelligence' ? intelligenceW : ability === 'wisdom' ? wisdomW : charismaW
+    return getConMod(Number(raw ?? 10))
+  })()
+  const classSpellList = (allSpells5e ?? []).filter(sp => {
+    if (!selectedClassData?.name) return false
+    try { return Object.prototype.hasOwnProperty.call(JSON.parse(sp.classes), selectedClassData.name) }
+    catch { return false }
+  })
+  const availableCantrips = classSpellList.filter(sp => sp.level === 0)
+  const availableLevel1Spells = classSpellList.filter(sp => sp.level === 1)
+  const cantripsNeeded = selectedClassData?.name ? cantripsKnownFor(selectedClassData.name, 1) : 0
+  const spellsNeeded = selectedClassData?.name ? spellsToPickAtLevel1(selectedClassData.name, spellcastingAbilityMod) : 0
+  const selectedCantrips = selectedSpells.filter(sp => sp.level === 0)
+  const selectedLevel1Spells = selectedSpells.filter(sp => sp.level === 1)
 
   const backgroundSkills: string[] = (() => {
     if (!selectedBackground?.skill_proficiencies) return []
@@ -289,6 +336,12 @@ export default function CharacterCreate() {
       if (classChoicesMade < totalTrainable)
         pendingItems.push(`Escolha mais ${totalTrainable - classChoicesMade} perícia(s) da classe`)
     }
+    if (isSpellcastingClass) {
+      if (cantripsNeeded > 0 && selectedCantrips.length < cantripsNeeded)
+        pendingItems.push(`Escolha mais ${cantripsNeeded - selectedCantrips.length} truque(s)`)
+      if (spellsNeeded > 0 && selectedLevel1Spells.length < spellsNeeded)
+        pendingItems.push(`Escolha mais ${spellsNeeded - selectedLevel1Spells.length} magia(s) de 1º círculo`)
+    }
   }
 
   const createMutation = useMutation({
@@ -313,6 +366,8 @@ export default function CharacterCreate() {
         await periciaService.save(character.ID, selectedPericias)
       for (const talento of selectedTalentos)
         await talentoService.add(character.ID, talento.ID)
+      for (const spell of selectedSpells)
+        await spellService.add(character.ID, spell.ID)
       return character
     },
     onSuccess: () => navigate('/characters'),
@@ -328,7 +383,7 @@ export default function CharacterCreate() {
     setSelectedBackground(null); setSelectedAlignment('')
     setSelectedSkills({ unlimited: [], encounter: [], daily: [], utility: [] })
     setChoiceSelections({})
-    setSelectedPericias([]); setSelectedTalentos([])
+    setSelectedPericias([]); setSelectedTalentos([]); setSelectedSpells([])
     reset({ name: '', edition, class_id: 0, race_id: 0, hit_points: 10,
             strength: 10, dexterity: 10, constitution: 10, intelligence: 10, wisdom: 10, charisma: 10 })
     setValue('edition', edition)
@@ -347,6 +402,7 @@ export default function CharacterCreate() {
     })()
     setSelectedPericias(is4e ? autoP : backgroundSkills)
     setSelectedTalentos([])
+    setSelectedSpells([])
   }
   const handleRaceChange = (raceId: number) => {
     setValue('race_id', raceId)
@@ -1057,8 +1113,75 @@ export default function CharacterCreate() {
               <input type="number" {...register('hit_points')} min={1} className="rpg-input" />
             </div>
 
+            {/* PASSO 13 — Magias e Truques (só classes conjuradoras 5e) */}
+            {isSpellcastingClass && (
+              <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
+                {sectionHeader(`Passo ${S()} — Magias e Truques`)}
+                <p className="text-gray-500 text-xs mb-4">
+                  Como {selectedClassData?.name}, você conhece <span style={{ color: '#c9a84c' }}>{cantripsNeeded} truque(s)</span> e{' '}
+                  <span style={{ color: '#c9a84c' }}>{spellsNeeded} magia(s) de 1º círculo</span> no nível 1.
+                </p>
+                {cantripsNeeded > 0 && (
+                  <div className="mb-5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="text-sm font-bold text-yellow-400">✨ Truques</h3>
+                      {counterBadge(selectedCantrips.length, cantripsNeeded)}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {availableCantrips.map(sp => {
+                        const isSelected = selectedSpells.some(s => s.ID === sp.ID)
+                        const isDisabled = !isSelected && selectedCantrips.length >= cantripsNeeded
+                        return (
+                          <button key={sp.ID} type="button" disabled={isDisabled}
+                            onClick={() => setSelectedSpells(prev => isSelected ? prev.filter(s => s.ID !== sp.ID) : [...prev, sp])}
+                            className={`text-left rounded-lg p-2.5 border text-xs transition ${isDisabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+                            style={isSelected
+                              ? { background: 'rgba(201,168,76,0.1)', borderColor: 'rgba(201,168,76,0.5)' }
+                              : { background: '#1a1a1a', borderColor: '#3f3f46' }
+                            }
+                          >
+                            <span className="font-semibold" style={{ color: isSelected ? '#c9a84c' : '#e4e4e7' }}>{sp.name}</span>
+                            <span className="text-gray-500"> — {sp.school}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+                {spellsNeeded > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="text-sm font-bold text-blue-400">📖 Magias de 1º Círculo</h3>
+                      {counterBadge(selectedLevel1Spells.length, spellsNeeded)}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {availableLevel1Spells.map(sp => {
+                        const isSelected = selectedSpells.some(s => s.ID === sp.ID)
+                        const isDisabled = !isSelected && selectedLevel1Spells.length >= spellsNeeded
+                        return (
+                          <button key={sp.ID} type="button" disabled={isDisabled}
+                            onClick={() => setSelectedSpells(prev => isSelected ? prev.filter(s => s.ID !== sp.ID) : [...prev, sp])}
+                            className={`text-left rounded-lg p-2.5 border text-xs transition ${isDisabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+                            style={isSelected
+                              ? { background: 'rgba(201,168,76,0.1)', borderColor: 'rgba(201,168,76,0.5)' }
+                              : { background: '#1a1a1a', borderColor: '#3f3f46' }
+                            }
+                          >
+                            <span className="font-semibold" style={{ color: isSelected ? '#c9a84c' : '#e4e4e7' }}>{sp.name}</span>
+                            <span className="text-gray-500"> — {sp.school}</span>
+                            {sp.ritual && <span className="ml-1 text-teal-400">Ritual</span>}
+                            {sp.concentration && <span className="ml-1 text-purple-400">Concentração</span>}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Resumo */}
-            {(is4e || is5e) && (totalSelected > 0 || selectedPericias.length > 0 || selectedTalentos.length > 0 || selectedBackground || selectedAlignment) && (
+            {(is4e || is5e) && (totalSelected > 0 || selectedPericias.length > 0 || selectedTalentos.length > 0 || selectedSpells.length > 0 || selectedBackground || selectedAlignment) && (
               <div className="rounded-xl p-4" style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)' }}>
                 <p className="text-xs font-semibold mb-2 uppercase tracking-widest" style={{ color: '#c9a84c' }}>Resumo da Criação</p>
                 <div className="flex flex-wrap gap-2">
@@ -1077,6 +1200,9 @@ export default function CharacterCreate() {
                     <span key={name} className={`text-xs px-2 py-1 rounded-full ${backgroundSkills.includes(name) || classAutoSkills.includes(name) ? 'bg-indigo-900/60 text-indigo-300' : 'bg-teal-900/60 text-teal-300'}`}>📚 {name}</span>
                   ))}
                   {selectedTalentos.map(t => <span key={t.ID} className="text-xs px-2 py-1 rounded-full bg-orange-900/60 text-orange-300">🏆 {t.name}</span>)}
+                  {selectedSpells.map(sp => (
+                    <span key={sp.ID} className="text-xs px-2 py-1 rounded-full bg-blue-900/60 text-blue-300">{sp.level === 0 ? '✨' : '📖'} {sp.name}</span>
+                  ))}
                 </div>
               </div>
             )}

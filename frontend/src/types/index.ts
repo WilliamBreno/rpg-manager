@@ -104,6 +104,19 @@ export interface Background {
   hair: string
 }
 
+// ── Spell — Magia do PHB 2024 (capítulo "Magias") ──────────────────────────
+export interface Spell {
+  ID: number
+  name: string
+  edition: string
+  level: number // 0 = truque, 1-9 = círculo
+  school: string
+  ritual: boolean
+  concentration: boolean
+  classes: string // JSON: '{"Mago":3,"Feiticeiro":3}' — classe -> círculo em que a aprende
+  description: string
+}
+
 // ── Antecedent — Antecedente D&D 5e (Acólito, Criminoso, Soldado, etc.) ────
 export interface Antecedent {
   ID: number
@@ -227,6 +240,7 @@ export interface Character {
   skills: Skill[]
   pericias: CharacterPericia[]
   talentos: Talento[]
+  spells?: Spell[]
   experience_points?: number
   death_save_successes?: number
   death_save_failures?:  number

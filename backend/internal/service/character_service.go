@@ -129,6 +129,124 @@ func proficiencyBonus5e(level int) int {
 	}
 }
 
+// ── Espaços de magia 5e ──────────────────────────────────────────────────────
+// Tabelas extraídas de "Características de X" no PHB 2024 (cap. 3), uma por
+// classe conjuradora, cruzadas com a extração real do PDF (não de memória —
+// ver CLAUDE.md para a verificação linha a linha que confirmou que Paladino
+// e Guardião ganham espaços de magia a partir do NÍVEL 1 no PHB 2024, uma
+// mudança real em relação ao PHB 2014, onde meio-conjuradores só ganhavam
+// magia no nível 2). Índice do slice = nível de personagem - 1; cada
+// elemento é [espaços de 1º círculo, 2º, 3º, ...] (índice 0 = 1º círculo).
+
+// fullCasterSlots5e: Bardo, Clérigo, Druida, Feiticeiro, Mago.
+var fullCasterSlots5e = [21][]int{
+	1:  {2},
+	2:  {3},
+	3:  {4, 2},
+	4:  {4, 3},
+	5:  {4, 3, 2},
+	6:  {4, 3, 3},
+	7:  {4, 3, 3, 1},
+	8:  {4, 3, 3, 2},
+	9:  {4, 3, 3, 3, 1},
+	10: {4, 3, 3, 3, 2},
+	11: {4, 3, 3, 3, 2, 1},
+	12: {4, 3, 3, 3, 2, 1},
+	13: {4, 3, 3, 3, 2, 1, 1},
+	14: {4, 3, 3, 3, 2, 1, 1},
+	15: {4, 3, 3, 3, 2, 1, 1, 1},
+	16: {4, 3, 3, 3, 2, 1, 1, 1},
+	17: {4, 3, 3, 3, 2, 1, 1, 1, 1},
+	18: {4, 3, 3, 3, 3, 1, 1, 1, 1},
+	19: {4, 3, 3, 3, 3, 2, 1, 1, 1},
+	20: {4, 3, 3, 3, 3, 2, 2, 1, 1},
+}
+
+// halfCasterSlots5e: Paladino, Guardião — verificado contra a tabela real
+// (ambas as classes começam com 1 espaço de 1º círculo já no nível 1).
+var halfCasterSlots5e = [21][]int{
+	1:  {2},
+	2:  {2},
+	3:  {3},
+	4:  {3},
+	5:  {4, 2},
+	6:  {4, 2},
+	7:  {4, 3},
+	8:  {4, 3},
+	9:  {4, 3, 2},
+	10: {4, 3, 2},
+	11: {4, 3, 3},
+	12: {4, 3, 3},
+	13: {4, 3, 3, 1},
+	14: {4, 3, 3, 1},
+	15: {4, 3, 3, 2},
+	16: {4, 3, 3, 2},
+	17: {4, 3, 3, 3, 1},
+	18: {4, 3, 3, 3, 1},
+	19: {4, 3, 3, 3, 2},
+	20: {4, 3, 3, 3, 2},
+}
+
+// pactMagicSlots5e / pactMagicCircle5e: Magia de Pacto do Bruxo — mecanismo
+// próprio (recupera em Descanso Curto ou Longo, não só Longo, e todos os
+// espaços são sempre do mesmo círculo, que sobe com o nível).
+var pactMagicSlots5e = [21]int{
+	1: 1, 2: 2, 3: 2, 4: 2, 5: 2, 6: 2, 7: 2, 8: 2, 9: 2, 10: 2,
+	11: 3, 12: 3, 13: 3, 14: 3, 15: 3, 16: 3,
+	17: 4, 18: 4, 19: 4, 20: 4,
+}
+var pactMagicCircle5e = [21]int{
+	1: 1, 2: 1, 3: 2, 4: 2, 5: 3, 6: 3, 7: 4, 8: 4, 9: 5, 10: 5,
+	11: 5, 12: 5, 13: 5, 14: 5, 15: 5, 16: 5, 17: 5, 18: 5, 19: 5, 20: 5,
+}
+
+// spellSlots5e retorna os espaços de magia por círculo (índice 0 = 1º
+// círculo) de uma classe 5e num dado nível de personagem. nil para classes
+// sem espaços de magia tradicionais (Bruxo usa Magia de Pacto à parte;
+// Bárbaro/Guerreiro-base/Ladino-base/Monge não conjuram).
+func spellSlots5e(className string, level int) []int {
+	if level < 1 || level > 20 {
+		return nil
+	}
+	switch className {
+	case "Bardo", "Clérigo", "Druida", "Feiticeiro", "Mago":
+		return fullCasterSlots5e[level]
+	case "Paladino", "Guardião":
+		return halfCasterSlots5e[level]
+	default:
+		return nil
+	}
+}
+
+// pactMagic5e retorna (usos, círculo) da Magia de Pacto do Bruxo num nível.
+func pactMagic5e(level int) (slots, circle int) {
+	if level < 1 || level > 20 {
+		return 0, 0
+	}
+	return pactMagicSlots5e[level], pactMagicCircle5e[level]
+}
+
+// cantripsKnown5e5e retorna quantos truques uma classe conjuradora conhece
+// num dado nível — todas seguem o mesmo formato "base no nível 1, +1 no
+// nível 4, +1 no nível 10" (ver a característica "Conjuração"/"Truques" de
+// cada classe no cap. 3), exceto Paladino e Guardião, que não têm truques.
+func cantripsKnown5e(className string, level int) int {
+	base, hasCantrips := map[string]int{
+		"Bardo": 2, "Bruxo": 2, "Clérigo": 3, "Druida": 2, "Feiticeiro": 4, "Mago": 3,
+	}[className]
+	if !hasCantrips {
+		return 0
+	}
+	n := base
+	if level >= 4 {
+		n++
+	}
+	if level >= 10 {
+		n++
+	}
+	return n
+}
+
 // XPParaProximoNivel retorna o XP necessário para o próximo nível
 func XPParaProximoNivel(edition string, currentLevel int) int {
 	nextLevel := currentLevel + 1

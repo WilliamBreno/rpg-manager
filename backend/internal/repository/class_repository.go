@@ -23,7 +23,7 @@ func (r *CharacterRepository) FindByID(id uint) (domain.Character, error) {
     var character domain.Character
     result := r.DB.Preload("Class").Preload("Race").Preload("Skills").
         Preload("Armor").Preload("Antecedent").Preload("Pericias").
-        Preload("Talentos").
+        Preload("Talentos").Preload("Spells").
         First(&character, id)
     return character, result.Error
 }

@@ -34,6 +34,7 @@ func main() {
 	armorRepo      := repository.NewArmorRepository(config.DB)
 	periciaRepo    := repository.NewPericiaRepository(config.DB)
 	talentoRepo    := repository.NewTalentoRepository(config.DB)
+	spellRepo      := repository.NewSpellRepository(config.DB)
 	itemRepo       := repository.NewItemRepository(config.DB)
 
 	_ = backgroundRepo // usado indiretamente via backgroundService
@@ -49,6 +50,7 @@ func main() {
 	armorService      := service.NewArmorService(armorRepo)
 	periciaService    := service.NewPericiaService(periciaRepo)
 	talentoService    := service.NewTalentoService(talentoRepo)
+	spellService      := service.NewSpellService(spellRepo)
 	itemService       := service.NewItemService(itemRepo)
 	inventoryService  := service.NewInventoryService(config.DB)
 
@@ -65,6 +67,7 @@ func main() {
 	ollamaHandler     := handler.NewOllamaHandler()
 	periciaHandler    := handler.NewPericiaHandler(periciaService)
 	talentoHandler    := handler.NewTalentoHandler(talentoService)
+	spellHandler      := handler.NewSpellHandler(spellService)
 	itemHandler       := handler.NewItemHandler(itemService)
 	inventoryHandler  := handler.NewInventoryHandler(inventoryService, characterService)
 
@@ -107,6 +110,7 @@ func main() {
 		api.GET("/items", itemHandler.GetAll)
 		api.GET("/pericias", periciaHandler.GetAll)
 		api.GET("/talentos", talentoHandler.GetAll)
+		api.GET("/spells", spellHandler.GetAll)
 		api.GET("/antecedentes", antecedentHandler.GetAll)
 		api.GET("/antecedentes/:id", antecedentHandler.GetByID)
 		api.POST("/ai/skills", ollamaHandler.GetSkills)
@@ -171,6 +175,9 @@ func main() {
 				characters.GET("/:id/talentos", talentoHandler.GetByCharacter)
 				characters.POST("/:id/talentos/:talento_id", talentoHandler.Add)
 				characters.DELETE("/:id/talentos/:talento_id", talentoHandler.Remove)
+				characters.GET("/:id/spells", spellHandler.GetByCharacter)
+				characters.POST("/:id/spells/:spell_id", spellHandler.Add)
+				characters.DELETE("/:id/spells/:spell_id", spellHandler.Remove)
 				characters.GET("/:id/inventory", inventoryHandler.GetInventory)
 				characters.POST("/:id/shop/items/:item_id", inventoryHandler.PurchaseItem)
 				characters.POST("/:id/shop/armors/:armor_id", inventoryHandler.PurchaseArmor)
