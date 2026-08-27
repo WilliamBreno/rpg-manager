@@ -208,6 +208,22 @@ export default function CharacterCreate() {
     enabled:  selectedEdition === '5e' && !!selectedClass, staleTime: Infinity,
   })
 
+  // Se a opção de Equipamento Inicial escolhida inclui uma armadura de corpo
+  // (nunca escudo — esse fica de fora do dropdown de Armadura, que já filtra
+  // armor_type !== 'shield'), pré-seleciona ela como a armadura equipada.
+  // Sem isso, escolher "Cota de Malha" no equipamento não refletia na CA da
+  // ficha — o jogador tinha que lembrar de trocar o dropdown manualmente.
+  // Continua editável: o jogador pode trocar depois se quiser.
+  useEffect(() => {
+    if (!equipmentOptionId || !equipmentOptions) return
+    const opt = equipmentOptions.find(o => o.ID === equipmentOptionId)
+    const armorComp = opt?.components.find(c => c.armor && c.armor.armor_type !== 'shield')
+    if (armorComp?.armor) {
+      setValue('armor_id', armorComp.armor.ID)
+      setSelectedArmorData(armorComp.armor)
+    }
+  }, [equipmentOptionId, equipmentOptions, setValue])
+
   const is4e = selectedEdition === '4e'
   const is5e = selectedEdition === '5e'
   const hasSkills = allSkills && allSkills.length > 0
