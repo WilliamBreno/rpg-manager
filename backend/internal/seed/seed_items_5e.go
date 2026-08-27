@@ -10,6 +10,16 @@ import (
 // seedArmors5e povoa o catálogo de armaduras 5e (Capítulo 6 do Livro do
 // Jogador) — a tabela estava vazia até aqui, então isso também corrige a
 // ausência total de armaduras equipáveis no sistema, não só a loja.
+//
+// "Sem Armadura" (CA base 10, sem limite de DEX) precisava entrar aqui
+// explicitamente: já existia uma linha manual com esse nome no banco de dev
+// (sem nenhum código que a criasse ou mantivesse), então em qualquer ambiente
+// sem esse registro à mão (produção, um banco recriado do zero) o dropdown de
+// armadura na criação de personagem simplesmente não tinha opção nenhuma de
+// "sem armadura" real — só o placeholder vazio do <select>, que não é um
+// armor_id válido e travava a criação silenciosamente se o jogador não
+// escolhesse manualmente uma armadura de verdade. Ver CharacterCreate.tsx:
+// o form agora pré-seleciona esta linha (armor_type == "none") como padrão.
 func seedArmors5e(db *gorm.DB) {
 	type a struct {
 		Name        string
@@ -20,6 +30,7 @@ func seedArmors5e(db *gorm.DB) {
 		CostCopper  int
 	}
 	armors := []a{
+		{"Sem Armadura", domain.ArmorNone, 10, -1, "", 0},
 		{"Armadura Acolchoada", domain.ArmorLight, 11, -1, "4 kg", 500},
 		{"Armadura de Couro", domain.ArmorLight, 11, -1, "5 kg", 1000},
 		{"Armadura de Couro Batido", domain.ArmorLight, 12, -1, "6,5 kg", 4500},

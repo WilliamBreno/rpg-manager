@@ -122,6 +122,18 @@ export default function CharacterCreate() {
   const { data: classes }   = useQuery({ queryKey: ['classes', selectedEdition],  queryFn: () => classService.getAll(selectedEdition!),      enabled: !!selectedEdition })
   const { data: races }     = useQuery({ queryKey: ['races', selectedEdition],    queryFn: () => raceService.getAll(selectedEdition!),        enabled: !!selectedEdition })
   const { data: armors }    = useQuery({ queryKey: ['armors', selectedEdition],   queryFn: () => armorService.getByEdition(selectedEdition!), enabled: !!selectedEdition })
+
+  // Sem armadura selecionada ainda (nem o jogador escolheu, nem a troca de
+  // edição resetou o form) → assume "Sem Armadura (CA base 10)" como padrão,
+  // em vez de deixar armor_id vazio e travar a criação silenciosamente.
+  useEffect(() => {
+    if (!armors || selectedArmorData) return
+    const semArmadura = armors.find(a => a.armor_type === 'none')
+    if (semArmadura) {
+      setValue('armor_id', semArmadura.ID)
+      setSelectedArmorData(semArmadura)
+    }
+  }, [armors, selectedArmorData, setValue])
   const { data: allSkills } = useQuery({
     queryKey: ['skills-filter', selectedClass, selectedRace],
     queryFn:  () => skillService.getByFilter(selectedClass!, selectedRace ?? undefined),
@@ -1008,7 +1020,6 @@ export default function CharacterCreate() {
               {sectionHeader(`Passo ${S()} — Armadura`)}
               <select {...register('armor_id')} className="rpg-select"
                 onChange={e => { const v = Number(e.target.value); setValue('armor_id', v); setSelectedArmorData(armors?.find((a: Armor) => a.ID === v) ?? null) }}>
-                <option value="">Sem armadura</option>
                 {armors?.filter((a: Armor) => a.armor_type !== 'shield').map((a: Armor) => (
                   <option key={a.ID} value={a.ID}>{a.name} (CA base {a.base_ac})</option>
                 ))}

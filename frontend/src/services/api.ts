@@ -49,28 +49,47 @@ function hideWakingToast() {
 }
 
 // ── Interceptors ────────────────────────────────────────────────────────────
+// Contador de requisições em voo, não um único timer — várias telas disparam
+// várias chamadas em paralelo (ex.: abrir um personagem busca personagem,
+// perícias, talentos e inventário ao mesmo tempo). Um timer único por
+// requisição se sobrescrevia a cada nova chamada: a resposta rápida de uma
+// requisição cancelava o timer de outra ainda pendente, então o toast podia
+// nunca aparecer, aparecer duas vezes, ou ficar preso na tela mesmo depois de
+// tudo carregar. Agora o timer de "acordando" só é criado quando a primeira
+// requisição pendente entra, e o toast só fecha quando a última sai.
+let pendingRequests = 0
 let slowTimer: ReturnType<typeof setTimeout> | null = null
 
+function requestStarted() {
+  pendingRequests += 1
+  if (pendingRequests === 1 && !slowTimer) {
+    slowTimer = setTimeout(showWakingToast, 4000)
+  }
+}
+
+function requestFinished() {
+  pendingRequests = Math.max(0, pendingRequests - 1)
+  if (pendingRequests === 0) {
+    if (slowTimer) { clearTimeout(slowTimer); slowTimer = null }
+    hideWakingToast()
+  }
+}
+
 api.interceptors.request.use(config => {
-  // Token
   const token = localStorage.getItem('token')
   if (token) config.headers.Authorization = `Bearer ${token}`
 
-  // Mostra toast se demorar mais de 4s
-  slowTimer = setTimeout(showWakingToast, 4000)
-
+  requestStarted()
   return config
 })
 
 api.interceptors.response.use(
   response => {
-    if (slowTimer) { clearTimeout(slowTimer); slowTimer = null }
-    hideWakingToast()
+    requestFinished()
     return response
   },
   error => {
-    if (slowTimer) { clearTimeout(slowTimer); slowTimer = null }
-    hideWakingToast()
+    requestFinished()
 
     if (error.response?.status === 401) {
       localStorage.removeItem('token')
