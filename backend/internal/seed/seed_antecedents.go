@@ -9,10 +9,14 @@ import (
 
 // seedAntecedents5e insere os 16 Antecedentes oficiais do PHB 2024 (capítulo 4,
 // "Origens dos Personagens", extraídos diretamente do PDF via PyMuPDF — não
-// inventados) mais "Herói do Povo" (antecedente de livro antigo, 2014, mantido
-// via a regra de "Antecedentes e Espécies de Livros Antigos", cap. 2 p.38).
-// Usa domain.Antecedent (tabela: antecedents) — separado da biografia do
-// personagem (Background).
+// inventados) mais 4 antecedentes de livro antigo (2014) sem equivalente de
+// mesmo nome no PHB 2024 — Herói do Povo, Artesão de Guilda, Forasteiro e
+// Órfão — mantidos via a regra de "Antecedentes e Espécies de Livros
+// Antigos", cap. 2 p.38 (ver bloco IsLegacy mais abaixo para os detalhes e
+// para por que os outros 9 antecedentes do PHB 2014 não precisaram ser
+// reimportados: eles têm nome idêntico a um antecedente 2024, que já vence
+// pela regra de ouro do sistema misto 2014/2024). Usa domain.Antecedent
+// (tabela: antecedents) — separado da biografia do personagem (Background).
 //
 // Nenhum dos 16 antecedentes de 2024 tem uma "característica" separada além
 // do próprio Talento de Origem que concede (diferente do modelo de 2014, que
@@ -268,6 +272,55 @@ func seedAntecedents5e(db *gorm.DB) {
 			// AbilityBonusOptions/OriginFeatName.
 			IsLegacy: true,
 		},
+		// ── Antecedentes de livro antigo (2014) sem equivalente de mesmo nome
+		// no PHB 2024 — mesma regra e mesmo tratamento de "Herói do Povo"
+		// acima. Extraídos de "D&D 5.0 - livro-do-jogador-fundo-branco-
+		// biblioteca-elfica.pdf" (PHB 2014, tradução Biblioteca Élfica),
+		// capítulo 4 "Personalidades e Antecedentes", p.129-141 — os outros
+		// 10 antecedentes desse mesmo capítulo (Acólito, Artista, Charlatão,
+		// Criminoso, Eremita, Marinheiro, Nobre, Sábio, Soldado — e Herói do
+		// Povo, já coberto acima) têm nome idêntico a um antecedente do PHB
+		// 2024, então a regra de ouro (2024 sempre vence em caso de mesmo
+		// nome) já os cobre integralmente; não foram reimportados aqui.
+		{
+			Name:               "Artesão de Guilda",
+			Edition:            "5e",
+			Description:        "Você é membro de uma guilda de artesãos, perito em um ofício específico e intimamente associado a outros artesãos — uma parte bem estabelecida do mundo mercantil, livre das restrições de uma ordem social feudal graças aos seus talentos e riqueza.",
+			SkillProficiencies: `["Intuição","Persuasão"]`,
+			ToolProficiencies:  "Um tipo de Ferramenta de Artesão",
+			Languages:          "Um idioma à sua escolha",
+			Equipment:          "Ferramentas de artesão (à sua escolha), uma carta de apresentação da sua guilda, roupas de viajante e uma algibeira com 15 po",
+			Feature:            "Associados da Guilda",
+			FeatureDescription: "Membros da sua guilda te dão hospedagem e comida quando necessário, e cobrem despesas de funeral. Um salão da guilda é um bom lugar para conhecer patrões, aliados e empregados em potencial. Se acusado de um crime, sua guilda pode ampará-lo caso uma defesa razoável seja possível, e membros bem posicionados podem ter acesso a figuras políticas através dela.",
+			IsDefault:          true,
+			IsLegacy:           true,
+		},
+		{
+			Name:               "Forasteiro",
+			Edition:            "5e",
+			Description:        "Você cresceu em uma área selvagem, longe da civilização e dos confortos da cidade — testemunhou migrações e climas extremos, e é adepto da solidão. O isolamento está no seu sangue, seja como nômade, explorador, recluso, forrageador ou saqueador.",
+			SkillProficiencies: `["Atletismo","Sobrevivência"]`,
+			ToolProficiencies:  "Um tipo de Instrumento Musical",
+			Languages:          "Um idioma à sua escolha",
+			Equipment:          "Um bordão, uma armadilha de caça, um fetiche de um animal que você matou, roupas de viagem e uma algibeira com 10 po",
+			Feature:            "Andarilho",
+			FeatureDescription: "Você tem memória excelente para mapas e geografia, sempre recorda o plano geral de terrenos, assentamentos e outras características ao redor. Também consegue encontrar comida e água fresca para si e até 5 outras pessoas por dia, desde que a terra ofereça o necessário.",
+			IsDefault:          true,
+			IsLegacy:           true,
+		},
+		{
+			Name:               "Órfão",
+			Edition:            "5e",
+			Description:        "Você cresceu nas ruas, sozinho, órfão e pobre, sem ninguém para cuidar de você ou alimentá-lo. Você lutou ferozmente por comida e sobreviveu à base de astúcia, força e agilidade.",
+			SkillProficiencies: `["Furtividade","Prestidigitação"]`,
+			ToolProficiencies:  "Kit de Disfarce, Ferramentas de Ladrão",
+			Languages:          "",
+			Equipment:          "Uma faca pequena, um mapa da cidade em que cresceu, um rato de estimação, um pequeno objeto para lembrar dos seus pais, roupas comuns e uma algibeira com 10 po",
+			Feature:            "Segredos da Cidade",
+			FeatureDescription: "Você conhece os padrões secretos e o fluxo das cidades, encontrando passagens que outros não perceberiam. Fora de combate, você (e quem estiver guiando) pode viajar entre dois pontos quaisquer da cidade com o dobro da velocidade normalmente permitida.",
+			IsDefault:          true,
+			IsLegacy:           true,
+		},
 	}
 
 	for _, a := range antecedents {
@@ -289,5 +342,5 @@ func seedAntecedents5e(db *gorm.DB) {
 			})
 		}
 	}
-	log.Println("  ✓ Antecedentes 5e: 17 seedados (16 do PHB 2024 + Herói do Povo, legado 2014)")
+	log.Println("  ✓ Antecedentes 5e: 20 seedados (16 do PHB 2024 + 4 legados de 2014: Herói do Povo, Artesão de Guilda, Forasteiro, Órfão)")
 }
