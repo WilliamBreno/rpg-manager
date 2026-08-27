@@ -64,6 +64,29 @@ const ASI_ATTRS = [
 
 const EMPTY_ASI = { strength: 0, dexterity: 0, constitution: 0, intelligence: 0, wisdom: 0, charisma: 0 }
 
+// Extrai a mensagem real do erro de exportação de PDF. A requisição usa
+// responseType: 'blob' (pro caso de sucesso, que é o PDF em si), então numa
+// resposta de erro o axios entrega error.response.data como um Blob (não
+// como o JSON já parseado) — sem isso, todo erro cai num "algo deu errado"
+// genérico, escondendo exatamente a informação que diferencia "ai-service
+// fora do ar" de "personagem inválido" de "erro ao preencher a ficha".
+async function extractExportPdfErrorMessage(err: unknown): Promise<string> {
+  const axiosErr = err as { response?: { data?: Blob; status?: number }; request?: unknown }
+  if (axiosErr?.response?.data instanceof Blob) {
+    try {
+      const text = await axiosErr.response.data.text()
+      const parsed = JSON.parse(text)
+      if (parsed?.error) return parsed.error
+    } catch {
+      // corpo do erro não era JSON — ignora e cai no fallback abaixo
+    }
+  }
+  if (axiosErr?.request && !axiosErr?.response) {
+    return 'Não foi possível conectar ao servidor. Verifique se o backend está no ar.'
+  }
+  return 'Não foi possível exportar a ficha em PDF. Tente novamente em instantes.'
+}
+
 // ── Tipos locais ──────────────────────────────────────────────────────────────
 type XPFeedback = { message: string; type: 'success' | 'level' | 'error' }
 type ASIChoices = typeof EMPTY_ASI
@@ -219,8 +242,8 @@ export default function CharacterDetail() {
       link.click()
       link.remove()
       window.URL.revokeObjectURL(url)
-    } catch {
-      setExportPdfError('Não foi possível exportar a ficha em PDF. Tente novamente em instantes.')
+    } catch (err) {
+      setExportPdfError(await extractExportPdfErrorMessage(err))
     } finally {
       setExportingPdf(false)
     }
