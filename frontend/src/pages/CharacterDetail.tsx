@@ -16,7 +16,17 @@ import InventoryPanel from '../components/InventoryPanel'
 import { maxLevelFor, xpProgressFor } from '../lib/xpTables'
 
 // ── Níveis ASI 5e ─────────────────────────────────────────────────────────────
-const ASI_LEVELS_5E = new Set([4, 8, 12, 16, 19])
+// A maioria das classes usa a progressão padrão, mas Guerreiro (+6, +14) e
+// Ladino (+10) têm ASIs bônus extras no PHB 2024 (cap. 3) — mesma lista usada
+// no backend (character_service.go, asiLevels5eGuerreiro/asiLevels5eLadino).
+const ASI_LEVELS_5E_PADRAO = [4, 8, 12, 16, 19]
+const ASI_LEVELS_5E_GUERREIRO = [4, 6, 8, 12, 14, 16, 19]
+const ASI_LEVELS_5E_LADINO = [4, 8, 10, 12, 16, 19]
+function asiLevelsFor(className: string | undefined): number[] {
+  if (className === 'Guerreiro') return ASI_LEVELS_5E_GUERREIRO
+  if (className === 'Ladino') return ASI_LEVELS_5E_LADINO
+  return ASI_LEVELS_5E_PADRAO
+}
 
 const CATEGORY_CONFIG: Record<string, { color: string; icon: string }> = {
   'Combate':  { color: 'text-red-400',    icon: '⚔️' },
@@ -498,13 +508,14 @@ export default function CharacterDetail() {
           {/* Indicador de níveis ASI 5e próximos */}
           {is5e && !isMaxLevel && (
             <p className="text-gray-600 text-xs mt-2">
-              {ASI_LEVELS_5E.has(character.level + 1)
-                ? <span className="text-amber-600">✦ Próximo nível concede melhoria de atributo (ASI)</span>
-                : (() => {
-                    const nextASI = [4, 8, 12, 16, 19].find(l => l > character.level)
-                    return nextASI ? `Próxima melhoria de atributo: nível ${nextASI}` : null
-                  })()
-              }
+              {(() => {
+                const asiLevels = asiLevelsFor(character.class?.name)
+                if (asiLevels.includes(character.level + 1)) {
+                  return <span className="text-amber-600">✦ Próximo nível concede melhoria de atributo (ASI)</span>
+                }
+                const nextASI = asiLevels.find(l => l > character.level)
+                return nextASI ? `Próxima melhoria de atributo: nível ${nextASI}` : null
+              })()}
             </p>
           )}
         </div>
@@ -736,10 +747,12 @@ export default function CharacterDetail() {
               📜 Antecedente — {bg5e.name}
             </h2>
             <p className="text-gray-400 text-sm mb-3">{bg5e.description}</p>
-            <div className="rounded-lg p-3 mb-3" style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)' }}>
-              <p className="text-xs font-semibold mb-1" style={{ color: '#c9a84c' }}>✦ {bg5e.feature}</p>
-              <p className="text-gray-400 text-xs">{bg5e.feature_description}</p>
-            </div>
+            {bg5e.feature && (
+              <div className="rounded-lg p-3 mb-3" style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)' }}>
+                <p className="text-xs font-semibold mb-1" style={{ color: '#c9a84c' }}>✦ {bg5e.feature}</p>
+                <p className="text-gray-400 text-xs">{bg5e.feature_description}</p>
+              </div>
+            )}
             <div className="flex flex-wrap gap-2 mb-2">
               {(() => { try { return JSON.parse(bg5e.skill_proficiencies) } catch { return [] } })()
                 .map((s: string) => (

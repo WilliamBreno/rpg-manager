@@ -556,8 +556,12 @@ export default function CharacterCreate() {
                         </div>
                         {isSel && (
                           <div className="mt-3 pt-3 border-t" style={{ borderColor: 'rgba(201,168,76,0.2)' }}>
-                            <p className="text-xs font-semibold mb-1" style={{ color: '#c9a84c' }}>✦ {bg.feature}</p>
-                            <p className="text-gray-400 text-xs mb-2">{bg.feature_description}</p>
+                            {bg.feature && (
+                              <>
+                                <p className="text-xs font-semibold mb-1" style={{ color: '#c9a84c' }}>✦ {bg.feature}</p>
+                                <p className="text-gray-400 text-xs mb-2">{bg.feature_description}</p>
+                              </>
+                            )}
                             <p className="text-gray-500 text-xs"><span className="text-gray-400 font-medium">Equipamento: </span>{bg.equipment}</p>
                           </div>
                         )}

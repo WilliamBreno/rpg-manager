@@ -22,19 +22,24 @@ import (
 func seedRaces5e(db *gorm.DB) {
 	type data struct {
 		Name, Description string
+		Speed              int
 	}
 
+	// Deslocamento (PHB 2024, cap. 4): 9 metros = 30ft para a maioria das
+	// espécies; Golias é a única exceção, com 10,5 metros = 35ft. Antes disso
+	// todas as 10 espécies estavam hardcoded em 30 — bug real que fazia
+	// personagens Golias exportarem "Deslocamento: 30" na ficha, errado.
 	races := []data{
-		{"Aasimar", "Mortais com uma centelha dos Planos Superiores. Carregam herança celestial que se manifesta em resistências e poderes de luz e cura."},
-		{"Anão", "Forjados da terra por Moradin. Resilientes como montanhas, com afinidade por pedra, metal e vida subterrânea. Vivem cerca de 350 anos."},
-		{"Draconato", "Humanoides de herança dracônica, com escamas, sopro elemental e resistência ao tipo de dano do seu ancestral dragão."},
-		{"Elfo", "Seres feéricos com sentidos aguçados, resistência à magia, e a capacidade de meditar em transe no lugar de dormir. Vivem séculos."},
-		{"Gnomo", "Pequenos humanoides com astúcia mágica natural, visão no escuro e resistência a magias que afetam a mente."},
-		{"Golias", "Gigantes em miniatura com forte conexão com o povo gigante, podendo resistir a danos devastadores e assumir uma forma aumentada."},
-		{"Humano", "A espécie mais versátil do multiverso. Recebem um talento de Origem adicional e se adaptam a qualquer caminho."},
-		{"Orc", "Humanoides robustos abençoados por Gruumsh. Determinados, com visão no escuro poderosa e a capacidade de continuar lutando ao cair."},
-		{"Pequenino", "Pequenos humanoides corajosos com sorte inata, furtividade natural e agilidade para se mover entre criaturas maiores."},
-		{"Tiferino", "Humanoides com sangue ínfero. Possuem visão no escuro e um legado mágico que reflete sua linhagem — diabólica, demoníaca ou outra."},
+		{"Aasimar", "Mortais com uma centelha dos Planos Superiores. Carregam herança celestial que se manifesta em resistências e poderes de luz e cura.", 30},
+		{"Anão", "Forjados da terra por Moradin. Resilientes como montanhas, com afinidade por pedra, metal e vida subterrânea. Vivem cerca de 350 anos.", 30},
+		{"Draconato", "Humanoides de herança dracônica, com escamas, sopro elemental e resistência ao tipo de dano do seu ancestral dragão.", 30},
+		{"Elfo", "Seres feéricos com sentidos aguçados, resistência à magia, e a capacidade de meditar em transe no lugar de dormir. Vivem séculos.", 30},
+		{"Gnomo", "Pequenos humanoides com astúcia mágica natural, visão no escuro e resistência a magias que afetam a mente.", 30},
+		{"Golias", "Gigantes descendentes de gigantes ancestrais, com forte ancestralidade gigante, capazes de resistir a danos devastadores e assumir tamanho Grande temporariamente.", 35},
+		{"Humano", "A espécie mais versátil do multiverso. Recebem um talento de Origem adicional e se adaptam a qualquer caminho.", 30},
+		{"Orc", "Humanoides robustos abençoados por Gruumsh. Determinados, com visão no escuro poderosa e a capacidade de continuar lutando ao cair.", 30},
+		{"Pequenino", "Pequenos humanoides corajosos com sorte inata, furtividade natural e agilidade para se mover entre criaturas maiores.", 30},
+		{"Tiferino", "Humanoides com sangue ínfero. Possuem visão no escuro e um legado mágico que reflete sua linhagem — diabólica, demoníaca ou outra.", 30},
 	}
 
 	for _, r := range races {
@@ -44,13 +49,13 @@ func seedRaces5e(db *gorm.DB) {
 				Name:        r.Name,
 				Edition:     "5e",
 				Description: r.Description,
-				Speed:       30, // PHB 2024: todas as espécies têm Deslocamento 9m (30ft)
+				Speed:       r.Speed,
 				IsDefault:   true,
 			})
 		} else {
 			db.Model(&existing).Updates(map[string]interface{}{
 				"description": r.Description,
-				"speed":       30,
+				"speed":       r.Speed,
 			})
 		}
 	}
@@ -212,6 +217,21 @@ func seedDraconato5ePHB(db *gorm.DB) {
 			Effect:    "Resistência ao tipo elemental do ancestral dracônico.",
 			PowerType: domain.PowerUnlimited, Level: 1, IsRaceFeature: true,
 		},
+		{
+			Name: "Visão no Escuro (Draconato)", Edition: "5e", RaceID: &id,
+			Description: "Você tem Visão no Escuro com alcance de 18 metros.",
+			ActionType:  "Passiva", Range: "Pessoal",
+			Effect:    "Enxerga em escuridão até 18m como se fosse meia-luz.",
+			PowerType: domain.PowerUnlimited, Level: 1, IsRaceFeature: true,
+		},
+		{
+			Name: "Voo Dracônico", Edition: "5e", RaceID: &id,
+			Description: "No nível 5 de personagem, você pode canalizar magia dracônica para voar temporariamente. Como uma Ação Bônus, você cria asas espectrais nas costas que duram 10 minutos ou até você as retrair (nenhuma ação necessária) ou ficar Incapacitado. Pela duração, você tem Deslocamento de Voo igual ao seu Deslocamento. Após usar esse traço, não pode usá-lo novamente até completar um Descanso Longo.",
+			ActionType:  "Ação Bônus", Range: "Pessoal",
+			Effect:       "Deslocamento de Voo igual ao Deslocamento normal por 10 minutos.",
+			LevelScaling: "Disponível a partir do nível 5 de personagem.",
+			PowerType:    domain.PowerDaily, Level: 5, IsRaceFeature: true,
+		},
 	}
 	for _, s := range skills {
 		upsertRaceSkill(db, s, id)
@@ -236,11 +256,19 @@ func seedElfo5ePHB(db *gorm.DB) {
 			PowerType: domain.PowerUnlimited, Level: 1, IsRaceFeature: true,
 		},
 		{
-			Name: "Ancestral das Fadas", Edition: "5e", RaceID: &id,
-			Description: "Você tem Vantagem nas salvaguardas para evitar ou encerrar a condição Enfeitiçado. Magia não pode colocá-lo para dormir.",
+			Name: "Ancestralidade Feérica", Edition: "5e", RaceID: &id,
+			Description: "Você tem Vantagem ao realizar salvaguardas para evitar ou encerrar a condição Enfeitiçado.",
 			ActionType:  "Passiva", Range: "Pessoal",
-			Effect:    "Vantagem vs Enfeitiçado. Imune a sono mágico.",
+			Effect:    "Vantagem em salvaguardas contra Enfeitiçado.",
 			PowerType: domain.PowerUnlimited, Level: 1, IsRaceFeature: true,
+		},
+		{
+			Name: "Sentidos Aguçados", Edition: "5e", RaceID: &id,
+			Description: "Você tem proficiência na perícia Intuição, Percepção ou Sobrevivência (escolha uma).",
+			ActionType:  "Passiva", Range: "Pessoal",
+			Effect:         "Proficiência em 1 perícia à escolha entre Intuição, Percepção ou Sobrevivência.",
+			PowerType:      domain.PowerUnlimited, Level: 1, IsRaceFeature: true,
+			RequiresChoice: true, ChoiceGroup: "sentidos_agucados_elfo",
 		},
 		{
 			Name: "Transe", Edition: "5e", RaceID: &id,
@@ -312,27 +340,27 @@ func seedGolias5ePHB(db *gorm.DB) {
 
 	skills := []domain.Skill{
 		{
-			Name: "Gigante Pequeno", Edition: "5e", RaceID: &id,
-			Description: "Você conta como uma criatura Grande quando se trata de sua capacidade de carga e do peso que pode empurrar, arrastar ou erguer.",
-			ActionType:  "Passiva", Range: "Pessoal",
-			Effect:    "Conta como Grande para carga e empurrar/arrastar.",
-			PowerType: domain.PowerUnlimited, Level: 1, IsRaceFeature: true,
+			Name: "Ancestralidade Gigante", Edition: "5e", RaceID: &id,
+			Description: "Você é descendente de Gigantes. Escolha um dos seguintes benefícios sobrenaturais: Arrepio do Gelo (Gigante do Gelo — ao causar dano com um ataque, também inflige 1d6 de dano Gélido e reduz o Deslocamento do alvo em 3m até o início do seu próximo turno), Queimadura de Fogo (Gigante de Fogo — também inflige 1d10 de dano Ígneo ao causar dano com um ataque), Resistência da Pedra (Gigante da Pedra — como Reação ao sofrer dano, jogue 1d12 + modificador de Constituição e reduza o dano por esse total), Salto da Nuvem (Gigante das Nuvens — como Ação Bônus, teleporta-se até 9m para um espaço desocupado à vista), Tombo da Colina (Gigante da Colina — ao causar dano a uma criatura Grande ou menor com um ataque, pode impor a condição Caído) ou Trovão da Tempestade (Gigante da Tempestade — como Reação ao sofrer dano de uma criatura a até 18m, causa 1d8 de dano Trovejante a ela). Usos = Bônus de Proficiência; recupera em Descanso Longo.",
+			ActionType:  "Variado (veja desc.)", Range: "Pessoal",
+			Effect:         "Um benefício sobrenatural à escolha entre 6 opções ligadas a um tipo de gigante ancestral.",
+			PowerType:      domain.PowerDaily, Level: 1, IsRaceFeature: true,
+			RequiresChoice: true, ChoiceGroup: "ancestralidade_gigante_golias",
 		},
 		{
-			Name: "Potência da Pedra", Edition: "5e", RaceID: &id,
-			Description: "Quando você sofre dano, pode usar sua Reação para reduzir esse dano em 1d12 + modificador de Constituição. Usos = Bônus de Proficiência; recupera em Descanso Longo.",
-			ActionType:  "Reação", Range: "Pessoal",
-			Effect:    "Reduz dano em 1d12 + CON como Reação. Recupera em Descanso Longo.",
-			PowerType: domain.PowerDaily, Level: 1, IsRaceFeature: true,
-		},
-		{
-			Name: "Forma do Gigante", Edition: "5e", RaceID: &id,
-			Description: "No nível 3, como Ação Bônus você assume uma forma de Gigante (Pedra, Gelo ou Tempestade, à escolha ao criar o personagem) por 1 minuto. Cada forma concede benefícios distintos de combate. Recupera em Descanso Longo.",
+			Name: "Forma Grande", Edition: "5e", RaceID: &id,
+			Description: "A partir do nível 5 de personagem, você pode alterar seu tamanho para Grande como uma Ação Bônus, se estiver em um espaço grande o suficiente. Essa transformação se mantém por 10 minutos ou até você a encerrar (nenhuma ação necessária). Pela duração, você tem Vantagem em testes de Força, e seu Deslocamento aumenta em 3 metros. Após usar este traço, não pode utilizá-lo novamente até completar um Descanso Longo.",
 			ActionType:  "Ação Bônus", Range: "Pessoal",
-			Effect:         "Transformação de Gigante por 1 minuto. Nível 3+. Recupera em Descanso Longo.",
-			LevelScaling:   "Disponível a partir do nível 3 de personagem.",
-			PowerType:      domain.PowerDaily, Level: 3, IsRaceFeature: true,
-			RequiresChoice: true, ChoiceGroup: "forma_gigante_golias_phb",
+			Effect:       "Tamanho Grande por 10 minutos: Vantagem em testes de Força, +3m de Deslocamento.",
+			LevelScaling: "Disponível a partir do nível 5 de personagem.",
+			PowerType:    domain.PowerDaily, Level: 5, IsRaceFeature: true,
+		},
+		{
+			Name: "Porte Poderoso", Edition: "5e", RaceID: &id,
+			Description: "Você tem Vantagem em qualquer teste de atributo que realizar para encerrar a condição Imobilizado. Você também conta como um tamanho maior ao determinar sua capacidade de carga.",
+			ActionType:  "Passiva", Range: "Pessoal",
+			Effect:    "Vantagem para encerrar Imobilizado; conta como 1 tamanho maior para capacidade de carga.",
+			PowerType: domain.PowerUnlimited, Level: 1, IsRaceFeature: true,
 		},
 	}
 	for _, s := range skills {
@@ -351,8 +379,23 @@ func seedHumano5ePHB(db *gorm.DB) {
 
 	skills := []domain.Skill{
 		{
+			Name: "Eficiente", Edition: "5e", RaceID: &id,
+			Description: "Você adquire Inspiração Heroica sempre que completar um Descanso Longo.",
+			ActionType:  "Passiva", Range: "Pessoal",
+			Effect:    "Ganha Inspiração Heroica a cada Descanso Longo.",
+			PowerType: domain.PowerUnlimited, Level: 1, IsRaceFeature: true,
+		},
+		{
+			Name: "Hábil", Edition: "5e", RaceID: &id,
+			Description: "Você adquire proficiência em uma perícia à sua escolha.",
+			ActionType:  "Passiva", Range: "Pessoal",
+			Effect:         "Proficiência em 1 perícia à escolha.",
+			PowerType:      domain.PowerUnlimited, Level: 1, IsRaceFeature: true,
+			RequiresChoice: true, ChoiceGroup: "habil_humano_phb",
+		},
+		{
 			Name: "Versátil", Edition: "5e", RaceID: &id,
-			Description: "Você recebe um talento de Origem à sua escolha (veja o capítulo 5). Esse talento reflete sua versatilidade inata e experiência diversificada antes de sua vida de aventura. Exemplos: Curandeiro, Atacante Selvagem, Habilidoso, Músico, Sortudo.",
+			Description: "Você adquire um talento de Origem à sua escolha (veja o capítulo 5). Habilidoso é recomendado.",
 			ActionType:  "Passiva", Range: "Pessoal",
 			Effect:         "Ganhe um talento de Origem adicional à escolha.",
 			PowerType:      domain.PowerUnlimited, Level: 1, IsRaceFeature: true,

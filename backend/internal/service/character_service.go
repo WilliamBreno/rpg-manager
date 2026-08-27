@@ -43,8 +43,15 @@ var xpTable5e = map[int]int{
 	16: 195000, 17: 225000, 18: 265000, 19: 305000, 20: 355000,
 }
 
-// Níveis 5e que concedem ASI (Ability Score Improvement)
+// Níveis 5e que concedem ASI (Ability Score Improvement). A maioria das
+// classes usa a progressão padrão, mas Guerreiro e Ladino têm ASIs bônus
+// extras no PHB 2024 (cap. 3): Guerreiro ganha em 6 e 14 além do padrão,
+// Ladino ganha em 10 além do padrão. Antes disso havia um único mapa global
+// pra todas as classes 5e — Guerreiros e Ladinos ficavam sem essas melhorias
+// extras, uma característica de classe real perdida silenciosamente.
 var asiLevels5e = map[int]bool{4: true, 8: true, 12: true, 16: true, 19: true}
+var asiLevels5eGuerreiro = map[int]bool{4: true, 6: true, 8: true, 12: true, 14: true, 16: true, 19: true}
+var asiLevels5eLadino = map[int]bool{4: true, 8: true, 10: true, 12: true, 16: true, 19: true}
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -88,12 +95,20 @@ func maxLevel(edition string) int {
 	return 20
 }
 
-// isASILevel verifica se o nível concede melhoria de atributo
-// 5e: níveis 4, 8, 12, 16, 19
-// 4e: todo nível par (2, 4, 6, ... 30)
-func isASILevel(edition string, level int) bool {
+// isASILevel verifica se o nível concede melhoria de atributo.
+// 5e: níveis 4, 8, 12, 16, 19 — exceto Guerreiro (+6, +14) e Ladino (+10),
+// que têm ASIs bônus extras no PHB 2024 (cap. 3).
+// 4e: todo nível par (2, 4, 6, ... 30).
+func isASILevel(edition, className string, level int) bool {
 	if edition == "5e" {
-		return asiLevels5e[level]
+		switch className {
+		case "Guerreiro":
+			return asiLevels5eGuerreiro[level]
+		case "Ladino":
+			return asiLevels5eLadino[level]
+		default:
+			return asiLevels5e[level]
+		}
 	}
 	return level > 1 && level%2 == 0
 }
@@ -292,10 +307,23 @@ func (s *CharacterService) checkAndApplyLevelUps(c *domain.Character) (leveledUp
 		// na criação, ver CharacterCreate.tsx), mas se uma for adicionada no
 		// futuro isso evita conceder as duas opções de uma vez em vez de
 		// esperar uma escolha do jogador que ainda não existe nesta tela.
+		//
+		// Habilidades de subclasse em níveis altos (ex.: "Ramos da Árvore" no
+		// nível 6 do Bárbaro) usam ChoiceGroup para guardar o Name exato da
+		// habilidade de entrada da subclasse (ex.: "Trilha da Árvore do
+		// Mundo") em vez de um slug de grupo de escolha — RequiresChoice fica
+		// false porque a escolha já foi feita no nível 3, não há nada para
+		// escolher de novo aqui. requiresSubclass() confere se o personagem já
+		// tem essa entrada de subclasse antes de conceder; sem essa checagem,
+		// TODO bárbaro ganharia as características de TODAS as trilhas ao
+		// subir de nível, não só da que escolheu.
 		newSkills, err := s.SkillRepo.FindByLevel(c.ClassID, c.Level)
 		if err == nil {
 			for _, skill := range newSkills {
 				if skill.RequiresChoice {
+					continue
+				}
+				if !hasChosenSubclass(c.Skills, skill.ChoiceGroup) {
 					continue
 				}
 				s.Repo.AddSkill(c, &skill)
@@ -303,7 +331,7 @@ func (s *CharacterService) checkAndApplyLevelUps(c *domain.Character) (leveledUp
 		}
 
 		// Se é nível ASI, para aqui e aguarda escolha do jogador
-		if isASILevel(c.Edition, c.Level) {
+		if isASILevel(c.Edition, c.Class.Name, c.Level) {
 			needsASI = true
 			break
 		}
@@ -650,12 +678,34 @@ func (s *CharacterService) LevelUp(id uint) (domain.Character, error) {
 			if skill.RequiresChoice {
 				continue
 			}
+			if !hasChosenSubclass(character.Skills, skill.ChoiceGroup) {
+				continue
+			}
 			s.Repo.AddSkill(&character, &skill)
 		}
 	}
 
 	err = s.Repo.Update(&character)
 	return character, err
+}
+
+// hasChosenSubclass reporta se o personagem já possui a habilidade de entrada
+// de subclasse referenciada. group vazio significa que a habilidade é uma
+// característica base da classe (sem subclasse envolvida) e sempre libera.
+// Quando não vazio, group é o Name exato da habilidade de entrada da
+// subclasse (ex.: "Trilha da Árvore do Mundo"), não um slug de ChoiceGroup —
+// convenção usada só pelas habilidades de subclasse de nível alto seedadas a
+// partir de 2026-08-27 (ver seed.go).
+func hasChosenSubclass(skills []domain.Skill, group string) bool {
+	if group == "" {
+		return true
+	}
+	for _, s := range skills {
+		if s.Name == group {
+			return true
+		}
+	}
+	return false
 }
 
 // ── Skills ────────────────────────────────────────────────────────────────────
