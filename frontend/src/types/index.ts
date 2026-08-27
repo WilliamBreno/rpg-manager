@@ -96,6 +96,12 @@ export interface Background {
   bonds: string
   flaws: string
   rumors: string
+  age: string
+  height: string
+  weight: string
+  eyes: string
+  skin: string
+  hair: string
 }
 
 // ── Antecedent — Antecedente D&D 5e (Acólito, Criminoso, Soldado, etc.) ────
@@ -203,6 +209,13 @@ export interface Character {
   bonds?: string
   flaws?: string
   rumors?: string                 // boatos que circulam sobre o personagem
+  history?: string
+  age?: string
+  height?: string
+  weight?: string
+  eyes?: string
+  skin?: string
+  hair?: string
   speed?: number                  // deslocamento em pés (30 para maioria)
   proficiency_bonus?: number      // calculado: +2 nos níveis 1-4
   // ── Relacionamentos ────────────────────────────────────────────────────────

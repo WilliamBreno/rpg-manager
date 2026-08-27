@@ -53,6 +53,17 @@ type Character struct {
 	// de biografia).
 	Rumors string `json:"rumors"`
 
+	// Descrição física e história — edição-agnóstico, editável pelo mesmo
+	// endpoint /characters/:id/background. Usado na página 2 da ficha 5e
+	// exportada (campos Age/Height/Weight/Eyes/Skin/Hair/Backstory).
+	Age     string `json:"age"`
+	Height  string `json:"height"`
+	Weight  string `json:"weight"`
+	Eyes    string `json:"eyes"`
+	Skin    string `json:"skin"`
+	Hair    string `json:"hair"`
+	History string `json:"history"`
+
 	// AbilityBonusChoice: só usado no payload de criação (não persistido —
 	// gorm:"-"). Regra 2024: o bônus de atributo vem do Antecedente, nunca
 	// da raça. O jogador digita os 6 atributos BASE (sem o bônus) e escolhe

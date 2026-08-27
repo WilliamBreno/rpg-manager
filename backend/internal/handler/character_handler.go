@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"rpg-manager/internal/domain"
 	"rpg-manager/internal/pdfexport"
+	"rpg-manager/internal/repository"
 	"rpg-manager/internal/service"
 )
 
@@ -15,10 +16,11 @@ type CharacterHandler struct {
 	Service        *service.CharacterService
 	ArmorService   *service.ArmorService
 	PericiaService *service.PericiaService
+	UserRepo       *repository.UserRepository
 }
 
-func NewCharacterHandler(service *service.CharacterService, armorService *service.ArmorService, periciaService *service.PericiaService) *CharacterHandler {
-	return &CharacterHandler{Service: service, ArmorService: armorService, PericiaService: periciaService}
+func NewCharacterHandler(service *service.CharacterService, armorService *service.ArmorService, periciaService *service.PericiaService, userRepo *repository.UserRepository) *CharacterHandler {
+	return &CharacterHandler{Service: service, ArmorService: armorService, PericiaService: periciaService, UserRepo: userRepo}
 }
 
 func (h *CharacterHandler) GetAll(c *gin.Context) {
@@ -452,7 +454,12 @@ func (h *CharacterHandler) ExportPDF5e(c *gin.Context) {
 		return
 	}
 
-	payload := service.BuildPDF5eExportPayload(character, allPericias, characterPericias, h.ArmorService)
+	playerName := ""
+	if user, err := h.UserRepo.FindByID(character.UserID); err == nil {
+		playerName = user.Name
+	}
+
+	payload := service.BuildPDF5eExportPayload(character, allPericias, characterPericias, h.ArmorService, playerName)
 
 	pdfBytes, err := pdfexport.FillCharacterSheet5e(payload)
 	if err != nil {

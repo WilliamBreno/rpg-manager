@@ -4,11 +4,15 @@
   "_total_campos_acroform": 334,
   "identidade": {
     "nome_personagem": "CharacterName",
+    "nome_jogador": "PlayerName",
     "classe_nivel": "ClassLevel",
     "antecedente": "Background",
     "raca": "Race ",
     "alinhamento": "Alignment",
     "xp": "XP"
+  },
+  "caracteristicas": {
+    "texto": "Features and Traits"
   },
   "atributos": {
     "FOR": {
@@ -210,10 +214,25 @@
     "vinculos": "Bonds",
     "defeitos": "Flaws"
   },
+  "pagina2": {
+    "nome_personagem_2": "CharacterName 2",
+    "idade": "Age",
+    "altura": "Height",
+    "peso": "Weight",
+    "olhos": "Eyes",
+    "pele": "Skin",
+    "cabelos": "Hair",
+    "historia": "Backstory"
+  },
+  "imagem_personagem": {
+    "_comentario": "CHARACTER IMAGE (pagina 2) e um botao com icone (/FT /Btn, flag Pushbutton), nao um campo de texto/checkbox comum -- pdfcpu ignora esse tipo de campo no fill por nome (fillBtn retorna cedo pra pushbuttons). A foto e aplicada por cima via watermark de imagem posicionado no Rect exato do widget, nao pelo mapa de campos.",
+    "campo_pdf": "CHARACTER IMAGE",
+    "pagina": 2,
+    "rect_pt": [36.4791, 443.398, 199.172, 661.497]
+  },
   "nao_preenchido_v1": {
-    "motivo": "sem campo correspondente no domain layer (backend/internal/domain/character.go) nesta versão do sistema",
+    "motivo": "sem campo correspondente no domain layer (backend/internal/domain/character.go) nesta versão do sistema, ou (pagina 3) sem sistema de magias implementado ainda",
     "campos_pdf": [
-      "PlayerName",
       "Inspiration",
       "Wpn Name",
       "Wpn1 AtkBonus",
@@ -231,23 +250,13 @@
       "GP",
       "PP",
       "Equipment",
-      "Features and Traits",
       "ProficienciesLang",
-      "CharacterName 2",
-      "Age",
-      "Height",
-      "Weight",
-      "Eyes",
-      "Skin",
-      "Hair",
       "Allies",
       "FactionName",
-      "Backstory",
       "Feat+Traits",
       "Treasure",
-      "Faction Symbol Image",
-      "CHARACTER IMAGE"
+      "Faction Symbol Image"
     ],
-    "paginas": "página 2 inteira (aparência/biografia) e página 3 inteira (conjuração de magias) não são preenchidas — o domain layer não modela spellcasting nem esses dados de biografia livre"
+    "paginas": "página 3 inteira (conjuração de magias: Spells NNN, SlotsTotal/SlotsRemaining, SpellcastingAbility/SpellSaveDC/SpellAtkBonus) não é preenchida — não existe nenhum modelo de magia no domain layer (sem catálogo de magias, sem espaços de magia por personagem). Isso é um sistema novo inteiro, não um campo faltando no mapa."
   }
 }

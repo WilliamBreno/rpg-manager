@@ -25,11 +25,20 @@ package pdfexport
 
 import (
 	"bytes"
+	"encoding/base64"
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"image"
+	_ "image/jpeg"
+	_ "image/png"
+	"os"
+	"strings"
 
 	"github.com/pdfcpu/pdfcpu/pkg/api"
+	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/model"
+	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/types"
+	_ "golang.org/x/image/webp"
 )
 
 //go:embed assets/ficha_5e_modelo.pdf
@@ -48,12 +57,26 @@ var formSkeletonRaw []byte
 type fieldMap struct {
 	Identidade struct {
 		NomePersonagem string `json:"nome_personagem"`
+		NomeJogador    string `json:"nome_jogador"`
 		ClasseNivel    string `json:"classe_nivel"`
 		Antecedente    string `json:"antecedente"`
 		Raca           string `json:"raca"`
 		Alinhamento    string `json:"alinhamento"`
 		XP             string `json:"xp"`
 	} `json:"identidade"`
+	Caracteristicas struct {
+		Texto string `json:"texto"`
+	} `json:"caracteristicas"`
+	Pagina2 struct {
+		NomePersonagem2 string `json:"nome_personagem_2"`
+		Idade           string `json:"idade"`
+		Altura          string `json:"altura"`
+		Peso            string `json:"peso"`
+		Olhos           string `json:"olhos"`
+		Pele            string `json:"pele"`
+		Cabelos         string `json:"cabelos"`
+		Historia        string `json:"historia"`
+	} `json:"pagina2"`
 	Atributos map[string]struct {
 		Valor string `json:"valor"`
 		Mod   string `json:"mod"`
@@ -240,11 +263,26 @@ func FillCharacterSheet5e(character map[string]interface{}) ([]byte, error) {
 
 	// Identidade
 	setText(fm.Identidade.NomePersonagem, str(character, "nome"))
+	setText(fm.Identidade.NomeJogador, str(character, "nome_jogador"))
 	setText(fm.Identidade.ClasseNivel, str(character, "classe_nivel"))
 	setText(fm.Identidade.Antecedente, str(character, "antecedente"))
 	setText(fm.Identidade.Raca, str(character, "raca"))
 	setText(fm.Identidade.Alinhamento, str(character, "alinhamento"))
 	setText(fm.Identidade.XP, str(character, "xp"))
+
+	// Características e Habilidades (página 1, texto livre sintetizado a
+	// partir das características de classe/raça e talentos do personagem)
+	setText(fm.Caracteristicas.Texto, str(character, "caracteristicas_habilidades"))
+
+	// Página 2: mesmo nome, aparência física e história
+	setText(fm.Pagina2.NomePersonagem2, str(character, "nome"))
+	setText(fm.Pagina2.Idade, str(character, "idade"))
+	setText(fm.Pagina2.Altura, str(character, "altura"))
+	setText(fm.Pagina2.Peso, str(character, "peso"))
+	setText(fm.Pagina2.Olhos, str(character, "olhos"))
+	setText(fm.Pagina2.Pele, str(character, "pele"))
+	setText(fm.Pagina2.Cabelos, str(character, "cabelos"))
+	setText(fm.Pagina2.Historia, str(character, "historia"))
 
 	// Atributos
 	atributos := subMap(character, "atributos")
@@ -318,5 +356,109 @@ func FillCharacterSheet5e(character map[string]interface{}) ([]byte, error) {
 		return nil, fmt.Errorf("preencher PDF: %w", err)
 	}
 
+	// Foto do personagem (página 2, campo "CHARACTER IMAGE"): carimbada por
+	// cima do PDF já preenchido, não preenchida como campo de formulário —
+	// ver o comentário em applyAvatarImage.
+	withAvatar, err := applyAvatarImage(out.Bytes(), str(character, "avatar_url"))
+	if err != nil {
+		// Uma foto que falha ao carimbar não deve derrubar a exportação
+		// inteira — devolve a ficha sem a foto em vez de erro 500.
+		return out.Bytes(), nil
+	}
+
+	return withAvatar, nil
+}
+
+// ── Foto do personagem (página 2) ────────────────────────────────────────
+//
+// "CHARACTER IMAGE" é um botão com ícone (/FT /Btn, flag Pushbutton), não um
+// campo de texto ou checkbox comum — o próprio pdfcpu ignora esse tipo de
+// campo ao preencher formulários por nome (form.fillBtn retorna imediatamente
+// pra qualquer campo com a flag Pushbutton, então settar um "value" para ele
+// no JSON de preenchimento simplesmente não tem efeito nenhum). Por isso a
+// foto é aplicada como um carimbo de imagem posicionado exatamente no
+// retângulo (Rect) desse widget na página 2, depois do preenchimento do
+// formulário — visualmente idêntico ao resultado esperado, só que por um
+// caminho diferente do de texto/checkbox.
+//
+// O Rect abaixo foi lido direto do AcroForm do PDF-modelo real (via pypdf) —
+// é específico deste arquivo; se o template mudar, precisa ser reobtido.
+const (
+	charImageRectX0 = 36.4791
+	charImageRectY0 = 443.398
+	charImageRectX1 = 199.172
+	charImageRectY1 = 661.497
+	charImagePage   = 2
+)
+
+// applyAvatarImage carimba o avatar (data URI base64, mesmo formato salvo
+// por UploadHandler.UploadAvatar) na página 2, ajustado por contenção
+// (preserva proporção, nunca estoura a caixa) e centralizado nela. Se não
+// houver avatar, ou se qualquer etapa falhar, devolve pdfBytes inalterado —
+// uma foto ausente ou corrompida nunca deve impedir a exportação do resto
+// da ficha.
+func applyAvatarImage(pdfBytes []byte, avatarDataURI string) ([]byte, error) {
+	if !strings.HasPrefix(avatarDataURI, "data:") {
+		return pdfBytes, nil
+	}
+	header, b64Data, found := strings.Cut(avatarDataURI, ",")
+	if !found {
+		return pdfBytes, nil
+	}
+
+	ext := ".png"
+	switch {
+	case strings.Contains(header, "jpeg"), strings.Contains(header, "jpg"):
+		ext = ".jpg"
+	case strings.Contains(header, "webp"):
+		ext = ".webp"
+	}
+
+	imgBytes, err := base64.StdEncoding.DecodeString(b64Data)
+	if err != nil {
+		return pdfBytes, nil
+	}
+
+	cfg, _, err := image.DecodeConfig(bytes.NewReader(imgBytes))
+	if err != nil || cfg.Width <= 0 || cfg.Height <= 0 {
+		return pdfBytes, nil
+	}
+	imgW, imgH := float64(cfg.Width), float64(cfg.Height)
+
+	targetW := charImageRectX1 - charImageRectX0
+	targetH := charImageRectY1 - charImageRectY0
+	scale := targetW / imgW
+	if h := targetH / imgH; h < scale {
+		scale = h
+	}
+	resultW := scale * imgW
+	resultH := scale * imgH
+	offsetX := charImageRectX0 + (targetW-resultW)/2
+	offsetY := charImageRectY0 + (targetH-resultH)/2
+
+	// api.ImageWatermark só aceita caminho de arquivo (lê a imagem depois,
+	// na hora de aplicar o carimbo) — grava num temporário de vida curta,
+	// removido logo em seguida.
+	tmp, err := os.CreateTemp("", "avatar-*"+ext)
+	if err != nil {
+		return pdfBytes, nil
+	}
+	defer os.Remove(tmp.Name())
+	if _, err := tmp.Write(imgBytes); err != nil {
+		tmp.Close()
+		return pdfBytes, nil
+	}
+	tmp.Close()
+
+	desc := fmt.Sprintf("pos:bl, offset:%.2f %.2f, scale:%.4f abs, rot:0", offsetX, offsetY, scale)
+	wm, err := api.ImageWatermark(tmp.Name(), desc, true, false, types.POINTS)
+	if err != nil {
+		return pdfBytes, nil
+	}
+
+	var out bytes.Buffer
+	if err := api.AddWatermarksMap(bytes.NewReader(pdfBytes), &out, map[int]*model.Watermark{charImagePage: wm}, nil); err != nil {
+		return pdfBytes, nil
+	}
 	return out.Bytes(), nil
 }

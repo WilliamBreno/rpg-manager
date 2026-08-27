@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"rpg-manager/internal/domain"
 )
@@ -28,16 +29,60 @@ func abilityScoreFor(character domain.Character, attr string) int {
 	}
 }
 
-// BuildPDF5eExportPayload monta o payload já totalmente calculado que o serviço Python usa
-// apenas para preencher os campos do AcroForm (nenhuma regra de D&D é reimplementada em Python).
+// buildCaracteristicasHabilidades monta o texto livre da caixa "Features and
+// Traits" (página 1) a partir dos dados JÁ estruturados do personagem —
+// características de classe/raça (domain.Skill com IsClassFeature/
+// IsRaceFeature) e talentos (domain.Talento) — sem inventar nada que não
+// esteja registrado no personagem.
+func buildCaracteristicasHabilidades(character domain.Character) string {
+	var classFeatures, raceFeatures []string
+	for _, s := range character.Skills {
+		switch {
+		case s.IsClassFeature:
+			classFeatures = append(classFeatures, s.Name)
+		case s.IsRaceFeature:
+			raceFeatures = append(raceFeatures, s.Name)
+		}
+	}
+
+	var talentos []string
+	for _, t := range character.Talentos {
+		talentos = append(talentos, t.Name)
+	}
+
+	var b strings.Builder
+	if len(classFeatures) > 0 {
+		b.WriteString("CARACTERÍSTICAS DE CLASSE: ")
+		b.WriteString(strings.Join(classFeatures, "; "))
+		b.WriteString("\n\n")
+	}
+	if len(raceFeatures) > 0 {
+		b.WriteString("TRAÇOS RACIAIS: ")
+		b.WriteString(strings.Join(raceFeatures, "; "))
+		b.WriteString("\n\n")
+	}
+	if len(talentos) > 0 {
+		b.WriteString("TALENTOS: ")
+		b.WriteString(strings.Join(talentos, "; "))
+	}
+
+	return strings.TrimSpace(b.String())
+}
+
+// BuildPDF5eExportPayload monta o payload já totalmente calculado que
+// internal/pdfexport usa apenas para preencher os campos do AcroForm
+// (nenhuma regra de D&D é reimplementada ali).
 //
 // allPericias5e: catálogo completo das 18 perícias de 5e (PericiaService.GetAll("5e")).
 // characterPericias: perícias em que o personagem é proficiente (PericiaService.GetByCharacter).
+// playerName: nome do dono da conta (User.Name) — não confundir com o nome do personagem,
+// vai no campo "Nome do Jogador" da ficha.
 func BuildPDF5eExportPayload(
 	character domain.Character,
 	allPericias5e []domain.Pericia,
 	characterPericias []domain.CharacterPericia,
 	armorService *ArmorService,
+	playerName string,
 ) map[string]interface{} {
 	profBonus := character.ProficiencyBonus
 	if profBonus == 0 {
@@ -121,6 +166,7 @@ func BuildPDF5eExportPayload(
 
 	return map[string]interface{}{
 		"nome":                 character.Name,
+		"nome_jogador":         playerName,
 		"classe_nivel":         classeNivel,
 		"antecedente":          antecedenteNome,
 		"raca":                 raca,
@@ -144,5 +190,15 @@ func BuildPDF5eExportPayload(
 		"ideais":               character.Ideals,
 		"vinculos":             character.Bonds,
 		"defeitos":             character.Flaws,
+		"caracteristicas_habilidades": buildCaracteristicasHabilidades(character),
+		// ── Página 2: aparência física + história ────────────────────────
+		"idade":      character.Age,
+		"altura":     character.Height,
+		"peso":       character.Weight,
+		"olhos":      character.Eyes,
+		"pele":       character.Skin,
+		"cabelos":    character.Hair,
+		"historia":   character.History,
+		"avatar_url": character.AvatarURL,
 	}
 }

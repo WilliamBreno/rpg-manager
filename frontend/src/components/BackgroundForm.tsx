@@ -19,6 +19,12 @@ export default function BackgroundForm({ characterID, background }: Props) {
     bonds: background?.bonds ?? '',
     flaws: background?.flaws ?? '',
     rumors: background?.rumors ?? '',
+    age: background?.age ?? '',
+    height: background?.height ?? '',
+    weight: background?.weight ?? '',
+    eyes: background?.eyes ?? '',
+    skin: background?.skin ?? '',
+    hair: background?.hair ?? '',
   })
 
   const saveMutation = useMutation({
@@ -41,6 +47,17 @@ export default function BackgroundForm({ characterID, background }: Props) {
     key: 'rumors', label: '🗞️ Rumores', placeholder: 'O que dizem por aí sobre esse personagem pelas tavernas e ruas?',
   } as const
 
+  // Campos curtos de aparência física — vão pra página 2 da ficha PDF 5e
+  // (Idade/Altura/Peso/Olhos/Pele/Cabelos).
+  const appearanceFields = [
+    { key: 'age', label: 'Idade', placeholder: 'Ex: 27 anos' },
+    { key: 'height', label: 'Altura', placeholder: 'Ex: 1,80m' },
+    { key: 'weight', label: 'Peso', placeholder: 'Ex: 75kg' },
+    { key: 'eyes', label: 'Olhos', placeholder: 'Ex: Castanhos' },
+    { key: 'skin', label: 'Pele', placeholder: 'Ex: Morena' },
+    { key: 'hair', label: 'Cabelos', placeholder: 'Ex: Negros e curtos' },
+  ] as const
+
   return (
     <div className="bg-gray-800 rounded-lg p-6 mb-4 border border-gray-700">
       <div className="flex justify-between items-center mb-4">
@@ -57,6 +74,24 @@ export default function BackgroundForm({ characterID, background }: Props) {
 
       {isEditing ? (
         <div className="flex flex-col gap-4">
+          <div>
+            <p className="text-gray-400 text-sm mb-2">🧍 Aparência Física</p>
+            <div className="grid grid-cols-3 gap-3">
+              {appearanceFields.map(field => (
+                <div key={field.key}>
+                  <label className="text-gray-500 text-xs mb-1 block">{field.label}</label>
+                  <input
+                    type="text"
+                    value={form[field.key]}
+                    onChange={e => setForm(prev => ({ ...prev, [field.key]: e.target.value }))}
+                    placeholder={field.placeholder}
+                    className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
           {fields.map(field => (
             <div key={field.key}>
               <label className="text-gray-400 text-sm mb-1 block">{field.label}</label>
@@ -101,6 +136,20 @@ export default function BackgroundForm({ characterID, background }: Props) {
         </div>
       ) : (
         <div className="flex flex-col gap-4">
+          <div>
+            <p className="text-gray-400 text-sm mb-2">🧍 Aparência Física</p>
+            <div className="grid grid-cols-3 gap-3">
+              {appearanceFields.map(field => (
+                <div key={field.key}>
+                  <p className="text-gray-500 text-xs mb-1">{field.label}</p>
+                  <p className="text-white text-sm bg-gray-700 rounded-lg px-3 py-2">
+                    {form[field.key] || <span className="text-gray-500 italic">—</span>}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {fields.map(field => (
             <div key={field.key}>
               <p className="text-gray-400 text-sm mb-1">{field.label}</p>

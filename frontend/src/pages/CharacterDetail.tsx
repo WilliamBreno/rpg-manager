@@ -815,12 +815,18 @@ export default function CharacterDetail() {
         <BackgroundForm
           characterID={Number(id)}
           background={{
-            history: '',
+            history: character.history ?? '',
             personality_traits: character.personality_traits ?? '',
             ideals: character.ideals ?? '',
             bonds: character.bonds ?? '',
             flaws: character.flaws ?? '',
             rumors: character.rumors ?? '',
+            age: character.age ?? '',
+            height: character.height ?? '',
+            weight: character.weight ?? '',
+            eyes: character.eyes ?? '',
+            skin: character.skin ?? '',
+            hair: character.hair ?? '',
           }}
         />
 

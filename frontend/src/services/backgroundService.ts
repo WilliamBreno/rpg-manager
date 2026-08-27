@@ -8,6 +8,12 @@ export interface BackgroundBio {
   bonds?:              string
   flaws?:              string
   rumors?:             string
+  age?:                string
+  height?:             string
+  weight?:             string
+  eyes?:               string
+  skin?:               string
+  hair?:               string
 }
 
 export const backgroundService = {

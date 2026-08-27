@@ -58,7 +58,7 @@ func main() {
 	classHandler      := handler.NewClassHandler(classService)
 	raceHandler       := handler.NewRaceHandler(raceService)
 	skillHandler      := handler.NewSkillHandler(skillService)
-	characterHandler  := handler.NewCharacterHandler(characterService, armorService, periciaService)
+	characterHandler  := handler.NewCharacterHandler(characterService, armorService, periciaService, userRepo)
 	backgroundHandler := handler.NewBackgroundHandler(backgroundService)
 	uploadHandler     := handler.NewUploadHandler(characterRepo)
 	armorHandler      := handler.NewArmorHandler(armorService)
