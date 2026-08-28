@@ -51,6 +51,7 @@ func ConnectDatabase() {
         &domain.CharacterArmorOwned{},
         &domain.ClassEquipmentOption{},
         &domain.ClassEquipmentComponent{},
+        &domain.Language{},
     )
     if err != nil {
         log.Fatal("Erro ao executar AutoMigrate: ", err)

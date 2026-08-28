@@ -69,6 +69,80 @@ func buildCaracteristicasHabilidades(character domain.Character) string {
 	return strings.TrimSpace(b.String())
 }
 
+var abilityLabelPT = map[string]string{
+	"FOR": "Força", "DES": "Destreza", "CON": "Constituição",
+	"INT": "Inteligência", "SAB": "Sabedoria", "CAR": "Carisma",
+}
+
+// buildConjuracao monta os dados da página 3 (conjuração): habilidade-chave,
+// CD de resistência, bônus de ataque de magia, espaços de magia por círculo
+// (0 a 9) e as magias conhecidas em cada círculo. Retorna nil se a classe do
+// personagem não conjura (a página inteira fica em branco nesse caso, ver
+// pdfexport.FillCharacterSheet5e).
+func buildConjuracao(character domain.Character) map[string]interface{} {
+	className := character.Class.Name
+	abilityAbbr, casts := spellcastingAbility5e[className]
+
+	// Terço-conjurador (Cavaleiro Místico/Trapaceiro Arcano) — só conjura se
+	// tiver escolhido essa subclasse especificamente; Guerreiro/Ladino comuns
+	// não estão no mapa acima e por isso não conjuram por padrão.
+	subclassName := ""
+	for _, s := range character.Skills {
+		if s.Name == "Cavaleiro Místico" || s.Name == "Trapaceiro Arcano" {
+			subclassName = s.Name
+		}
+	}
+	if className == "Guerreiro" || className == "Ladino" {
+		casts = subclassName != ""
+		abilityAbbr = "INT"
+	}
+	if !casts {
+		return nil
+	}
+
+	profBonus := character.ProficiencyBonus
+	if profBonus == 0 {
+		profBonus = proficiencyBonus5e(character.Level)
+	}
+	habilidadeMod := mod(abilityScoreFor(character, abilityAbbr))
+
+	var slots []int
+	if className == "Bruxo" {
+		s, circle := pactMagic5e(character.Level)
+		if s > 0 && circle > 0 {
+			slots = make([]int, circle)
+			slots[circle-1] = s
+		}
+	} else {
+		slots = spellSlots5e(className, subclassName, character.Level)
+	}
+
+	spellsByCircle := map[int][]string{}
+	for _, sp := range character.Spells {
+		spellsByCircle[sp.Level] = append(spellsByCircle[sp.Level], sp.Name)
+	}
+
+	circulos := map[string]interface{}{}
+	for c := 0; c <= 9; c++ {
+		total := 0
+		if c >= 1 && c <= len(slots) {
+			total = slots[c-1]
+		}
+		circulos[fmt.Sprintf("%d", c)] = map[string]interface{}{
+			"total":  total,
+			"magias": spellsByCircle[c],
+		}
+	}
+
+	return map[string]interface{}{
+		"classe":     className,
+		"habilidade": abilityLabelPT[abilityAbbr],
+		"cd":         8 + profBonus + habilidadeMod,
+		"ataque":     profBonus + habilidadeMod,
+		"circulos":   circulos,
+	}
+}
+
 // BuildPDF5eExportPayload monta o payload já totalmente calculado que
 // internal/pdfexport usa apenas para preencher os campos do AcroForm
 // (nenhuma regra de D&D é reimplementada ali).
@@ -90,8 +164,12 @@ func BuildPDF5eExportPayload(
 	}
 
 	proficientPericias := make(map[string]bool, len(characterPericias))
+	expertisePericias := make(map[string]bool, len(characterPericias))
 	for _, cp := range characterPericias {
 		proficientPericias[cp.PericiaName] = true
+		if cp.Expertise {
+			expertisePericias[cp.PericiaName] = true
+		}
 	}
 
 	var savingThrowAbilities []string
@@ -128,11 +206,15 @@ func BuildPDF5eExportPayload(
 	pericias := map[string]interface{}{}
 	for _, p := range allPericias5e {
 		proficiente := proficientPericias[p.Name]
+		especializado := expertisePericias[p.Name]
 		valor := mod(abilityScoreFor(character, p.Attribute))
-		if proficiente {
+		switch {
+		case especializado:
+			valor += profBonus * 2
+		case proficiente:
 			valor += profBonus
 		}
-		pericias[p.Name] = map[string]interface{}{"valor": valor, "proficiente": proficiente}
+		pericias[p.Name] = map[string]interface{}{"valor": valor, "proficiente": proficiente, "especializado": especializado}
 	}
 
 	percepcaoPassiva := 10
@@ -200,5 +282,13 @@ func BuildPDF5eExportPayload(
 		"cabelos":    character.Hair,
 		"historia":   character.History,
 		"avatar_url": character.AvatarURL,
+		// ── Moedas ─────────────────────────────────────────────────────────
+		"cp": character.CopperPieces,
+		"sp": character.SilverPieces,
+		"ep": character.ElectrumPieces,
+		"gp": character.GoldPieces,
+		"pp": character.PlatinumPieces,
+		// ── Página 3: conjuração (nil se a classe não conjurar) ───────────
+		"conjuracao": buildConjuracao(character),
 	}
 }

@@ -164,6 +164,12 @@ export default function CharacterDetail() {
 
   // ── Mutations ────────────────────────────────────────────────────────────
 
+  const setExpertiseMutation = useMutation({
+    mutationFn: ({ periciaName, expertise }: { periciaName: string; expertise: boolean }) =>
+      periciaService.setExpertise(Number(id), periciaName, expertise),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['character-pericias', id] }),
+  })
+
   // Adicionar XP — dispara level up automático no backend
   const addXPMutation = useMutation({
     mutationFn: (xp: number) => characterService.addXP(Number(id), xp),
@@ -286,6 +292,19 @@ export default function CharacterDetail() {
   })()
 
   const trainedPericiaNames = (characterPericias ?? []).map((cp: any) => cp.pericia_name)
+  const expertPericiaNames = (characterPericias ?? []).filter((cp: any) => cp.expertise).map((cp: any) => cp.pericia_name)
+  // Especialização (Expertise) — Ladino nv1/6, Bardo nv2/9, Guardião nv9
+  // dobram o Bônus de Proficiência em perícias já proficientes à escolha.
+  // Mesma tabela extraída do livro que já existe em character_service.go
+  // (ExpertiseSlotsFor) — se corrigir uma, corrigir a outra.
+  const expertiseSlots = (() => {
+    const cls = character.class?.name
+    const lvl = character.level
+    if (cls === 'Ladino') return lvl >= 6 ? 4 : lvl >= 1 ? 2 : 0
+    if (cls === 'Bardo') return lvl >= 9 ? 4 : lvl >= 2 ? 2 : 0
+    if (cls === 'Guardião') return lvl >= 9 ? 2 : 0
+    return 0
+  })()
 
   const getAttrScore = (abbr: string): number => {
     const field = ATTR_FIELD[abbr]
@@ -300,6 +319,7 @@ export default function CharacterDetail() {
   const getSkillValue = (periciaName: string, attribute: string): number => {
     const attrKey = Object.keys(ATTR_FIELD).find(k => ATTR_FIELD[k] === attribute.toLowerCase()) ?? attribute
     const mod = abilityMod(getAttrScore(attrKey))
+    if (expertPericiaNames.includes(periciaName)) return mod + profBonus * 2
     const proficient = trainedPericiaNames.includes(periciaName)
     return mod + (proficient ? profBonus : 0)
   }
@@ -350,7 +370,13 @@ export default function CharacterDetail() {
       const { slots, circle } = pactMagicFor(character.level)
       return slots > 0 ? `Magia de Pacto: ${slots}× ${circle}º círculo` : null
     }
-    const slots = spellSlotsFor(character.class.name, character.level)
+    // Terço-conjurador (Cavaleiro Místico/Trapaceiro Arcano) só existe se o
+    // personagem tiver de fato escolhido essa subclasse — checa pelo nome da
+    // Skill de entrada, mesma convenção usada em hasChosenSubclass no backend.
+    const thirdCasterSubclass = (character.skills ?? []).find(
+      s => s.name === 'Cavaleiro Místico' || s.name === 'Trapaceiro Arcano'
+    )?.name
+    const slots = spellSlotsFor(character.class.name, character.level, thirdCasterSubclass)
     if (slots.length === 0) return null
     return `Espaços: ${slots.map((n, i) => `${n}×${i + 1}º`).join(', ')}`
   })()
@@ -686,16 +712,26 @@ export default function CharacterDetail() {
               </h2>
               <span className="text-xs text-gray-500 bg-gray-700/60 px-2 py-1 rounded-full">
                 {trainedPericiaNames.length} treinadas
+                {expertiseSlots > 0 && ` · ${expertPericiaNames.length}/${expertiseSlots} especializadas`}
               </span>
             </div>
+            {expertiseSlots > 0 && (
+              <p className="text-gray-500 text-xs mb-3">
+                {character.class?.name} dobra o Bônus de Proficiência (Especialização) em até {expertiseSlots} perícias já treinadas — clique na estrela pra escolher.
+              </p>
+            )}
             <div className="flex flex-col gap-1.5">
               {allPericias.map((p: Pericia) => {
                 const proficient = trainedPericiaNames.includes(p.name)
+                const expert = expertPericiaNames.includes(p.name)
                 const val = getSkillValue(p.name, p.attribute)
+                const canToggleExpertise = proficient && expertiseSlots > 0 && (expert || expertPericiaNames.length < expertiseSlots)
                 return (
                   <div key={p.ID}
                     className="flex items-center gap-3 rounded-lg px-3 py-2 border"
-                    style={proficient
+                    style={expert
+                      ? { background: 'rgba(201,168,76,0.14)', borderColor: 'rgba(201,168,76,0.4)' }
+                      : proficient
                       ? { background: 'rgba(201,168,76,0.07)', borderColor: 'rgba(201,168,76,0.25)' }
                       : { background: 'transparent', borderColor: 'transparent' }
                     }
@@ -710,6 +746,16 @@ export default function CharacterDetail() {
                     </span>
                     <span className={`text-sm flex-1 ${proficient ? 'text-white font-medium' : 'text-gray-400'}`}>{p.name}</span>
                     <span className="text-gray-600 text-xs flex-shrink-0">({p.attribute})</span>
+                    {expertiseSlots > 0 && proficient && (
+                      <button type="button" title={expert ? 'Remover Especialização' : 'Marcar Especialização'}
+                        disabled={!canToggleExpertise || setExpertiseMutation.isPending}
+                        onClick={() => setExpertiseMutation.mutate({ periciaName: p.name, expertise: !expert })}
+                        className="flex-shrink-0 text-sm disabled:opacity-30"
+                        style={{ color: expert ? '#c9a84c' : '#52525b' }}
+                      >
+                        {expert ? '★' : '☆'}
+                      </button>
+                    )}
                     <Tooltip content={p.tooltip} />
                   </div>
                 )
@@ -785,6 +831,22 @@ export default function CharacterDetail() {
                   </div>
                 )
               })}
+            </div>
+          </div>
+        )}
+
+        {/* ── Idiomas (5e) — RAW 2024: não vem da raça, é escolha livre na criação */}
+        {is5e && (character.languages ?? []).length > 0 && (
+          <div className="bg-gray-800 rounded-xl p-4 sm:p-6 mb-4 border border-gray-700">
+            <h2 className="text-sm font-semibold uppercase tracking-widest mb-3" style={{ color: 'rgba(201,168,76,0.7)' }}>
+              🗣 Idiomas
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {(character.languages ?? []).map(l => (
+                <span key={l.ID} className="text-xs px-2 py-1 rounded-full bg-cyan-900/60 text-cyan-300 border border-cyan-700/40">
+                  {l.name}
+                </span>
+              ))}
             </div>
           </div>
         )}

@@ -1,5 +1,5 @@
 import api from './api'
-import type { Pericia } from '../types'
+import type { Pericia, CharacterPericia } from '../types'
 
 export const periciaService = {
   getAll: async (edition?: string): Promise<Pericia[]> => {
@@ -9,12 +9,16 @@ export const periciaService = {
     return data
   },
 
-  getByCharacter: async (characterId: number): Promise<{ pericia_name: string }[]> => {
+  getByCharacter: async (characterId: number): Promise<CharacterPericia[]> => {
     const { data } = await api.get(`/characters/${characterId}/pericias`)
     return data
   },
 
   save: async (characterId: number, pericias: string[]): Promise<void> => {
     await api.post(`/characters/${characterId}/pericias`, { pericias })
+  },
+
+  setExpertise: async (characterId: number, periciaName: string, expertise: boolean): Promise<void> => {
+    await api.patch(`/characters/${characterId}/pericias/expertise`, { pericia_name: periciaName, expertise })
   },
 }

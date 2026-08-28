@@ -97,7 +97,8 @@ type Character struct {
 	Pericias   []CharacterPericia `json:"pericias"    gorm:"foreignKey:CharacterID"`
 	Talentos   []Talento          `json:"talentos"    gorm:"many2many:character_talentos;"`
 	Spells     []Spell            `json:"spells"      gorm:"many2many:character_spells;"`
-	
+	Languages  []Language         `json:"languages"   gorm:"many2many:character_languages;"`
+
 	// Death Saving Throws (5e)
 	DeathSaveSuccesses int `json:"death_save_successes"`
 	DeathSaveFailures  int `json:"death_save_failures"`

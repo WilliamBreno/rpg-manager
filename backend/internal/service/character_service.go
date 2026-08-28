@@ -200,11 +200,33 @@ var pactMagicCircle5e = [21]int{
 	11: 5, 12: 5, 13: 5, 14: 5, 15: 5, 16: 5, 17: 5, 18: 5, 19: 5, 20: 5,
 }
 
+// thirdCasterSlots5e: Cavaleiro Místico (Guerreiro) e Trapaceiro Arcano
+// (Ladino) — tabela idêntica pras duas subclasses, extraída verbatim das
+// tabelas "Conjuração de Cavaleiro Místico"/"Conjuração de Trapaceiro
+// Arcano" do PHB 2024 (não existia nenhuma tabela de terço-conjurador antes
+// disso — Guerreiro/Ladino sempre caíam no "default: nil" abaixo).
+var thirdCasterSlots5e = [21][]int{
+	3: {2}, 4: {3}, 5: {3},
+	6: {3}, 7: {4, 2}, 8: {4, 2}, 9: {4, 2}, 10: {4, 3},
+	11: {4, 3}, 12: {4, 3}, 13: {4, 3, 2}, 14: {4, 3, 2}, 15: {4, 3, 2},
+	16: {4, 3, 3}, 17: {4, 3, 3}, 18: {4, 3, 3}, 19: {4, 3, 3, 1}, 20: {4, 3, 3, 1},
+}
+
+// thirdCasterSubclass indica, por nome de subclasse, a qual classe base ela
+// pertence — usado só pra confirmar que o personagem realmente escolheu essa
+// subclasse antes de tratá-lo como conjurador (um Guerreiro comum não conjura).
+var thirdCasterSubclass = map[string]string{
+	"Cavaleiro Místico": "Guerreiro",
+	"Trapaceiro Arcano": "Ladino",
+}
+
 // spellSlots5e retorna os espaços de magia por círculo (índice 0 = 1º
-// círculo) de uma classe 5e num dado nível de personagem. nil para classes
-// sem espaços de magia tradicionais (Bruxo usa Magia de Pacto à parte;
-// Bárbaro/Guerreiro-base/Ladino-base/Monge não conjuram).
-func spellSlots5e(className string, level int) []int {
+// círculo) de uma classe 5e num dado nível de personagem. subclassName só
+// importa pra Guerreiro/Ladino, pra distinguir um terço-conjurador (Cavaleiro
+// Místico/Trapaceiro Arcano) de um personagem comum dessas classes, que não
+// conjura. nil para classes sem espaços de magia tradicionais (Bruxo usa
+// Magia de Pacto à parte; Bárbaro/Monge não conjuram).
+func spellSlots5e(className, subclassName string, level int) []int {
 	if level < 1 || level > 20 {
 		return nil
 	}
@@ -214,6 +236,9 @@ func spellSlots5e(className string, level int) []int {
 	case "Paladino", "Guardião":
 		return halfCasterSlots5e[level]
 	default:
+		if thirdCasterSubclass[subclassName] == className {
+			return thirdCasterSlots5e[level]
+		}
 		return nil
 	}
 }
@@ -230,6 +255,53 @@ func pactMagic5e(level int) (slots, circle int) {
 // num dado nível — todas seguem o mesmo formato "base no nível 1, +1 no
 // nível 4, +1 no nível 10" (ver a característica "Conjuração"/"Truques" de
 // cada classe no cap. 3), exceto Paladino e Guardião, que não têm truques.
+// spellcastingAbility5e: atributo de conjuração por classe (extraído das
+// características de classe já seedadas — "Atributo de Conjuração" na
+// descrição de cada uma). Guerreiro/Ladino não entram aqui: eles só conjuram
+// se tiverem escolhido Cavaleiro Místico/Trapaceiro Arcano especificamente
+// (ver buildConjuracao em pdf_export_service.go, que trata esse caso à parte
+// porque depende da subclasse, não só da classe).
+var spellcastingAbility5e = map[string]string{
+	"Mago":       "INT",
+	"Clérigo":    "SAB",
+	"Druida":     "SAB",
+	"Guardião":   "SAB",
+	"Bardo":      "CAR",
+	"Bruxo":      "CAR",
+	"Feiticeiro": "CAR",
+	"Paladino":   "CAR",
+}
+
+// ExpertiseSlotsFor retorna quantas perícias (já proficientes) um personagem
+// pode ter com Expertise (Especialização — dobra o Bônus de Proficiência)
+// no nível atual. Extraído verbatim da tabela de características de cada
+// classe: Ladino "Especialista" nível 1 (2) e nível 6 (+2, total 4); Bardo
+// "Especialista" nível 2 (2) e nível 9 (+2, total 4); Guardião "Especialista"
+// nível 9 (2, único). Não é um nível fixo genérico — cada classe tem o seu.
+func ExpertiseSlotsFor(className string, level int) int {
+	switch className {
+	case "Ladino":
+		if level >= 6 {
+			return 4
+		}
+		if level >= 1 {
+			return 2
+		}
+	case "Bardo":
+		if level >= 9 {
+			return 4
+		}
+		if level >= 2 {
+			return 2
+		}
+	case "Guardião":
+		if level >= 9 {
+			return 2
+		}
+	}
+	return 0
+}
+
 func cantripsKnown5e(className string, level int) int {
 	base, hasCantrips := map[string]int{
 		"Bardo": 2, "Bruxo": 2, "Clérigo": 3, "Druida": 2, "Feiticeiro": 4, "Mago": 3,
@@ -571,6 +643,22 @@ func (s *CharacterService) Create(character *domain.Character) error {
 	if character.EquipmentOptionID != nil {
 		if err := s.grantStartingEquipment(character, *character.EquipmentOptionID); err != nil {
 			return err
+		}
+	}
+
+	// Comum é concedido automaticamente a todo personagem 5e — RAW 2024 (Livro
+	// do Jogador, cap. 2, "Escolha Idiomas"): "seu personagem sabe pelo menos
+	// três idiomas: Comum e mais dois...". Os outros 2 são escolha livre do
+	// jogador (ver CharacterCreate.tsx), concedidos via POST
+	// /characters/:id/languages/:language_id como os demais catálogos
+	// (Talento/Spell) — aqui só o automático.
+	if character.Edition == "5e" {
+		var comum domain.Language
+		if err := s.DB.Where("name = ? AND edition = ?", "Comum", "5e").First(&comum).Error; err == nil {
+			s.DB.Exec(
+				"INSERT INTO character_languages (character_id, language_id) VALUES (?, ?) ON CONFLICT DO NOTHING",
+				character.ID, comum.ID,
+			)
 		}
 	}
 

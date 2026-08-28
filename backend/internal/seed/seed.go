@@ -29,6 +29,7 @@ func Run(db *gorm.DB) {
 	seedItems5e(db)
 	seedSpells5e(db)
 	seedClassEquipment5e(db)
+	seedLanguages5e(db)
 	log.Println("✅ Seed concluído!")
 }
 
@@ -48,6 +49,11 @@ func upsertSkill(db *gorm.DB, s domain.Skill, classID uint) {
 			"is_class_feature": s.IsClassFeature,
 			"requires_choice": s.RequiresChoice,
 			"choice_group": s.ChoiceGroup,
+			// "level" faltava aqui — corrigir o nível de uma Skill já seedada
+			// (ex: mover a escolha de subclasse de Bruxo/Feiticeiro do nível 1
+			// pro 3) nunca se propagava pra linhas já existentes no banco,
+			// só pra linhas novas. Ver CLAUDE.md "Progressão de nível".
+			"level": s.Level,
 		})
 	}
 }
@@ -986,7 +992,7 @@ func seedBruxo5e(db *gorm.DB) {
 			Description: "Faça Acordos com Feéricos Excêntricos — seu pacto é fundamentado no poder de Faéria, com uma Arquifada como o Príncipe do Gelo ou Titânia, ou um espectro Feérico.",
 			Keywords: "Arcano, Feérico", ActionType: "Passiva", Range: "Pessoal",
 			Effect: "Concede características exclusivas a partir do nível 3.",
-			PowerType: domain.PowerUnlimited, Level: 1,
+			PowerType: domain.PowerUnlimited, Level: 3,
 			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "patrono_bruxo",
 		},
 		{
@@ -994,7 +1000,7 @@ func seedBruxo5e(db *gorm.DB) {
 			Description: "Invoque o Poder dos Céus — seu pacto é fundamentado nos Planos Superiores, com um empiriano, couatl, esfinge, unicórnio ou outra entidade celestial.",
 			Keywords: "Arcano, Divino", ActionType: "Passiva", Range: "Pessoal",
 			Effect: "Concede características exclusivas a partir do nível 3.",
-			PowerType: domain.PowerUnlimited, Level: 1,
+			PowerType: domain.PowerUnlimited, Level: 3,
 			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "patrono_bruxo",
 		},
 		{
@@ -1002,7 +1008,7 @@ func seedBruxo5e(db *gorm.DB) {
 			Description: "Descubra o Conhecimento Proibido de Seres Inefáveis — conecta-se a uma entidade indescritível do Reino Distante ou a um deus ancestral como Tharizdun ou Grande Cthulhu.",
 			Keywords: "Arcano, Aberrante", ActionType: "Passiva", Range: "Pessoal",
 			Effect: "Concede características exclusivas a partir do nível 3.",
-			PowerType: domain.PowerUnlimited, Level: 1,
+			PowerType: domain.PowerUnlimited, Level: 3,
 			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "patrono_bruxo",
 		},
 		{
@@ -1010,7 +1016,7 @@ func seedBruxo5e(db *gorm.DB) {
 			Description: "Realize um Pacto com os Planos Inferiores — negocia com um lorde demônio, um arquidiabo, ou outra entidade maligna dos Planos Inferiores.",
 			Keywords: "Arcano, Ínfero", ActionType: "Passiva", Range: "Pessoal",
 			Effect: "Concede características exclusivas a partir do nível 3.",
-			PowerType: domain.PowerUnlimited, Level: 1,
+			PowerType: domain.PowerUnlimited, Level: 3,
 			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "patrono_bruxo",
 		},
 		// ── PROGRESSÃO DE NÍVEL (características base, todos os patronos) ──
@@ -1596,20 +1602,11 @@ func seedFeiticeiro5e(db *gorm.DB) {
 			PowerType:    domain.PowerDaily, Level: 1, IsClassFeature: true,
 		},
 		{
-			Name:    "Origem da Feitiçaria",
-			Edition: "5e", ClassID: &id,
-			Description: "Escolha a fonte do seu poder mágico inato: Aberrante, Dracônica, Mecânica ou Selvagem. A origem concede características exclusivas a partir do nível 1.",
-			Keywords: "Arcano", ActionType: "Passiva", Range: "Pessoal",
-			Effect:         "Define a fonte do poder do Feiticeiro.",
-			PowerType:      domain.PowerUnlimited, Level: 1, IsClassFeature: true,
-			RequiresChoice: true, ChoiceGroup: "origem_feiticeiro",
-		},
-		{
 			Name: "Feitiçaria Aberrante", Edition: "5e", ClassID: &id,
 			Description: "Exerça o Sobrenatural Poder Psiônico — uma influência alienígena (Plano Astral, Reino Distante ou um girino devorador de mentes) concedeu poder psiônico à sua mente.",
 			Keywords: "Arcano, Aberrante", ActionType: "Passiva", Range: "Pessoal",
 			Effect: "Concede características exclusivas a partir do nível 3.",
-			PowerType: domain.PowerUnlimited, Level: 1,
+			PowerType: domain.PowerUnlimited, Level: 3,
 			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "origem_feiticeiro",
 		},
 		{
@@ -1617,7 +1614,7 @@ func seedFeiticeiro5e(db *gorm.DB) {
 			Description: "Respire a Magia dos Dragões — sua magia inata provém da dádiva de um dragão ancestral, um local impregnado de poder dracônico, ou um antepassado dragão.",
 			Keywords: "Arcano, Dracônico", ActionType: "Passiva", Range: "Pessoal",
 			Effect: "Concede características exclusivas a partir do nível 3.",
-			PowerType: domain.PowerUnlimited, Level: 1,
+			PowerType: domain.PowerUnlimited, Level: 3,
 			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "origem_feiticeiro",
 		},
 		{
@@ -1625,7 +1622,7 @@ func seedFeiticeiro5e(db *gorm.DB) {
 			Description: "Canalize as Forças Cósmicas da Ordem — seu poder vem de Mecanos, o plano moldado pela eficiência de um relógio, habitado pelos modrons.",
 			Keywords: "Arcano, Ordem", ActionType: "Passiva", Range: "Pessoal",
 			Effect: "Concede características exclusivas a partir do nível 3.",
-			PowerType: domain.PowerUnlimited, Level: 1,
+			PowerType: domain.PowerUnlimited, Level: 3,
 			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "origem_feiticeiro",
 		},
 		{
@@ -1633,7 +1630,7 @@ func seedFeiticeiro5e(db *gorm.DB) {
 			Description: "Liberte a Magia Caótica — sua magia inata provém das forças do caos, seja por exposição a magia bruta, uma bênção feérica, uma marca demoníaca ou puro acaso.",
 			Keywords: "Arcano, Caótico", ActionType: "Passiva", Range: "Pessoal",
 			Effect: "Concede características exclusivas a partir do nível 3.",
-			PowerType: domain.PowerUnlimited, Level: 1,
+			PowerType: domain.PowerUnlimited, Level: 3,
 			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "origem_feiticeiro",
 		},
 		// ── PROGRESSÃO DE NÍVEL (características base, todas as origens) ──
@@ -2856,6 +2853,193 @@ func seedMago5e(db *gorm.DB) {
 			Keywords: "Arcano, Ilusão", ActionType: "Passiva", Range: "Pessoal",
 			Effect: "Torna um objeto ilusório temporariamente real e utilizável.",
 			PowerType: domain.PowerUnlimited, Level: 14, IsClassFeature: true, ChoiceGroup: "Ilusionista",
+		},
+		// ── Escolas importadas do PHB 2014 (não reimpressas no PHB 2024, que só
+		// traz Abjurador/Adivinhador/Evocador/Ilusionista — confirmado pelo
+		// próprio texto do livro 2024: "Esta seção apresenta as subclasses
+		// Abjurador, Adivinhador, Evocador e Ilusionista"). Regra já registrada
+		// no CLAUDE.md pra subclasses só-2014: importar é permitido, sempre no
+		// nível 3 (não no 2, como o livro de 2014 diz). Extraído verbatim de
+		// "D&D 5.0 - livro-do-jogador-fundo-branco-biblioteca-elfica.pdf"
+		// (págs. 96-99) — mantido o mecanismo real de 2014 ("Escola X
+		// Instruída", metade do custo de cópia) em vez de inventar um
+		// "Versado em X" no estilo 2024, já que esse texto nunca foi escrito
+		// pra essas 4 escolas em nenhum livro oficial disponível.
+		{
+			Name: "Convocador", Edition: "5e", ClassID: &id,
+			Description: "Como um conjurador, você prefere magias que produzem objetos e criaturas do nada — nuvens de gás mortal, criaturas de outros lugares para lutar por você, e magias de teletransporte que o levam a vastas distâncias.",
+			Keywords: "Arcano", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "escola_mago",
+		},
+		{
+			Name: "Encantador", Edition: "5e", ClassID: &id,
+			Description: "Como um membro da Escola de Encantamento, você afiou sua habilidade de encantar e seduzir outras pessoas e monstros com magia.",
+			Keywords: "Arcano", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "escola_mago",
+		},
+		{
+			Name: "Necromante", Edition: "5e", ClassID: &id,
+			Description: "A Escola de Necromancia explora as forças cósmicas da vida, morte e morte-vida — você aprende a manipular a energia que anima todas as coisas vivas, retirando força vital de criaturas e transformando-a em poder mágico.",
+			Keywords: "Arcano", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "escola_mago",
+		},
+		{
+			Name: "Transmutador", Edition: "5e", ClassID: &id,
+			Description: "Você é um estudante de magias que modificam energia e matéria — para você o mundo não é algo fixo, e você se deleita em ser um agente da mudança.",
+			Keywords: "Arcano", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concede características exclusivas a partir do nível 3.",
+			PowerType: domain.PowerUnlimited, Level: 3,
+			IsClassFeature: true, RequiresChoice: true, ChoiceGroup: "escola_mago",
+		},
+		// ── PROGRESSÃO — Convocador (níveis 3/6/10/14) ──────────────────────
+		{
+			Name: "Conjuração Instruída", Edition: "5e", ClassID: &id,
+			Description: "O ouro e o tempo que você precisa gastar para copiar uma magia da Escola de Conjuração em seu grimório é reduzido à metade.",
+			Keywords: "Arcano, Conjuração", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Copia magias de Conjuração no grimório pela metade do custo/tempo.",
+			PowerType: domain.PowerUnlimited, Level: 3, IsClassFeature: true, ChoiceGroup: "Convocador",
+		},
+		{
+			Name: "Conjuração Menor", Edition: "5e", ClassID: &id,
+			Description: "Como uma ação, conjura um objeto inanimado não-mágico (até 90cm de largura, 5kg) na mão ou num espaço desocupado à vista a até 3m — precisa ser a forma de um objeto não-mágico que você já viu. O objeto emana penumbra a 1,5m e desaparece após 1 hora, ao usar esta característica de novo, ou se sofrer/causar qualquer dano.",
+			Keywords: "Arcano, Conjuração", ActionType: "Ação", Range: "3 metros",
+			Effect: "Cria um pequeno objeto não-mágico temporário do nada.",
+			PowerType: domain.PowerUnlimited, Level: 3, IsClassFeature: true, ChoiceGroup: "Convocador",
+		},
+		{
+			Name: "Transposição Benigna", Edition: "5e", ClassID: &id,
+			Description: "Como uma ação, teleporta-se até 9m para um espaço desocupado à vista, ou troca de lugar com uma criatura Pequena ou Média voluntária num espaço ocupado ao alcance. Recarrega ao completar um Descanso Longo ou ao conjurar uma magia de Conjuração de 1º círculo ou superior.",
+			Keywords: "Arcano, Conjuração", ActionType: "Ação", Range: "9 metros",
+			Effect: "Teleporte curto, ou troca de lugar com um aliado voluntário.",
+			PowerType: domain.PowerDaily, Level: 6, IsClassFeature: true, ChoiceGroup: "Convocador",
+		},
+		{
+			Name: "Conjuração Focada", Edition: "5e", ClassID: &id,
+			Description: "Enquanto estiver concentrado numa magia de Conjuração, sua concentração não pode ser interrompida como resultado de sofrer dano.",
+			Keywords: "Arcano, Conjuração", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Concentração em magias de Conjuração imune a dano.",
+			PowerType: domain.PowerUnlimited, Level: 10, IsClassFeature: true, ChoiceGroup: "Convocador",
+		},
+		{
+			Name: "Invocações Resistentes", Edition: "5e", ClassID: &id,
+			Description: "Qualquer criatura que você invocar ou criar com uma magia de Conjuração ganha 30 Pontos de Vida temporários.",
+			Keywords: "Arcano, Conjuração", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Criaturas invocadas/criadas ganham 30 PV temporários.",
+			PowerType: domain.PowerUnlimited, Level: 14, IsClassFeature: true, ChoiceGroup: "Convocador",
+		},
+		// ── PROGRESSÃO — Encantador (níveis 3/6/10/14) ──────────────────────
+		{
+			Name: "Encantamento Instruído", Edition: "5e", ClassID: &id,
+			Description: "O ouro e o tempo que você precisa gastar para copiar uma magia da Escola de Encantamento em seu grimório é reduzido à metade.",
+			Keywords: "Arcano, Encantamento", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Copia magias de Encantamento no grimório pela metade do custo/tempo.",
+			PowerType: domain.PowerUnlimited, Level: 3, IsClassFeature: true, ChoiceGroup: "Encantador",
+		},
+		{
+			Name: "Olhar Hipnotizante", Edition: "5e", ClassID: &id,
+			Description: "Como uma ação, escolhe uma criatura à vista a até 1,5m que possa ver ou ouvir você: ela deve ser bem-sucedida numa Salvaguarda de Sabedoria (CD das suas magias) ou fica Enfeitiçada por você até o final do seu próximo turno (deslocamento 0, Incapacitada). Pode manter o efeito gastando sua ação em turnos seguintes, mas ele termina se você se afastar mais de 1,5m, a criatura não puder ver/ouvir você, ou ela sofrer dano. Se a criatura passar na salvaguarda inicial (ou quando o efeito terminar), não pode ser alvo desta característica de novo até você completar um Descanso Longo.",
+			Keywords: "Arcano, Encantamento", ActionType: "Ação", Range: "1,5 metros",
+			Effect: "Enfeitiça e imobiliza uma criatura próxima com o olhar.",
+			PowerType: domain.PowerUnlimited, Level: 3, IsClassFeature: true, ChoiceGroup: "Encantador",
+		},
+		{
+			Name: "Encanto Instintivo", Edition: "5e", ClassID: &id,
+			Description: "Quando uma criatura à vista a até 9m fizer uma jogada de ataque contra você, pode usar sua Reação para desviar o ataque, desde que exista outra criatura no alcance dele. O atacante faz uma Salvaguarda de Sabedoria (CD das suas magias); se falhar, ataca a criatura mais próxima (que não seja você ou ele mesmo — escolhida por ele se houver mais de uma opção). Em caso de sucesso, não pode usar esta característica contra o mesmo atacante de novo até completar um Descanso Longo.",
+			Keywords: "Arcano, Encantamento", ActionType: "Reação", Range: "9 metros",
+			Effect: "Redireciona o ataque de um inimigo enfeitiçável contra outro alvo.",
+			PowerType: domain.PowerUnlimited, Level: 6, IsClassFeature: true, ChoiceGroup: "Encantador",
+		},
+		{
+			Name: "Dividir Encantamento", Edition: "5e", ClassID: &id,
+			Description: "Ao conjurar uma magia de Encantamento de 1º círculo ou superior que tenha uma única criatura como alvo, pode fazer com que ela afete uma segunda criatura.",
+			Keywords: "Arcano, Encantamento", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Magias de Encantamento de alvo único passam a afetar dois alvos.",
+			PowerType: domain.PowerUnlimited, Level: 10, IsClassFeature: true, ChoiceGroup: "Encantador",
+		},
+		{
+			Name: "Alterar Memórias", Edition: "5e", ClassID: &id,
+			Description: "Quando conjura uma magia de Encantamento para enfeitiçar uma ou mais criaturas, pode alterar a compreensão de uma delas para que continue sem saber que foi enfeitiçada. Além disso, assim que a magia expirar, pode usar sua ação para a criatura escolhida esquecer parte do tempo enfeitiçada (Salvaguarda de Inteligência, CD das suas magias, ou perde 1 + seu mod. de Carisma horas de memória, mínimo 1, limitado à duração do encantamento).",
+			Keywords: "Arcano, Encantamento", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Esconde o próprio encantamento e apaga a memória de quem foi afetado.",
+			PowerType: domain.PowerUnlimited, Level: 14, IsClassFeature: true, ChoiceGroup: "Encantador",
+		},
+		// ── PROGRESSÃO — Necromante (níveis 3/6/10/14) ──────────────────────
+		{
+			Name: "Necromancia Instruída", Edition: "5e", ClassID: &id,
+			Description: "O ouro e o tempo que você precisa gastar para copiar uma magia da Escola de Necromancia em seu grimório é reduzido à metade.",
+			Keywords: "Arcano, Necromancia", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Copia magias de Necromancia no grimório pela metade do custo/tempo.",
+			PowerType: domain.PowerUnlimited, Level: 3, IsClassFeature: true, ChoiceGroup: "Necromante",
+		},
+		{
+			Name: "Colheita Sinistra", Edition: "5e", ClassID: &id,
+			Description: "Uma vez por turno, quando mata uma ou mais criaturas com uma magia de 1º círculo ou superior, recupera PV = ao dobro do círculo da magia (ou o triplo do seu nível de Mago, se a magia for da Escola de Necromancia). Não funciona ao matar constructos ou mortos-vivos.",
+			Keywords: "Arcano, Necromancia", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Cura PV ao matar criaturas com magia.",
+			PowerType: domain.PowerUnlimited, Level: 3, IsClassFeature: true, ChoiceGroup: "Necromante",
+		},
+		{
+			Name: "Escravos Mortos-Vivos", Edition: "5e", ClassID: &id,
+			Description: "Ganha Animar Mortos de graça no grimório, se ainda não tiver. Ao conjurá-la, pode escolher um corpo ou pilha de ossos adicional, criando outro zumbi ou esqueleto. Todo morto-vivo criado por uma magia de Necromancia sua ganha PV máximos += seu nível de Mago, e soma seu bônus de proficiência às jogadas de dano dele.",
+			Keywords: "Arcano, Necromancia", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Animar Mortos gratuita e fortalecida, com um servo extra.",
+			PowerType: domain.PowerUnlimited, Level: 6, IsClassFeature: true, ChoiceGroup: "Necromante",
+		},
+		{
+			Name: "Acostumado à Morte-Vida", Edition: "5e", ClassID: &id,
+			Description: "Você tem Resistência a dano Necrótico, e seu máximo de Pontos de Vida não pode ser reduzido.",
+			Keywords: "Arcano, Necromancia", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Resistência a Necrótico; imune a redução de PV máximo.",
+			PowerType: domain.PowerUnlimited, Level: 10, IsClassFeature: true, ChoiceGroup: "Necromante",
+		},
+		{
+			Name: "Comandar Mortos-Vivos", Edition: "5e", ClassID: &id,
+			Description: "Como uma ação, escolhe um morto-vivo à vista a até 18m (mesmo um criado por outro mago). Ele faz uma Salvaguarda de Carisma (CD das suas magias); se falhar, fica amistoso a você e obedece seus comandos até você usar esta característica de novo (se tiver Inteligência 8+, tem Vantagem no teste; se ainda assim falhar e tiver Inteligência 12+, pode repetir o teste ao final de cada hora até se libertar).",
+			Keywords: "Arcano, Necromancia", ActionType: "Ação", Range: "18 metros",
+			Effect: "Domina um morto-vivo à distância, mesmo um alheio.",
+			PowerType: domain.PowerUnlimited, Level: 14, IsClassFeature: true, ChoiceGroup: "Necromante",
+		},
+		// ── PROGRESSÃO — Transmutador (níveis 3/6/10/14) ────────────────────
+		{
+			Name: "Transmutação Instruída", Edition: "5e", ClassID: &id,
+			Description: "O ouro e o tempo que você precisa gastar para copiar uma magia da Escola de Transmutação em seu grimório é reduzido à metade.",
+			Keywords: "Arcano, Transmutação", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Copia magias de Transmutação no grimório pela metade do custo/tempo.",
+			PowerType: domain.PowerUnlimited, Level: 3, IsClassFeature: true, ChoiceGroup: "Transmutador",
+		},
+		{
+			Name: "Alquimia Menor", Edition: "5e", ClassID: &id,
+			Description: "Com um procedimento alquímico (10 minutos por 30cm³), transforma temporariamente um objeto não-mágico de madeira, pedra, ferro, cobre ou prata em outro desses materiais. Reverte após 1 hora, ou se você perder a concentração.",
+			Keywords: "Arcano, Transmutação", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Transmuta temporariamente um material simples em outro.",
+			PowerType: domain.PowerUnlimited, Level: 3, IsClassFeature: true, ChoiceGroup: "Transmutador",
+		},
+		{
+			Name: "Pedra de Transmutador", Edition: "5e", ClassID: &id,
+			Description: "Gastando 8 horas, cria uma pedra que armazena magia de Transmutação e concede a quem a possuir um destes benefícios, escolhido ao criá-la: Visão no Escuro 18m, +3m de Deslocamento, Proficiência em Salvaguardas de Constituição, ou Resistência a um tipo de dano elemental (ácido, frio, fogo, elétrico ou trovejante). Pode trocar o benefício ao conjurar uma magia de Transmutação de 1º círculo ou superior. Criar uma nova pedra invalida a anterior.",
+			Keywords: "Arcano, Transmutação", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Item utilitário reconfigurável com 1 de 4 benefícios.",
+			PowerType: domain.PowerUnlimited, Level: 6, IsClassFeature: true, ChoiceGroup: "Transmutador",
+		},
+		{
+			Name: "Metamorfo", Edition: "5e", ClassID: &id,
+			Description: "Ganha Metamorfose de graça no grimório, se ainda não tiver. Pode conjurá-la sem gastar espaço de magia, mas só em si mesmo, transformando-se numa besta de ND 1 ou menor. Recarrega em Descanso Curto ou Longo (ainda pode ser conjurada normalmente gastando espaços de magia).",
+			Keywords: "Arcano, Transmutação", ActionType: "Passiva", Range: "Pessoal",
+			Effect: "Metamorfose gratuita em si mesmo, uma vez por descanso.",
+			PowerType: domain.PowerEncounter, Level: 10, IsClassFeature: true, ChoiceGroup: "Transmutador",
+		},
+		{
+			Name: "Mestre Transmutador", Edition: "5e", ClassID: &id,
+			Description: "Como uma ação, consome sua Pedra de Transmutador (que é destruída) para um destes efeitos: Transformação Maior (transmuta um objeto não-mágico de até 1,5m³ em outro de tamanho/massa similar e valor igual ou inferior, 10 minutos); Panaceia (remove todas as maldições, doenças e venenos de uma criatura tocada e a cura por completo); Restaurar Vida (conjura Reviver Mortos numa criatura tocada, sem espaço de magia nem precisar ter a magia no grimório); ou Restaurar Juventude (reduz a idade aparente de uma criatura voluntária tocada em 3d10 anos, mínimo 13, sem estender sua expectativa de vida).",
+			Keywords: "Arcano, Transmutação", ActionType: "Ação", Range: "Pessoal",
+			Effect: "Consome a Pedra de Transmutador para um efeito poderoso à escolha.",
+			PowerType: domain.PowerDaily, Level: 14, IsClassFeature: true, ChoiceGroup: "Transmutador",
 		},
 	}
 	for _, s := range skills {

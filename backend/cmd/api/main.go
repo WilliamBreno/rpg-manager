@@ -37,6 +37,7 @@ func main() {
 	spellRepo      := repository.NewSpellRepository(config.DB)
 	itemRepo       := repository.NewItemRepository(config.DB)
 	classEquipRepo := repository.NewClassEquipmentRepository(config.DB)
+	languageRepo   := repository.NewLanguageRepository(config.DB)
 
 	_ = backgroundRepo // usado indiretamente via backgroundService
 
@@ -49,12 +50,13 @@ func main() {
 	backgroundService := service.NewBackgroundService(config.DB)
 	antecedentSvc     := service.NewAntecedentService(config.DB)
 	armorService      := service.NewArmorService(armorRepo)
-	periciaService    := service.NewPericiaService(periciaRepo)
+	periciaService    := service.NewPericiaService(periciaRepo, config.DB)
 	talentoService    := service.NewTalentoService(talentoRepo)
 	spellService      := service.NewSpellService(spellRepo)
 	itemService       := service.NewItemService(itemRepo)
 	inventoryService  := service.NewInventoryService(config.DB)
 	classEquipService := service.NewClassEquipmentService(classEquipRepo)
+	languageService   := service.NewLanguageService(languageRepo)
 
 	// Handlers
 	antecedentHandler := handler.NewAntecedentHandler(antecedentSvc)
@@ -73,6 +75,7 @@ func main() {
 	itemHandler       := handler.NewItemHandler(itemService)
 	inventoryHandler  := handler.NewInventoryHandler(inventoryService, characterService)
 	classEquipHandler := handler.NewClassEquipmentHandler(classEquipService)
+	languageHandler   := handler.NewLanguageHandler(languageService)
 
 	r := gin.Default()
 
@@ -114,6 +117,7 @@ func main() {
 		api.GET("/pericias", periciaHandler.GetAll)
 		api.GET("/talentos", talentoHandler.GetAll)
 		api.GET("/spells", spellHandler.GetAll)
+		api.GET("/languages", languageHandler.GetAll)
 		api.GET("/antecedentes", antecedentHandler.GetAll)
 		api.GET("/antecedentes/:id", antecedentHandler.GetByID)
 		api.POST("/ai/skills", ollamaHandler.GetSkills)
@@ -176,12 +180,16 @@ func main() {
 				characters.GET("/:id/export/pdf", characterHandler.ExportPDF5e)
 				characters.GET("/:id/pericias", periciaHandler.GetByCharacter)
 				characters.POST("/:id/pericias", periciaHandler.Save)
+				characters.PATCH("/:id/pericias/expertise", periciaHandler.SetExpertise)
 				characters.GET("/:id/talentos", talentoHandler.GetByCharacter)
 				characters.POST("/:id/talentos/:talento_id", talentoHandler.Add)
 				characters.DELETE("/:id/talentos/:talento_id", talentoHandler.Remove)
 				characters.GET("/:id/spells", spellHandler.GetByCharacter)
 				characters.POST("/:id/spells/:spell_id", spellHandler.Add)
 				characters.DELETE("/:id/spells/:spell_id", spellHandler.Remove)
+				characters.GET("/:id/languages", languageHandler.GetByCharacter)
+				characters.POST("/:id/languages/:language_id", languageHandler.Add)
+				characters.DELETE("/:id/languages/:language_id", languageHandler.Remove)
 				characters.GET("/:id/inventory", inventoryHandler.GetInventory)
 				characters.POST("/:id/shop/items/:item_id", inventoryHandler.PurchaseItem)
 				characters.POST("/:id/shop/armors/:armor_id", inventoryHandler.PurchaseArmor)

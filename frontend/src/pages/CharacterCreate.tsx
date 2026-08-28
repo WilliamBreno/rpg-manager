@@ -13,12 +13,13 @@ import { periciaService } from '../services/periciaService'
 import { talentoService } from '../services/talentoService'
 import { antecedentService } from '../services/antecedentService'
 import { spellService } from '../services/spellService'
+import { languageService } from '../services/languageService'
 import { classEquipmentService } from '../services/classEquipmentService'
 import { SkillCard, powerConfig } from '../components/SkillCard'
 import { Tooltip } from '../components/Tooltip'
 import { SPELLCASTING_CLASSES, SPELLCASTING_ABILITY, cantripsKnownFor } from '../lib/spellSlots'
 import { parseWeaponDescription, attackBonusFor, damageAbilityMod, formatSigned, acFor } from '../lib/weaponParser'
-import type { Class, Armor, Skill, PowerType, Race, Talento, Antecedent, Spell, ClassEquipmentOption } from '../types'
+import type { Class, Armor, Skill, PowerType, Race, Talento, Antecedent, Spell, ClassEquipmentOption, Language } from '../types'
 
 // Quantas magias de nível 1+ um conjurador escolhe já no nível 1 — Bardo,
 // Bruxo e Feiticeiro têm uma lista "conhecida" fixa por nível (não é fórmula
@@ -111,6 +112,8 @@ export default function CharacterCreate() {
   const [choiceSelections, setChoiceSelections] = useState<Record<string, Skill>>({})
   const [selectedPericias, setSelectedPericias] = useState<string[]>([])
   const [selectedTalentos, setSelectedTalentos] = useState<Talento[]>([])
+  const [fightingStyleId, setFightingStyleId] = useState<number | null>(null)
+  const [selectedLanguages, setSelectedLanguages] = useState<Language[]>([])
   const [selectedSpells, setSelectedSpells] = useState<Spell[]>([])
   const [equipmentOptionId, setEquipmentOptionId] = useState<number | null>(null)
 
@@ -156,6 +159,17 @@ export default function CharacterCreate() {
   const { data: classes }   = useQuery({ queryKey: ['classes', selectedEdition],  queryFn: () => classService.getAll(selectedEdition!),      enabled: !!selectedEdition })
   const { data: races }     = useQuery({ queryKey: ['races', selectedEdition],    queryFn: () => raceService.getAll(selectedEdition!),        enabled: !!selectedEdition })
   const { data: armors }    = useQuery({ queryKey: ['armors', selectedEdition],   queryFn: () => armorService.getByEdition(selectedEdition!), enabled: !!selectedEdition })
+  // Idiomas (5e) — RAW 2024 (Livro do Jogador, cap. 2, "Escolha Idiomas"):
+  // idioma NÃO vem da raça/espécie. Todo personagem sabe Comum (concedido
+  // automaticamente pelo backend, ver CharacterService.Create) e escolhe
+  // livremente mais 2 da tabela "Idiomas Comuns" — independente de raça/
+  // classe, por isso essa query não depende de nenhuma outra escolha.
+  const { data: allLanguages5e } = useQuery({
+    queryKey: ['languages', '5e'],
+    queryFn:  () => languageService.getAll('5e'),
+    enabled:  selectedEdition === '5e', staleTime: Infinity,
+  })
+  const languageChoices = (allLanguages5e ?? []).filter(l => l.category === 'comum' && l.name !== 'Comum')
 
   // Sem armadura selecionada ainda (nem o jogador escolheu, nem a troca de
   // edição resetou o form) → assume "Sem Armadura (CA base 10)" como padrão,
@@ -183,6 +197,19 @@ export default function CharacterCreate() {
     queryFn:  () => talentoService.getAll(selectedEdition!),
     enabled:  !!selectedEdition && selectedEdition === '4e', staleTime: Infinity,
   })
+  // Estilo de Luta (Guerreiro nível 1, Paladino nível 2 — RAW) é um Talento
+  // (categoria "Estilo de Luta"), não uma Skill: a característica de classe só
+  // dá "acesso" à categoria, quem escolhe UM estilo específico é o jogador.
+  // Antes disso não existia nenhum jeito real de escolher — a Skill que
+  // representava essa característica tinha um único item solto no grupo de
+  // escolha, sem ligação nenhuma com os 10 Talentos reais dessa categoria.
+  const isFightingStyleClass = selectedEdition === '5e' && (selectedClassData?.name === 'Guerreiro' || selectedClassData?.name === 'Paladino')
+  const { data: estiloLutaTalentos5e } = useQuery({
+    queryKey: ['talentos', '5e'],
+    queryFn:  () => talentoService.getAll('5e'),
+    enabled:  isFightingStyleClass, staleTime: Infinity,
+  })
+  const fightingStyleOptions = (estiloLutaTalentos5e ?? []).filter(t => t.category === 'Estilo de Luta')
   // Só usado por antecedentes de livro antigo sem talento fixo (ex: Herói do
   // Povo) — RAW 2024: escolha livre entre os talentos de categoria Origem.
   const { data: origemTalentos5e } = useQuery({
@@ -279,12 +306,23 @@ export default function CharacterCreate() {
   // FIX TALENTOS: padrão é 1 talento por nível (não 2). Classe/raça podem conceder mais.
   const totalTalentos = (selectedClassData?.talentos_count ?? 1) + (selectedRaceData?.bonus_talentos ?? 0)
 
-  const classFeatures   = (allSkills ?? []).filter(s => s.is_class_feature && !s.requires_choice)
+  // A criação é sempre no nível 1 — por isso classFeatures/raceFeatures (as
+  // que são concedidas automaticamente, sem escolha) só devem incluir
+  // características de nível 1. Sem esse filtro, um personagem novo recebia
+  // TODAS as características de TODOS os níveis da classe de uma vez (ex: um
+  // Mago nível 1 ganhava as 8 Escolas de Magia inteiras — nível 3/6/10/14 de
+  // cada uma — mais capstones de nível 18/20, tudo no ato da criação). As
+  // escolhas de subclasse (RequiresChoice, ex: escolher a Escola) continuam
+  // disponíveis independente do nível — é razoável deixar o jogador decidir o
+  // caminho desde já; só as características em SI (as de nível 2+) é que
+  // passam a vir só de verdade quando o personagem alcançar aquele nível via
+  // XP (checkAndApplyLevelUps, que já filtra por nível exato corretamente).
+  const classFeatures   = (allSkills ?? []).filter(s => s.is_class_feature && !s.requires_choice && (!s.level || s.level <= 1))
   const choiceFeatures  = (allSkills ?? []).filter(s => s.is_class_feature && s.requires_choice)
   const choiceGroups    = choiceFeatures.reduce<Record<string, Skill[]>>((acc, s) => {
     const g = s.choice_group ?? 'default'; acc[g] = [...(acc[g] ?? []), s]; return acc
   }, {})
-  const raceFeatures       = (allSkills ?? []).filter(s => s.is_race_feature && !s.requires_choice)
+  const raceFeatures       = (allSkills ?? []).filter(s => s.is_race_feature && !s.requires_choice && (!s.level || s.level <= 1))
   const raceChoiceFeatures = (allSkills ?? []).filter(s => s.is_race_feature && s.requires_choice)
   const raceChoiceGroups   = raceChoiceFeatures.reduce<Record<string, Skill[]>>((acc, s) => {
     const g = s.choice_group ?? 'default'; acc[g] = [...(acc[g] ?? []), s]; return acc
@@ -355,6 +393,8 @@ export default function CharacterCreate() {
       pendingItems.push(`Escolha mais ${totalTalentos - selectedTalentos.length} talento(s)`)
   }
   if (is5e) {
+    if (languageChoices.length > 0 && selectedLanguages.length < 2)
+      pendingItems.push(`Escolha mais ${2 - selectedLanguages.length} idioma(s)`)
     if (!selectedClass)      pendingItems.push('Selecione uma classe')
     if (!selectedRace)       pendingItems.push('Selecione uma raça')
     if (!selectedBackground) pendingItems.push('Selecione um antecedente')
@@ -400,6 +440,10 @@ export default function CharacterCreate() {
         await periciaService.save(character.ID, selectedPericias)
       for (const talento of selectedTalentos)
         await talentoService.add(character.ID, talento.ID)
+      if (fightingStyleId)
+        await talentoService.add(character.ID, fightingStyleId)
+      for (const lang of selectedLanguages)
+        await languageService.add(character.ID, lang.ID)
       for (const spell of selectedSpells)
         await spellService.add(character.ID, spell.ID)
       return character
@@ -419,6 +463,8 @@ export default function CharacterCreate() {
     setChoiceSelections({})
     setSelectedPericias([]); setSelectedTalentos([]); setSelectedSpells([])
     setEquipmentOptionId(null)
+    setFightingStyleId(null)
+    setSelectedLanguages([])
     setActiveTab('personagem')
     reset({ name: '', edition, class_id: 0, race_id: 0, hit_points: 10,
             strength: 10, dexterity: 10, constitution: 10, intelligence: 10, wisdom: 10, charisma: 10 })
@@ -440,6 +486,7 @@ export default function CharacterCreate() {
     setSelectedTalentos([])
     setSelectedSpells([])
     setEquipmentOptionId(null)
+    setFightingStyleId(null)
   }
   const handleRaceChange = (raceId: number) => {
     setValue('race_id', raceId)
@@ -494,6 +541,13 @@ export default function CharacterCreate() {
       if (prev.some(t => t.ID === talento.ID)) return prev.filter(t => t.ID !== talento.ID)
       if (prev.length >= totalTalentos) return prev
       return [...prev, talento]
+    })
+  }
+  const toggleLanguage = (lang: Language) => {
+    setSelectedLanguages(prev => {
+      if (prev.some(l => l.ID === lang.ID)) return prev.filter(l => l.ID !== lang.ID)
+      if (prev.length >= 2) return prev
+      return [...prev, lang]
     })
   }
 
@@ -648,6 +702,37 @@ export default function CharacterCreate() {
                 </div>
               )}
             </div>
+
+            {/* PASSO 3.5 — Idiomas (só 5e — RAW 2024: não depende de raça/classe) */}
+            {is5e && languageChoices.length > 0 && (
+              <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
+                <div className="flex items-center justify-between mb-1">
+                  {sectionHeader(`Passo ${S()} — Idiomas`)}
+                  {counterBadge(selectedLanguages.length, 2)}
+                </div>
+                <p className="text-gray-500 text-xs mb-4">
+                  Seu personagem sempre sabe <span style={{ color: '#c9a84c' }}>Comum</span>. Escolha mais <strong className="text-white">2</strong> da lista abaixo.
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {languageChoices.map(lang => {
+                    const isSelected = selectedLanguages.some(l => l.ID === lang.ID)
+                    const isDisabled = !isSelected && selectedLanguages.length >= 2
+                    return (
+                      <button key={lang.ID} type="button" disabled={isDisabled} onClick={() => toggleLanguage(lang)}
+                        className={`text-left rounded-lg p-2.5 border text-xs transition ${isDisabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+                        style={isSelected
+                          ? { background: 'rgba(201,168,76,0.1)', borderColor: 'rgba(201,168,76,0.5)' }
+                          : { background: '#1a1a1a', borderColor: '#3f3f46' }
+                        }
+                      >
+                        <span className="font-semibold" style={{ color: isSelected ? '#c9a84c' : '#e4e4e7' }}>{lang.name}</span>
+                        <span className="text-gray-500"> — {lang.origin}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
             </>)}
 
             {activeTab === 'antecedente' && is5e && (<>
@@ -913,6 +998,33 @@ export default function CharacterCreate() {
                           {options.map(s => <SkillCard key={s.ID} skill={s} selectable selected={isChoiceSelected(s)} disabled={false} onToggle={selectChoice} defaultExpanded />)}
                         </div>
                       </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* PASSO 6.5 — Estilo de Luta (só Guerreiro/Paladino 5e) */}
+            {isFightingStyleClass && fightingStyleOptions.length > 0 && (
+              <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
+                {sectionHeader(`Passo ${S()} — Estilo de Luta`)}
+                <p className="text-gray-500 text-xs mb-4">
+                  {selectedClassData?.name} concede acesso à categoria de Talentos "Estilo de Luta" — escolha um.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {fightingStyleOptions.map(t => {
+                    const isSelected = fightingStyleId === t.ID
+                    return (
+                      <button key={t.ID} type="button" onClick={() => setFightingStyleId(t.ID)}
+                        className="text-left rounded-lg p-2.5 border text-xs transition"
+                        style={isSelected
+                          ? { background: 'rgba(201,168,76,0.1)', borderColor: 'rgba(201,168,76,0.5)' }
+                          : { background: '#1a1a1a', borderColor: '#3f3f46' }
+                        }
+                      >
+                        <span className="font-semibold" style={{ color: isSelected ? '#c9a84c' : '#e4e4e7' }}>{t.name}</span>
+                        {t.description && <p className="text-gray-500 mt-1">{t.description}</p>}
+                      </button>
                     )
                   })}
                 </div>
@@ -1332,7 +1444,7 @@ export default function CharacterCreate() {
 
             {activeTab === 'resumo' && (<>
             {/* Resumo */}
-            {(is4e || is5e) && (totalSelected > 0 || selectedPericias.length > 0 || selectedTalentos.length > 0 || selectedSpells.length > 0 || selectedBackground || selectedAlignment || equipmentOptionId) && (
+            {(is4e || is5e) && (totalSelected > 0 || selectedPericias.length > 0 || selectedTalentos.length > 0 || selectedSpells.length > 0 || selectedBackground || selectedAlignment || equipmentOptionId || fightingStyleId || selectedLanguages.length > 0) && (
               <div className="rounded-xl p-4" style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)' }}>
                 <p className="text-xs font-semibold mb-2 uppercase tracking-widest" style={{ color: '#c9a84c' }}>Resumo da Criação</p>
                 <div className="flex flex-wrap gap-2">
@@ -1355,6 +1467,11 @@ export default function CharacterCreate() {
                     <span key={name} className={`text-xs px-2 py-1 rounded-full ${backgroundSkills.includes(name) || classAutoSkills.includes(name) ? 'bg-indigo-900/60 text-indigo-300' : 'bg-teal-900/60 text-teal-300'}`}>📚 {name}</span>
                   ))}
                   {selectedTalentos.map(t => <span key={t.ID} className="text-xs px-2 py-1 rounded-full bg-orange-900/60 text-orange-300">🏆 {t.name}</span>)}
+                  {selectedLanguages.map(l => <span key={l.ID} className="text-xs px-2 py-1 rounded-full bg-cyan-900/60 text-cyan-300">🗣 {l.name}</span>)}
+                  {fightingStyleId && (() => {
+                    const style = fightingStyleOptions.find(t => t.ID === fightingStyleId)
+                    return style ? <span className="text-xs px-2 py-1 rounded-full bg-red-900/60 text-red-300">⚔️ {style.name}</span> : null
+                  })()}
                   {selectedSpells.map(sp => (
                     <span key={sp.ID} className="text-xs px-2 py-1 rounded-full bg-blue-900/60 text-blue-300">{sp.level === 0 ? '✨' : '📖'} {sp.name}</span>
                   ))}

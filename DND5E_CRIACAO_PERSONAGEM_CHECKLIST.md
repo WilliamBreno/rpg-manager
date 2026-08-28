@@ -390,9 +390,42 @@ antecedente). Ver a Seção 2 abaixo pra decisão sobre se vale a pena formaliza
 - ~~Subclasses inconsistentes entre classes~~ **Respondido: corrigir níveis e adicionar as que faltavam. Implementado e testado.** As 9 classes sem subclasse (Bárbaro, Bardo, Druida, Guardião, Guerreiro, Ladino, Mago, Monge, Paladino) agora têm as 4 opções reais do PHB 2024 cada, todas no **nível 3** (nome e nível confirmados direto no PDF via `rag_5e.query_5e()`, não por memória — a 2024 unificou quase toda escolha de subclasse pro nível 3, inclusive Mago e Druida que eram nível 2 no 2014). As 3 que já existiam (Clérigo/Bruxo/Feiticeiro, nível 1) conferem com o PHB 2024 e não precisaram de correção. **Bug de dados encontrado nesse processo, não corrigido ainda:** existem 2 linhas "Guerreiro" 5e duplicadas no banco (uma completa, uma incompleta sem saving throws/perícias) — não mexi nisso sem confirmar com você, já que apagar/mesclar uma linha de classe é uma ação destrutiva se algum personagem já referenciar a errada.
 - `domain.Background` parece uma tabela morta (Seção 1) — **respondido: deixar por ora**, revisitar se precisar mais adiante.
 
-## Pergunta em aberto (bloqueando a implementação de 2014+2024)
+## Pergunta em aberto (bloqueando a implementação de 2014+2024) — RESOLVIDA
 
 Você pediu pra formalizar **tanto** as regras de 2014 quanto as de 2024 pro bônus de atributo — mas isso são dois mecanismos diferentes e incompatíveis pro mesmo personagem (2014: raça dá o bônus; 2024: antecedente dá o bônus + 1 talento de origem). Antes de implementar isso, preciso saber: **como o sistema decide qual das duas regras vale pra um personagem específico?** Por exemplo:
 - Um campo novo no personagem (`rules_version`: "2014" ou "2024") escolhido na criação, e a UI muda o que aparece (bônus vem da raça OU do antecedente) conforme essa escolha?
 - Ou é uma configuração global do sistema/tabela (todo mundo usa a mesma regra)?
 - Ou outra coisa que você tinha em mente?
+
+**Resolvido numa sessão posterior:** não existe `rules_version` nenhum — a decisão final foi mais simples que as opções acima. O projeto segue 2024 como regra golden em tudo (bônus de atributo sempre vem do Antecedente, nunca da raça), com uma exceção pontual e explícita: subclasses/antecedentes que existiam em 2014 mas não foram reimpressos em 2024 podem ser importados como conteúdo `IsLegacy`, sempre reencaixados nas convenções de 2024 (nível 3 pra subclasse, escolha livre de atributo/talento pros antecedentes legados). Ver `CLAUDE.md`, seção "Mixed 2014/2024 ruleset" — é a fonte viva desta decisão agora, não este arquivo.
+
+---
+
+# Atualização da auditoria — 2026-08-28
+
+Muita coisa mudou desde a auditoria original acima (spells, inventário/loja, equipamento inicial de classe, antecedentes completos, subclasses completas, idiomas). Em vez de reescrever a tabela inteira, aqui vai só o que **mudou de status** — o que não é mencionado aqui continua exatamente como a auditoria original documentou.
+
+| Item (seção original) | Status era | Status agora | Nota |
+|---|---|---|---|
+| Bônus de atributo (Seção 0/2) | ❌ não existe | ✅ existe | Vem do Antecedente (2024) ou é livre pros 6 atributos em antecedentes `IsLegacy` (2014 importados) — ver `CLAUDE.md` |
+| ASI com opção de feat (Seção 2) | ❌ não existe | ✅ existe | `ApplyASI` aceita `talento_id` como alternativa a atributos, valida mutuamente exclusivo |
+| Talentos — de onde vêm (Seção 3) | ⚠️ 1 talento 4e livre, sem talento 5e real nenhum | ✅ existe | 75 talentos 5e reais seedados (10 Origem, 43 Geral, 10 Estilo de Luta, 12 Dádiva Épica); Talento de Origem ligado ao Antecedente; Estilo de Luta agora com escolha real (ver `CLAUDE.md`) |
+| Idiomas conhecidos (Seção 3) | ❌ não existe | ✅ existe | Sistema novo — RAW 2024 confirmado com o usuário (não vem da raça, é escolha livre de 2 + Comum automático) |
+| Classe de Armadura 5e (Seção 4) | ✅ existia no cálculo, mas nunca era exibida (mostrava "—") | ✅ existe e é exibida | Bug real encontrado e corrigido numa sessão posterior — a ficha lia um campo que nunca era calculado pro 5e |
+| Velocidade da raça (Seção 4) | ❌ bug ativo (sempre 0) | ✅ corrigido | `Create()` agora copia `race.Speed` |
+| Ataque Extra (Seção 4) | ❌ não existe | ✅ existe, com escalonamento correto | Guerreiro nível 5→11→20 (2/3/4 ataques), Bardo Colégio da Bravura nível 6 — conferido contra o livro, não de memória |
+| Bônus de ataque/dano de arma (Seção 4) | ❌ não existe | ⚠️ existe parcialmente | Preview calculado na criação (assume proficiência, correto nesse contexto) e no inventário (só dano, não assume proficiência — ver `CLAUDE.md`); ainda não é um "bônus de ataque" central computado pra qualquer arma em qualquer contexto |
+| Conjuração inteira (Seção 5) | ❌ não existe nada | ✅ existe quase tudo | `domain.Spell`, magias conhecidas por personagem, espaços de magia (completo/meio/**terço** — terço-conjurador adicionado nesta sessão), truques, CD/bônus de ataque de magia calculados e exibidos. Ainda faltam: descrições mecânicas completas das magias, distinção preparado/conhecido, aprender magia no level-up |
+| Subclasses inconsistentes (Seção 1) | ❌ Mago sem Escola, Guerreiro sem Arquétipo, níveis errados | ✅ todas as 12 classes corretas | 4 subclasses por classe, todas nível 3 (Bruxo/Feiticeiro corrigidos de nível 1 pra 3 nesta sessão) |
+| Idade/altura/peso/olhos/pele/cabelo (Seção 9) | ❌ não existe | ✅ existe | Campos adicionados ao `Character`, editáveis via `/characters/:id/background` |
+| História do personagem nunca salva (Seção 9) | ⚠️ bug conhecido, não corrigido | ✅ corrigido | Campo incluído no allowlist de `BackgroundService.Save` |
+| Equipamento (Seção 8) | ❌ não existe (Fase D do roadmap) | ✅ existe — loja + inventário + Equipamento Inicial de classe | Sistema completo de compra/posse; Equipamento Inicial da CLASSE é creditado automaticamente na criação |
+
+**Continua exatamente igual à auditoria original (não mudou):**
+- **Expertise e Jack of All Trades** (Seção 3) — confirmei de novo nesta atualização, zero menções em todo o backend. Ladino/Bardo ainda exportam/calculam o bônus de perícia linear, sem dobrar. **Este é hoje o gap mais visível e concreto que resta pra "cálculo correto" da ficha** — ao contrário de quando foi documentado, agora não é mais "uma lacuna entre várias", é praticamente a única lacuna de cálculo que resta em Perícias/Combate.
+- `domain.Background` continua uma tabela morta (Seção 1) — só é tocada por um `DELETE` em cascata, nunca por um `SELECT`/catálogo de verdade.
+- Equipamento inicial do **Antecedente** (`Antecedent.Equipment`, texto livre) continua não creditado automaticamente — diferente do Equipamento Inicial da **Classe** (esse sim, creditado automaticamente desde esta sessão). São dois sistemas parecidos de nome mas com maturidade bem diferente hoje.
+- Traços raciais (Darkvision, resistência, tamanho) continuam sem campo estruturado em `domain.Race` — existem só como texto narrativo dentro da descrição de `Skill` (ex: "Visão no Escuro" com alcance escrito na descrição). Isso é suficiente pra exibição, mas nada no código consulta esse valor programaticamente (ex: pra um cálculo automático de furtividade no escuro) — mesma classe de simplificação já aceita pra proficiências de arma/armadura.
+- Proficiências de arma/armadura estruturadas — ainda só texto (`Antecedent.ToolProficiencies` etc.), sem um jeito do sistema saber "esse personagem é proficiente com espada longa?" programaticamente.
+
+**Novo item, não estava na auditoria original:** terço-conjurador (Cavaleiro Místico/Trapaceiro Arcano) tinha uma tabela de espaços de magia inteiramente ausente — corrigido nesta sessão, mas sem nenhum jeito de aprender magias com essa subclasse ainda (mesma limitação do "aprender magia no level-up" documentada acima pra conjuração em geral).

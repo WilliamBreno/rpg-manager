@@ -22,6 +22,22 @@ const HALF_CASTER_SLOTS: Record<number, number[]> = {
   19: [4, 3, 3, 3, 2], 20: [4, 3, 3, 3, 2],
 }
 
+// Terço-conjurador (Cavaleiro Místico/Guerreiro, Trapaceiro Arcano/Ladino) —
+// tabela idêntica pras duas subclasses, extraída verbatim das tabelas
+// "Conjuração de Cavaleiro Místico"/"Conjuração de Trapaceiro Arcano" do
+// PHB 2024 (não existia nenhuma tabela de terço-conjurador no sistema antes
+// disso — Guerreiro/Ladino sempre voltavam vazio de spellSlotsFor).
+const THIRD_CASTER_SLOTS: Record<number, number[]> = {
+  1: [], 2: [], 3: [2], 4: [3], 5: [3],
+  6: [3], 7: [4, 2], 8: [4, 2], 9: [4, 2], 10: [4, 3],
+  11: [4, 3], 12: [4, 3], 13: [4, 3, 2], 14: [4, 3, 2], 15: [4, 3, 2],
+  16: [4, 3, 3], 17: [4, 3, 3], 18: [4, 3, 3], 19: [4, 3, 3, 1], 20: [4, 3, 3, 1],
+}
+const THIRD_CASTER_SUBCLASSES: Record<string, string> = {
+  'Cavaleiro Místico': 'Guerreiro',
+  'Trapaceiro Arcano': 'Ladino',
+}
+
 const PACT_MAGIC_SLOTS: Record<number, number> = {
   1: 1, 2: 2, 3: 2, 4: 2, 5: 2, 6: 2, 7: 2, 8: 2, 9: 2, 10: 2,
   11: 3, 12: 3, 13: 3, 14: 3, 15: 3, 16: 3, 17: 4, 18: 4, 19: 4, 20: 4,
@@ -35,12 +51,18 @@ const CANTRIP_BASE: Record<string, number> = {
   Bardo: 2, Bruxo: 2, Clérigo: 3, Druida: 2, Feiticeiro: 4, Mago: 3,
 }
 
-export function spellSlotsFor(className: string, level: number): number[] {
+// subclassName: nome da subclasse escolhida (ex: "Cavaleiro Místico"), só
+// relevante pra saber se um Guerreiro/Ladino é terço-conjurador — ignorado
+// pras demais classes, que já sabem conjurar (ou não) só pelo nome da classe.
+export function spellSlotsFor(className: string, level: number, subclassName?: string): number[] {
   if (['Bardo', 'Clérigo', 'Druida', 'Feiticeiro', 'Mago'].includes(className)) {
     return FULL_CASTER_SLOTS[level] ?? []
   }
   if (['Paladino', 'Guardião'].includes(className)) {
     return HALF_CASTER_SLOTS[level] ?? []
+  }
+  if (subclassName && THIRD_CASTER_SUBCLASSES[subclassName] === className) {
+    return THIRD_CASTER_SLOTS[level] ?? []
   }
   return []
 }

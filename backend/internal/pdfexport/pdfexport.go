@@ -116,6 +116,23 @@ type fieldMap struct {
 		Vinculos            string `json:"vinculos"`
 		Defeitos            string `json:"defeitos"`
 	} `json:"personalidade"`
+	Moedas struct {
+		CP string `json:"cp"`
+		SP string `json:"sp"`
+		EP string `json:"ep"`
+		GP string `json:"gp"`
+		PP string `json:"pp"`
+	} `json:"moedas"`
+	Conjuracao struct {
+		Classe     string `json:"classe"`
+		Habilidade string `json:"habilidade"`
+		CD         string `json:"cd"`
+		Ataque     string `json:"ataque"`
+		Circulos   map[string]struct {
+			Total   string   `json:"total"`
+			Magias  []string `json:"magias"`
+		} `json:"circulos"`
+	} `json:"conjuracao"`
 }
 
 // ── Estruturas do formulário no formato que o pdfcpu espera/produz (ver
@@ -345,6 +362,40 @@ func FillCharacterSheet5e(character map[string]interface{}) ([]byte, error) {
 	setText(fm.Personalidade.Ideais, str(character, "ideais"))
 	setText(fm.Personalidade.Vinculos, str(character, "vinculos"))
 	setText(fm.Personalidade.Defeitos, str(character, "defeitos"))
+
+	// Moedas
+	setText(fm.Moedas.CP, str(character, "cp"))
+	setText(fm.Moedas.SP, str(character, "sp"))
+	setText(fm.Moedas.EP, str(character, "ep"))
+	setText(fm.Moedas.GP, str(character, "gp"))
+	setText(fm.Moedas.PP, str(character, "pp"))
+
+	// Página 3: conjuração. Ausente (nil) pra personagem que não conjura —
+	// nesse caso a página inteira fica em branco, igual já era antes desta
+	// característica existir.
+	if conj, ok := character["conjuracao"].(map[string]interface{}); ok && conj != nil {
+		setText(fm.Conjuracao.Classe, str(conj, "classe"))
+		setText(fm.Conjuracao.Habilidade, str(conj, "habilidade"))
+		setText(fm.Conjuracao.CD, str(conj, "cd"))
+		setText(fm.Conjuracao.Ataque, str(conj, "ataque"))
+		circulosData := subMap(conj, "circulos")
+		for nivel, campos := range fm.Conjuracao.Circulos {
+			dados := subMap(circulosData, nivel)
+			if campos.Total != "" {
+				total := intVal(dados, "total")
+				if total > 0 {
+					setText(campos.Total, fmt.Sprintf("%d", total))
+				}
+			}
+			magiasConhecidas, _ := dados["magias"].([]string)
+			for i, fieldName := range campos.Magias {
+				if i >= len(magiasConhecidas) {
+					break
+				}
+				setText(fieldName, magiasConhecidas[i])
+			}
+		}
+	}
 
 	filledJSON, err := json.Marshal(group)
 	if err != nil {

@@ -59,3 +59,26 @@ func (h *PericiaHandler) Save(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Perícias salvas"})
 }
+
+// PATCH /characters/:id/pericias/expertise
+// Body: {"pericia_name": "Furtividade", "expertise": true}
+func (h *PericiaHandler) SetExpertise(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID inválido"})
+		return
+	}
+	var body struct {
+		PericiaName string `json:"pericia_name"`
+		Expertise   bool   `json:"expertise"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if err := h.svc.SetExpertise(uint(id), body.PericiaName, body.Expertise); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Especialização atualizada"})
+}

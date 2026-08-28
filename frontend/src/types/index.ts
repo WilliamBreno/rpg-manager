@@ -73,6 +73,7 @@ export interface Pericia {
 export interface CharacterPericia {
   character_id: number
   pericia_name: string
+  expertise: boolean
 }
 
 // ── Talento ─────────────────────────────────────────────────────────────────
@@ -115,6 +116,15 @@ export interface Spell {
   concentration: boolean
   classes: string // JSON: '{"Mago":3,"Feiticeiro":3}' — classe -> círculo em que a aprende
   description: string
+}
+
+// ── Language — Idioma D&D 5e (catálogo, RAW 2024: não vem da raça) ─────────
+export interface Language {
+  ID: number
+  name: string
+  edition: string
+  category: string // "comum" ou "raro"
+  origin: string
 }
 
 // ── Antecedent — Antecedente D&D 5e (Acólito, Criminoso, Soldado, etc.) ────
@@ -262,6 +272,7 @@ export interface Character {
   pericias: CharacterPericia[]
   talentos: Talento[]
   spells?: Spell[]
+  languages?: Language[]
   experience_points?: number
   death_save_successes?: number
   death_save_failures?:  number

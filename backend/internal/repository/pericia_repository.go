@@ -23,6 +23,22 @@ func (r *PericiaRepository) GetByCharacter(characterID uint) ([]domain.Character
 	return pericias, r.db.Where("character_id = ?", characterID).Find(&pericias).Error
 }
 
+// SetExpertise faz um UPDATE pontual (não mexe nas outras linhas, diferente
+// de Save que recria a lista inteira) — só pode marcar Expertise numa
+// perícia que já exista como proficiente pra esse personagem.
+func (r *PericiaRepository) SetExpertise(characterID uint, periciaName string, expertise bool) error {
+	result := r.db.Model(&domain.CharacterPericia{}).
+		Where("character_id = ? AND pericia_name = ?", characterID, periciaName).
+		Update("expertise", expertise)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}
+
 func (r *PericiaRepository) Save(characterID uint, names []string) error {
 	tx := r.db.Begin()
 	if err := tx.Where("character_id = ?", characterID).Delete(&domain.CharacterPericia{}).Error; err != nil {
