@@ -52,6 +52,19 @@ func ConnectDatabase() {
         &domain.ClassEquipmentOption{},
         &domain.ClassEquipmentComponent{},
         &domain.Language{},
+        // ── Sistema do Mestre (mesa virtual) ──────────────────────────────
+        &domain.Campaign{},
+        &domain.CampaignMembership{},
+        &domain.NPC{},
+        &domain.Enemy{},
+        &domain.EnemyAbility{},
+        &domain.EnemyLine{},
+        &domain.MagicItem{},
+        &domain.Scene{},
+        &domain.Token{},
+        &domain.Session{},
+        &domain.ChatMessage{},
+        &domain.Reward{},
     )
     if err != nil {
         log.Fatal("Erro ao executar AutoMigrate: ", err)

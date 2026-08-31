@@ -10,7 +10,10 @@ import CharacterCard from '../components/CharacterCard'
 const NAV_ITEMS = [
   { label: 'Início', icon: '🏠', path: '/' },
   { label: 'Meus Personagens', icon: '📜', path: '/characters' },
+  { label: 'Convites de Campanha', icon: '✉️', path: '/invites' },
 ]
+// Só visível pra contas de Mestre — Sistema do Mestre, Etapa 1.
+const MASTER_NAV_ITEM = { label: 'Minhas Campanhas', icon: '🗺️', path: '/campaigns' }
 
 export default function CharacterList() {
   const navigate = useNavigate()
@@ -56,7 +59,7 @@ export default function CharacterList() {
         </div>
 
         <nav className="flex-1 flex flex-col gap-1">
-          {NAV_ITEMS.map(item => {
+          {[...NAV_ITEMS, ...(user?.role === 'master' ? [MASTER_NAV_ITEM] : [])].map(item => {
             const active = item.path === '/characters'
             return (
               <button

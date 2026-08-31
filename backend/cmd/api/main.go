@@ -10,10 +10,11 @@ import (
 	"github.com/joho/godotenv"
 	"rpg-manager/internal/handler"
 	"rpg-manager/internal/repository"
+	"rpg-manager/internal/seed"
 	"rpg-manager/internal/service"
+	"rpg-manager/internal/ws"
 	"rpg-manager/pkg/config"
 	"rpg-manager/pkg/middleware"
-	"rpg-manager/internal/seed"
 )
 
 func main() {
@@ -25,57 +26,85 @@ func main() {
 	seed.Run(config.DB)
 
 	// Repositories
-	userRepo       := repository.NewUserRepository(config.DB)
-	classRepo      := repository.NewClassRepository(config.DB)
-	raceRepo       := repository.NewRaceRepository(config.DB)
-	skillRepo      := repository.NewSkillRepository(config.DB)
-	characterRepo  := repository.NewCharacterRepository(config.DB)
+	userRepo := repository.NewUserRepository(config.DB)
+	classRepo := repository.NewClassRepository(config.DB)
+	raceRepo := repository.NewRaceRepository(config.DB)
+	skillRepo := repository.NewSkillRepository(config.DB)
+	characterRepo := repository.NewCharacterRepository(config.DB)
 	backgroundRepo := repository.NewBackgroundRepository(config.DB)
-	armorRepo      := repository.NewArmorRepository(config.DB)
-	periciaRepo    := repository.NewPericiaRepository(config.DB)
-	talentoRepo    := repository.NewTalentoRepository(config.DB)
-	spellRepo      := repository.NewSpellRepository(config.DB)
-	itemRepo       := repository.NewItemRepository(config.DB)
+	armorRepo := repository.NewArmorRepository(config.DB)
+	periciaRepo := repository.NewPericiaRepository(config.DB)
+	talentoRepo := repository.NewTalentoRepository(config.DB)
+	spellRepo := repository.NewSpellRepository(config.DB)
+	itemRepo := repository.NewItemRepository(config.DB)
 	classEquipRepo := repository.NewClassEquipmentRepository(config.DB)
-	languageRepo   := repository.NewLanguageRepository(config.DB)
+	languageRepo := repository.NewLanguageRepository(config.DB)
+	campaignRepo := repository.NewCampaignRepository(config.DB)
+	npcRepo := repository.NewNPCRepository(config.DB)
+	enemyRepo := repository.NewEnemyRepository(config.DB)
+	sessionRepo := repository.NewSessionRepository(config.DB)
+	sceneRepo := repository.NewSceneRepository(config.DB)
+	membershipRepo := repository.NewCampaignMembershipRepository(config.DB)
+	chatRepo := repository.NewChatMessageRepository(config.DB)
+	rewardRepo := repository.NewRewardRepository(config.DB)
+	magicItemRepo := repository.NewMagicItemRepository(config.DB)
 
 	_ = backgroundRepo // usado indiretamente via backgroundService
 
 	// Services
-	authService       := service.NewAuthService(userRepo)
-	classService      := service.NewClassService(classRepo)
-	raceService       := service.NewRaceService(raceRepo)
-	skillService      := service.NewSkillService(skillRepo)
-	characterService  := service.NewCharacterService(characterRepo, skillRepo, classRepo, raceRepo, talentoRepo, config.DB)
+	authService := service.NewAuthService(userRepo)
+	classService := service.NewClassService(classRepo)
+	raceService := service.NewRaceService(raceRepo)
+	skillService := service.NewSkillService(skillRepo)
+	characterService := service.NewCharacterService(characterRepo, skillRepo, classRepo, raceRepo, talentoRepo, config.DB)
 	backgroundService := service.NewBackgroundService(config.DB)
-	antecedentSvc     := service.NewAntecedentService(config.DB)
-	armorService      := service.NewArmorService(armorRepo)
-	periciaService    := service.NewPericiaService(periciaRepo, config.DB)
-	talentoService    := service.NewTalentoService(talentoRepo)
-	spellService      := service.NewSpellService(spellRepo)
-	itemService       := service.NewItemService(itemRepo)
-	inventoryService  := service.NewInventoryService(config.DB)
+	antecedentSvc := service.NewAntecedentService(config.DB)
+	armorService := service.NewArmorService(armorRepo)
+	periciaService := service.NewPericiaService(periciaRepo, config.DB)
+	talentoService := service.NewTalentoService(talentoRepo)
+	spellService := service.NewSpellService(spellRepo)
+	itemService := service.NewItemService(itemRepo)
+	inventoryService := service.NewInventoryService(config.DB)
 	classEquipService := service.NewClassEquipmentService(classEquipRepo)
-	languageService   := service.NewLanguageService(languageRepo)
+	languageService := service.NewLanguageService(languageRepo)
+	campaignService := service.NewCampaignService(campaignRepo)
+	npcService := service.NewNPCService(npcRepo)
+	enemyService := service.NewEnemyService(enemyRepo)
+	sessionService := service.NewSessionService(sessionRepo)
+	sceneService := service.NewSceneService(sceneRepo)
+	membershipService := service.NewCampaignMembershipService(membershipRepo, userRepo)
+	chatService := service.NewChatService(chatRepo)
+	magicItemService := service.NewMagicItemService(magicItemRepo)
+	rewardService := service.NewRewardService(rewardRepo, magicItemRepo, inventoryService)
 
 	// Handlers
 	antecedentHandler := handler.NewAntecedentHandler(antecedentSvc)
-	authHandler       := handler.NewAuthHandler(authService)
-	classHandler      := handler.NewClassHandler(classService)
-	raceHandler       := handler.NewRaceHandler(raceService)
-	skillHandler      := handler.NewSkillHandler(skillService)
-	characterHandler  := handler.NewCharacterHandler(characterService, armorService, periciaService, userRepo)
+	authHandler := handler.NewAuthHandler(authService)
+	classHandler := handler.NewClassHandler(classService)
+	raceHandler := handler.NewRaceHandler(raceService)
+	skillHandler := handler.NewSkillHandler(skillService)
+	characterHandler := handler.NewCharacterHandler(characterService, armorService, periciaService, userRepo)
 	backgroundHandler := handler.NewBackgroundHandler(backgroundService)
-	uploadHandler     := handler.NewUploadHandler(characterRepo)
-	armorHandler      := handler.NewArmorHandler(armorService)
-	ollamaHandler     := handler.NewOllamaHandler()
-	periciaHandler    := handler.NewPericiaHandler(periciaService)
-	talentoHandler    := handler.NewTalentoHandler(talentoService)
-	spellHandler      := handler.NewSpellHandler(spellService)
-	itemHandler       := handler.NewItemHandler(itemService)
-	inventoryHandler  := handler.NewInventoryHandler(inventoryService, characterService)
+	uploadHandler := handler.NewUploadHandler(characterRepo)
+	armorHandler := handler.NewArmorHandler(armorService)
+	ollamaHandler := handler.NewOllamaHandler()
+	periciaHandler := handler.NewPericiaHandler(periciaService)
+	talentoHandler := handler.NewTalentoHandler(talentoService)
+	spellHandler := handler.NewSpellHandler(spellService)
+	itemHandler := handler.NewItemHandler(itemService)
+	inventoryHandler := handler.NewInventoryHandler(inventoryService, characterService)
 	classEquipHandler := handler.NewClassEquipmentHandler(classEquipService)
-	languageHandler   := handler.NewLanguageHandler(languageService)
+	languageHandler := handler.NewLanguageHandler(languageService)
+	campaignHandler := handler.NewCampaignHandler(campaignService)
+	npcHandler := handler.NewNPCHandler(npcService, campaignService)
+	wsManager := ws.NewManager()
+	enemyHandler := handler.NewEnemyHandler(enemyService, campaignService, wsManager)
+	sessionHandler := handler.NewSessionHandler(sessionService, campaignService, wsManager)
+	sceneHandler := handler.NewSceneHandler(sceneService, campaignService, sessionService, wsManager)
+	membershipHandler := handler.NewCampaignMembershipHandler(membershipService, campaignService)
+	wsHandler := handler.NewWSHandler(wsManager, authService, campaignService, membershipService)
+	chatHandler := handler.NewChatHandler(chatService, campaignService, membershipService, wsManager)
+	rewardHandler := handler.NewRewardHandler(rewardService, magicItemService, campaignService, membershipService)
 
 	r := gin.Default()
 
@@ -120,10 +149,12 @@ func main() {
 		api.GET("/languages", languageHandler.GetAll)
 		api.GET("/antecedentes", antecedentHandler.GetAll)
 		api.GET("/antecedentes/:id", antecedentHandler.GetByID)
+		api.GET("/dnd/cr-damage-table", handler.CRDamageTableHandler)
+		api.GET("/ws/campaign/:id", wsHandler.JoinCampaign) // token via query param, não Authorization — ver ws_handler.go
 		api.POST("/ai/skills", ollamaHandler.GetSkills)
-		api.PATCH("/characters/:id/add-xp",    characterHandler.AddXP)
+		api.PATCH("/characters/:id/add-xp", characterHandler.AddXP)
 		api.PATCH("/characters/:id/apply-asi", characterHandler.ApplyASI)
-		api.PATCH("/characters/:id/death-save",        characterHandler.DeathSave)
+		api.PATCH("/characters/:id/death-save", characterHandler.DeathSave)
 		api.PATCH("/characters/:id/reset-death-saves", characterHandler.ResetDeathSaves)
 		classes := api.Group("/classes")
 		{
@@ -195,6 +226,72 @@ func main() {
 				characters.POST("/:id/shop/armors/:armor_id", inventoryHandler.PurchaseArmor)
 				characters.PATCH("/:id/currency", inventoryHandler.SetCurrency)
 			}
+
+			campaigns := protected.Group("/campaigns")
+			{
+				campaigns.POST("", campaignHandler.Create)
+				campaigns.GET("", campaignHandler.GetAll)
+				campaigns.GET("/:id", campaignHandler.GetByID)
+				campaigns.PUT("/:id", campaignHandler.Update)
+				campaigns.DELETE("/:id", campaignHandler.Delete)
+
+				campaigns.POST("/:id/npcs", npcHandler.Create)
+				campaigns.GET("/:id/npcs", npcHandler.GetByCampaign)
+
+				campaigns.POST("/:id/enemies", enemyHandler.Create)
+				campaigns.GET("/:id/enemies", enemyHandler.GetByCampaign)
+
+				campaigns.POST("/:id/sessions", sessionHandler.Start)
+				campaigns.GET("/:id/sessions", sessionHandler.GetByCampaign)
+
+				campaigns.POST("/:id/scenes", sceneHandler.Create)
+				campaigns.GET("/:id/scenes", sceneHandler.GetByCampaign)
+
+				campaigns.POST("/:id/invites", membershipHandler.Invite)
+				campaigns.GET("/:id/members", membershipHandler.GetByCampaign)
+
+				campaigns.GET("/:id/chat", chatHandler.GetHistory)
+				campaigns.POST("/:id/chat", chatHandler.Send)
+
+				campaigns.POST("/:id/magic-items", rewardHandler.CreateMagicItem)
+				campaigns.GET("/:id/magic-items", rewardHandler.GetMagicItems)
+				campaigns.GET("/:id/rewards", rewardHandler.GetHistory)
+				campaigns.POST("/:id/rewards/currency", rewardHandler.GrantCurrency)
+				campaigns.POST("/:id/rewards/item", rewardHandler.GrantItem)
+			}
+
+			protected.DELETE("/magic-items/:id", rewardHandler.DeleteMagicItem)
+
+			protected.GET("/users/me/campaign-invites", membershipHandler.GetMyPending)
+			protected.GET("/users/me/campaigns", membershipHandler.GetMyCampaigns)
+			protected.PATCH("/campaign-memberships/:id/respond", membershipHandler.Respond)
+
+			protected.PATCH("/sessions/:id/end", sessionHandler.End)
+			protected.PATCH("/sessions/:id/summary", sessionHandler.UpdateSummary)
+			protected.PATCH("/sessions/:id/active-scene", sceneHandler.SetActiveScene)
+			protected.PATCH("/sessions/:id/music", sessionHandler.SetMusic)
+
+			protected.GET("/scenes/:id", sceneHandler.GetByID)
+			protected.PUT("/scenes/:id", sceneHandler.Update)
+			protected.DELETE("/scenes/:id", sceneHandler.Delete)
+			protected.POST("/scenes/:id/tokens", sceneHandler.CreateToken)
+			protected.PATCH("/tokens/:id/move", sceneHandler.MoveToken)
+			protected.DELETE("/tokens/:id", sceneHandler.DeleteToken)
+
+			protected.PUT("/npcs/:id", npcHandler.Update)
+			protected.DELETE("/npcs/:id", npcHandler.Delete)
+
+			protected.GET("/enemies/:id", enemyHandler.GetByID)
+			protected.PUT("/enemies/:id", enemyHandler.Update)
+			protected.DELETE("/enemies/:id", enemyHandler.Delete)
+			protected.POST("/enemies/:id/abilities", enemyHandler.CreateAbility)
+			protected.PUT("/enemy-abilities/:id", enemyHandler.UpdateAbility)
+			protected.DELETE("/enemy-abilities/:id", enemyHandler.DeleteAbility)
+			protected.POST("/enemies/:id/lines", enemyHandler.CreateLine)
+			protected.PUT("/enemy-lines/:id", enemyHandler.UpdateLine)
+			protected.DELETE("/enemy-lines/:id", enemyHandler.DeleteLine)
+			protected.POST("/enemies/:id/play-sound", enemyHandler.PlaySound)
+			protected.POST("/enemy-lines/:id/play", enemyHandler.PlayLine)
 		}
 	}
 

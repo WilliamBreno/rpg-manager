@@ -65,6 +65,24 @@ func (s *InventoryService) SetCurrency(characterID uint, cp, sp, ep, gp, pp int)
 	return character, s.DB.Save(&character).Error
 }
 
+// GrantCurrency soma as moedas informadas ao que o personagem já tem
+// (diferente de SetCurrency, que define totais absolutos) — usado pelo
+// RewardService quando o mestre dá moeda como recompensa (Etapa 8 do
+// SISTEMA_MESTRE.md). Redenomina o total inteiro pelas moedas de maior valor
+// possível, mesma lógica de "troco" já usada em PurchaseItem/PurchaseArmor.
+func (s *InventoryService) GrantCurrency(characterID uint, cp, sp, ep, gp, pp int) (domain.Character, error) {
+	character, err := s.getCharacter(characterID)
+	if err != nil {
+		return character, err
+	}
+	granted := cp + sp*copperPerSilver + ep*copperPerElectrum + gp*copperPerGold + pp*copperPerPlatinum
+	newTotal := totalCopper(character) + granted
+	ncp, nsp, nep, ngp, npp := copperToPurse(newTotal)
+	character.CopperPieces, character.SilverPieces = ncp, nsp
+	character.ElectrumPieces, character.GoldPieces, character.PlatinumPieces = nep, ngp, npp
+	return character, s.DB.Save(&character).Error
+}
+
 // PurchaseItem — debita o custo (item.CostCopper * quantity) da carteira e
 // credita a quantidade no inventário do personagem.
 func (s *InventoryService) PurchaseItem(characterID, itemID uint, quantity int) (domain.Character, error) {

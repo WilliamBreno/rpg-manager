@@ -118,6 +118,105 @@ export interface Spell {
   description: string
 }
 
+// ── Campaign — mesa do Mestre (Sistema do Mestre, Etapa 1) ─────────────────
+export interface Campaign {
+  ID: number
+  name: string
+  edition: string
+  main_story: string
+  master_id: number
+}
+
+// NPC — Sistema do Mestre, Etapa 2.
+export interface NPC {
+  ID: number
+  campaign_id: number
+  name: string
+  hp: number
+  history: string
+  bonds: string
+  alignment: string
+  personality: string
+  notes: string
+}
+
+export type EnemyKind = 'enemy' | 'boss' | 'villain'
+export type EnemyLineSource = 'upload' | 'tts'
+
+export interface EnemyAbility {
+  ID: number
+  enemy_id: number
+  name: string
+  damage: string
+  description: string
+}
+
+export interface EnemyLine {
+  ID: number
+  enemy_id: number
+  text: string
+  audio_url: string
+  source: EnemyLineSource
+}
+
+// Enemy/Boss/Vilão — mesma tabela, distinguidos por `kind` (Sistema do
+// Mestre, Etapa 2). History/bonds/notes/lines só fazem sentido na prática
+// pra boss/villain, mas o backend aceita em qualquer kind.
+export interface Enemy {
+  ID: number
+  campaign_id: number
+  kind: EnemyKind
+  name: string
+  hp: number
+  challenge_rating: string
+  race: string
+  photo_url: string
+  sound_url: string
+  class: string
+  armor: number
+  abilities: EnemyAbility[]
+  history?: string
+  bonds?: string
+  notes?: string
+  lines?: EnemyLine[]
+}
+
+// Scene (Battleground) / Token — Sistema do Mestre, Etapa 4. Token é só
+// posição decorativa/manual (sem lógica de movimento por turno, ver
+// backend domain.Token).
+export interface SceneToken {
+  ID: number
+  scene_id: number
+  label: string
+  image_url: string
+  x: number
+  y: number
+  enemy_id?: number
+  npc_id?: number
+}
+
+export interface Scene {
+  ID: number
+  campaign_id: number
+  name: string
+  image_url: string
+  tokens?: SceneToken[]
+}
+
+// Linha da tabela "Estatísticas de Monstro por Nível de Desafio" (Guia do
+// Mestre, p.275) — usada só pra mostrar a faixa de dano/rodada sugerida.
+export interface CRDamageStats {
+  cr: string
+  proficiency_bonus: number
+  armor_class: number
+  hp_min: number
+  hp_max: number
+  attack_bonus: number
+  damage_per_round_min: number
+  damage_per_round_max: number
+  save_dc: number
+}
+
 // ── Language — Idioma D&D 5e (catálogo, RAW 2024: não vem da raça) ─────────
 export interface Language {
   ID: number
