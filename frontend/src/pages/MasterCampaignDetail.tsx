@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { campaignService } from '../services/campaignService'
@@ -12,6 +12,7 @@ import { rewardService } from '../services/rewardService'
 import MasterEnemyForm from '../components/MasterEnemyForm'
 import MasterSceneCanvas from '../components/MasterSceneCanvas'
 import DiceRoller from '../components/DiceRoller'
+import FileUploadField from '../components/FileUploadField'
 import type { EnemyInput } from '../services/enemyService'
 import type { EnemyKind } from '../types'
 
@@ -30,6 +31,15 @@ export default function MasterCampaignDetail() {
   const queryClient = useQueryClient()
 
   const [tab, setTab] = useState<'npcs' | 'enemies' | 'sessions' | 'scenes' | 'dice' | 'rewards'>('npcs')
+  const tabBarRef = useRef<HTMLDivElement>(null)
+
+  // Garante que a aba escolhida fique visível mesmo quando a barra de abas
+  // rola horizontalmente no mobile (sem isso, tocar numa aba fora da área
+  // visível troca o conteúdo mas o indicador ativo continua fora de vista).
+  useEffect(() => {
+    tabBarRef.current?.querySelector(`[data-tab="${tab}"]`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
+  }, [tab])
   const [editingSummaryId, setEditingSummaryId] = useState<number | null>(null)
   const [summaryDraft, setSummaryDraft] = useState('')
   const [showSceneForm, setShowSceneForm] = useState(false)
@@ -226,42 +236,48 @@ export default function MasterCampaignDetail() {
       <div className="max-w-4xl mx-auto">
         <button onClick={() => navigate('/campaigns')} className="transition mb-4 block text-sm" style={{ color: 'rgba(201,168,76,0.5)' }}>← Voltar às campanhas</button>
 
-        <div className="flex items-start justify-between gap-3 mb-1">
+        <div className="flex flex-wrap items-start justify-between gap-3 mb-1">
           <h1 className="font-rpg text-2xl sm:text-3xl font-bold" style={{ color: '#c9a84c' }}>{campaign?.name ?? 'Campanha'}</h1>
-          <button onClick={() => navigate(`/campaigns/${campaignId}/room`)} className="btn-rpg-primary px-4 py-2 text-sm whitespace-nowrap">
+          <button onClick={() => navigate(`/campaigns/${campaignId}/room`)} className="btn-rpg-primary px-4 py-2 text-sm whitespace-nowrap flex-shrink-0">
             🔴 Entrar na Sala
           </button>
         </div>
         <p className="text-gray-500 text-sm mb-3">{campaign?.main_story}</p>
 
-        <form onSubmit={e => { e.preventDefault(); invitePlayer.mutate() }} className="flex gap-2 mb-6 max-w-md">
+        <form onSubmit={e => { e.preventDefault(); invitePlayer.mutate() }} className="flex flex-col sm:flex-row gap-2 mb-6 max-w-md">
           <input type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} required
             placeholder="E-mail do jogador a convidar" className="rpg-input text-sm flex-1" />
-          <button type="submit" disabled={invitePlayer.isPending} className="btn-rpg-outline px-3 py-1.5 text-xs whitespace-nowrap">
+          <button type="submit" disabled={invitePlayer.isPending} className="btn-rpg-outline px-3 py-1.5 text-xs whitespace-nowrap flex-shrink-0">
             {invitePlayer.isPending ? 'Enviando...' : 'Convidar'}
           </button>
         </form>
         {inviteMsg && <p className="text-xs text-gray-400 -mt-4 mb-6">{inviteMsg}</p>}
 
-        <div className="flex gap-2 mb-6 border-b border-gray-800">
-          <button onClick={() => setTab('npcs')} className={`px-4 py-2 text-sm font-medium border-b-2 transition ${tab === 'npcs' ? 'border-rpg-gold text-rpg-gold' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>
-            NPCs
-          </button>
-          <button onClick={() => setTab('enemies')} className={`px-4 py-2 text-sm font-medium border-b-2 transition ${tab === 'enemies' ? 'border-rpg-gold text-rpg-gold' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>
-            Inimigos / Boss / Vilão
-          </button>
-          <button onClick={() => setTab('sessions')} className={`px-4 py-2 text-sm font-medium border-b-2 transition ${tab === 'sessions' ? 'border-rpg-gold text-rpg-gold' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>
-            Sessões
-          </button>
-          <button onClick={() => setTab('scenes')} className={`px-4 py-2 text-sm font-medium border-b-2 transition ${tab === 'scenes' ? 'border-rpg-gold text-rpg-gold' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>
-            Cenários
-          </button>
-          <button onClick={() => setTab('dice')} className={`px-4 py-2 text-sm font-medium border-b-2 transition ${tab === 'dice' ? 'border-rpg-gold text-rpg-gold' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>
-            Dados
-          </button>
-          <button onClick={() => setTab('rewards')} className={`px-4 py-2 text-sm font-medium border-b-2 transition ${tab === 'rewards' ? 'border-rpg-gold text-rpg-gold' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>
-            Recompensas
-          </button>
+        <div className="relative mb-6">
+          <div ref={tabBarRef} className="flex gap-2 border-b border-gray-800 overflow-x-auto no-scrollbar">
+            <button data-tab="npcs" onClick={() => setTab('npcs')} className={`flex-shrink-0 px-4 py-2 text-sm font-medium border-b-2 transition whitespace-nowrap ${tab === 'npcs' ? 'border-rpg-gold text-rpg-gold' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>
+              NPCs
+            </button>
+            <button data-tab="enemies" onClick={() => setTab('enemies')} className={`flex-shrink-0 px-4 py-2 text-sm font-medium border-b-2 transition whitespace-nowrap ${tab === 'enemies' ? 'border-rpg-gold text-rpg-gold' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>
+              Inimigos / Boss / Vilão
+            </button>
+            <button data-tab="sessions" onClick={() => setTab('sessions')} className={`flex-shrink-0 px-4 py-2 text-sm font-medium border-b-2 transition whitespace-nowrap ${tab === 'sessions' ? 'border-rpg-gold text-rpg-gold' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>
+              Sessões
+            </button>
+            <button data-tab="scenes" onClick={() => setTab('scenes')} className={`flex-shrink-0 px-4 py-2 text-sm font-medium border-b-2 transition whitespace-nowrap ${tab === 'scenes' ? 'border-rpg-gold text-rpg-gold' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>
+              Cenários
+            </button>
+            <button data-tab="dice" onClick={() => setTab('dice')} className={`flex-shrink-0 px-4 py-2 text-sm font-medium border-b-2 transition whitespace-nowrap ${tab === 'dice' ? 'border-rpg-gold text-rpg-gold' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>
+              Dados
+            </button>
+            <button data-tab="rewards" onClick={() => setTab('rewards')} className={`flex-shrink-0 px-4 py-2 text-sm font-medium border-b-2 transition whitespace-nowrap ${tab === 'rewards' ? 'border-rpg-gold text-rpg-gold' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>
+              Recompensas
+            </button>
+          </div>
+          {/* Dica visual de que a barra rola horizontalmente no mobile — sem
+              isso o corte abrupto no fim das abas parece um problema de
+              layout em vez de "arraste pra ver mais". */}
+          <div className="md:hidden pointer-events-none absolute right-0 top-0 bottom-[2px] w-8 bg-gradient-to-l from-gray-900 to-transparent" />
         </div>
 
         {tab === 'npcs' && (
@@ -392,18 +408,15 @@ export default function MasterCampaignDetail() {
             </div>
 
             {activeSession && (
-              <form onSubmit={e => {
-                e.preventDefault()
-                sessionService.setMusic(activeSession.ID, musicUrl, true)
-              }} className="rpg-card p-4 mb-4 flex gap-2 items-end">
-                <div className="flex-1">
-                  <label className="text-gray-500 text-xs mb-1 block uppercase tracking-wider">Música de fundo (Etapa 9)</label>
-                  <input value={musicUrl} onChange={e => setMusicUrl(e.target.value)} placeholder="URL do áudio (upload em breve)" className="rpg-input text-sm" />
+              <div className="rpg-card p-4 mb-4 flex flex-col gap-3">
+                <FileUploadField label="Música de fundo" kind="audio" value={musicUrl} onChange={setMusicUrl} />
+                <div className="flex gap-2">
+                  <button type="button" disabled={!musicUrl} onClick={() => sessionService.setMusic(activeSession.ID, musicUrl, true)}
+                    className="btn-rpg-primary px-3 py-1.5 text-xs disabled:opacity-40">▶ Tocar pros jogadores</button>
+                  <button type="button" onClick={() => sessionService.setMusic(activeSession.ID, '', false)}
+                    className="text-xs px-3 py-1.5 rounded-lg border border-gray-700 text-gray-400 hover:bg-gray-800 transition">⏹ Parar</button>
                 </div>
-                <button type="submit" className="btn-rpg-primary px-3 py-1.5 text-xs">▶ Tocar</button>
-                <button type="button" onClick={() => sessionService.setMusic(activeSession.ID, '', false)}
-                  className="text-xs px-3 py-1.5 rounded-lg border border-gray-700 text-gray-400 hover:bg-gray-800 transition">⏹ Parar</button>
-              </form>
+              </div>
             )}
 
             {loadingSessions && <p className="text-gray-500 text-sm">Carregando...</p>}
@@ -465,7 +478,7 @@ export default function MasterCampaignDetail() {
             {showSceneForm && (
               <form onSubmit={e => { e.preventDefault(); createScene.mutate() }} className="rpg-card p-5 mb-6 flex flex-col gap-3">
                 <input value={sceneName} onChange={e => setSceneName(e.target.value)} required placeholder="Nome do cenário" className="rpg-input" />
-                <input value={sceneImageUrl} onChange={e => setSceneImageUrl(e.target.value)} placeholder="URL da imagem de fundo (upload em breve)" className="rpg-input" />
+                <FileUploadField label="Imagem de fundo" kind="image" value={sceneImageUrl} onChange={setSceneImageUrl} />
                 <button type="submit" disabled={createScene.isPending} className="btn-rpg-primary py-2 text-sm">
                   {createScene.isPending ? 'Criando...' : 'Criar Cenário'}
                 </button>
@@ -497,11 +510,11 @@ export default function MasterCampaignDetail() {
 
             {openScene && (
               <div>
-                <div className="flex items-center gap-2 mb-3">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-3">
                   <h3 className="text-white font-semibold">{openScene.name}</h3>
-                  <form onSubmit={e => { e.preventDefault(); addToken.mutate() }} className="flex gap-2 ml-auto">
-                    <input value={tokenLabel} onChange={e => setTokenLabel(e.target.value)} placeholder="Nome do token" className="rpg-input text-sm py-1" />
-                    <button type="submit" disabled={!tokenLabel || addToken.isPending} className="btn-rpg-primary px-3 py-1 text-xs">+ Token</button>
+                  <form onSubmit={e => { e.preventDefault(); addToken.mutate() }} className="flex gap-2 sm:ml-auto">
+                    <input value={tokenLabel} onChange={e => setTokenLabel(e.target.value)} placeholder="Nome do token" className="rpg-input text-sm py-1 flex-1 sm:flex-none" />
+                    <button type="submit" disabled={!tokenLabel || addToken.isPending} className="btn-rpg-primary px-3 py-1 text-xs flex-shrink-0">+ Token</button>
                   </form>
                 </div>
                 <MasterSceneCanvas
@@ -558,7 +571,7 @@ export default function MasterCampaignDetail() {
             </div>
             {rewardMsg && <p className="text-xs text-gray-400 mb-6">{rewardMsg}</p>}
 
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
               <h3 className="text-white font-semibold text-sm uppercase tracking-wider">Catálogo de Itens Mágicos</h3>
               <button onClick={() => setShowItemForm(v => !v)} className="btn-rpg-outline px-3 py-1 text-xs">
                 {showItemForm ? 'Cancelar' : '+ Novo Item'}
@@ -574,12 +587,12 @@ export default function MasterCampaignDetail() {
             )}
             <div className="flex flex-col gap-2 mb-8">
               {(magicItems ?? []).map(mi => (
-                <div key={mi.ID} className="rpg-card p-3 flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-white text-sm font-semibold">{mi.name}</p>
+                <div key={mi.ID} className="rpg-card p-3 flex flex-wrap items-center justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-white text-sm font-semibold truncate">{mi.name}</p>
                     <p className="text-gray-500 text-xs">{mi.effect}</p>
                   </div>
-                  <button onClick={() => deleteMagicItem.mutate(mi.ID)} className="text-xs text-red-400 hover:underline">Excluir</button>
+                  <button onClick={() => deleteMagicItem.mutate(mi.ID)} className="text-xs text-red-400 hover:underline flex-shrink-0">Excluir</button>
                 </div>
               ))}
             </div>

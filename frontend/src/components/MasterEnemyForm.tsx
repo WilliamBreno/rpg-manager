@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { enemyService, type EnemyAbilityInput, type EnemyInput, type EnemyLineInput } from '../services/enemyService'
+import FileUploadField from './FileUploadField'
 import type { EnemyKind } from '../types'
 
 const KIND_LABEL: Record<EnemyKind, string> = { enemy: 'Inimigo', boss: 'Boss', villain: 'Vilão' }
@@ -120,14 +121,8 @@ export default function MasterEnemyForm({
           </datalist>
           <p className="text-gray-600 text-xs mt-1">Opcional — usado só pra sugerir faixa de dano.</p>
         </div>
-        <div>
-          <label className="text-gray-500 text-xs mb-1 block uppercase tracking-wider">URL da Foto</label>
-          <input value={photoUrl} onChange={e => setPhotoUrl(e.target.value)} className="rpg-input" placeholder="cole uma URL (upload em breve)" />
-        </div>
-        <div>
-          <label className="text-gray-500 text-xs mb-1 block uppercase tracking-wider">URL do Som</label>
-          <input value={soundUrl} onChange={e => setSoundUrl(e.target.value)} className="rpg-input" placeholder="cole uma URL (upload em breve)" />
-        </div>
+        <FileUploadField label="Foto" kind="image" value={photoUrl} onChange={setPhotoUrl} />
+        <FileUploadField label="Som" kind="audio" value={soundUrl} onChange={setSoundUrl} />
       </div>
 
       {isBossOrVillain && (
@@ -181,16 +176,17 @@ export default function MasterEnemyForm({
           </div>
           <div className="flex flex-col gap-2">
             {lines.map((l, i) => (
-              <div key={i} className="flex flex-col sm:flex-row gap-2 bg-gray-800/40 p-2 rounded-lg">
-                <input value={l.text} onChange={e => updateLine(i, 'text', e.target.value)}
-                  placeholder="Texto da fala" className="rpg-input flex-1" />
-                <select value={l.source} onChange={e => updateLine(i, 'source', e.target.value)} className="rpg-input">
-                  <option value="upload">Áudio enviado</option>
-                  <option value="tts">Gerado por TTS</option>
-                </select>
-                <input value={l.audio_url} onChange={e => updateLine(i, 'audio_url', e.target.value)}
-                  placeholder="URL do áudio (upload/TTS em breve)" className="rpg-input flex-1" />
-                <button type="button" onClick={() => removeLine(i)} className="text-red-400 text-xs px-2 self-start">Remover</button>
+              <div key={i} className="flex flex-col gap-2 bg-gray-800/40 p-3 rounded-lg">
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input value={l.text} onChange={e => updateLine(i, 'text', e.target.value)}
+                    placeholder="Texto da fala" className="rpg-input flex-1" />
+                  <select value={l.source} onChange={e => updateLine(i, 'source', e.target.value)} className="rpg-input sm:w-44">
+                    <option value="upload">Áudio enviado</option>
+                    <option value="tts">Gerado por TTS</option>
+                  </select>
+                  <button type="button" onClick={() => removeLine(i)} className="text-red-400 text-xs px-2 flex-shrink-0 self-center">Remover</button>
+                </div>
+                <FileUploadField label="Áudio da fala" kind="audio" value={l.audio_url} onChange={v => updateLine(i, 'audio_url', v)} />
               </div>
             ))}
           </div>

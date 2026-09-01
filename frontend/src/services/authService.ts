@@ -26,4 +26,8 @@ export const authService = {
   markWelcomeSeen: async (): Promise<void> => {
     await api.patch('/users/me/welcome-seen')
   },
+
+  markMasterWelcomeSeen: async (): Promise<void> => {
+    await api.patch('/users/me/master-welcome-seen')
+  },
 }

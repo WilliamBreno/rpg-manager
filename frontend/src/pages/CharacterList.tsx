@@ -20,6 +20,7 @@ export default function CharacterList() {
   const { user, logout, markWelcomeSeen } = useAuthStore()
   const [showWelcome, setShowWelcome] = useState(() => user ? !user.welcome_seen : false)
   const [search, setSearch] = useState('')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const { data: characters, isLoading, error } = useQuery({
     queryKey: ['characters'],
@@ -47,24 +48,75 @@ export default function CharacterList() {
     navigate('/login')
   }
 
+  const navItems = [...NAV_ITEMS, ...(user?.role === 'master' ? [MASTER_NAV_ITEM] : [])]
+
+  const goTo = (path: string) => {
+    setSidebarOpen(false)
+    navigate(path)
+  }
+
   return (
     <div className="min-h-screen bg-gray-900 flex">
       {showWelcome && <WelcomeModal onClose={dismissWelcome} />}
 
-      {/* ── Sidebar ──────────────────────────────────────────────────────── */}
-      <aside className="hidden md:flex w-60 flex-shrink-0 flex-col bg-gray-950 border-r border-gray-800 py-6 px-4">
-        <div className="flex items-center gap-2 px-2 mb-8">
-          <span className="text-2xl">🎲</span>
-          <span className="font-rpg font-bold text-lg" style={{ color: '#c9a84c' }}>RPG Manager</span>
+      {/* ── Barra superior mobile (só < md) ─────────────────────────────── */}
+      <div className="md:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between px-4 py-3 bg-gray-950 border-b border-gray-800">
+        <div className="flex items-center gap-2">
+          <span className="text-xl">🎲</span>
+          <span className="font-rpg font-bold" style={{ color: '#c9a84c' }}>RPG Manager</span>
+        </div>
+        <button
+          onClick={() => setSidebarOpen(true)}
+          aria-label="Abrir menu"
+          className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-300 hover:bg-gray-800 transition"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      {/* ── Backdrop do menu retrátil (só mobile, só quando aberto) ─────── */}
+      {sidebarOpen && (
+        <div
+          className="md:hidden fixed inset-0 bg-black/60 z-40"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* ── Sidebar: fixa no desktop, gaveta retrátil no mobile ─────────── */}
+      <aside
+        className={`fixed md:static inset-y-0 left-0 z-50 w-64 md:w-60 flex-shrink-0 flex flex-col bg-gray-950 border-r border-gray-800 py-6 px-4
+          transform transition-transform duration-300 ease-in-out md:translate-x-0
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+      >
+        <div className="flex items-center justify-between gap-2 px-2 mb-8">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">🎲</span>
+            <span className="font-rpg font-bold text-lg" style={{ color: '#c9a84c' }}>RPG Manager</span>
+          </div>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Fechar menu"
+            className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-800 hover:text-gray-200 transition"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
         </div>
 
         <nav className="flex-1 flex flex-col gap-1">
-          {[...NAV_ITEMS, ...(user?.role === 'master' ? [MASTER_NAV_ITEM] : [])].map(item => {
+          {navItems.map(item => {
             const active = item.path === '/characters'
             return (
               <button
                 key={item.path}
-                onClick={() => navigate(item.path)}
+                onClick={() => goTo(item.path)}
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition text-left ${
                   active ? 'bg-rpg-gold-muted text-rpg-gold' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'
                 }`}
@@ -90,7 +142,7 @@ export default function CharacterList() {
       </aside>
 
       {/* ── Conteúdo principal ───────────────────────────────────────────── */}
-      <div className="flex-1 px-4 py-6 sm:px-8 sm:py-8">
+      <div className="flex-1 px-4 py-6 sm:px-8 sm:py-8 pt-20 md:pt-6">
         <div className="max-w-5xl mx-auto">
 
           <div className="flex flex-col lg:flex-row gap-6">

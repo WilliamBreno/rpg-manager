@@ -178,6 +178,8 @@ func main() {
 		protected.Use(middleware.AuthMiddleware(authService))
 		{
 			protected.PATCH("/users/me/welcome-seen", authHandler.MarkWelcomeSeen)
+			protected.PATCH("/users/me/master-welcome-seen", authHandler.MarkMasterWelcomeSeen)
+			protected.POST("/uploads/file", uploadHandler.UploadFile)
 
 			protected.POST("/classes", classHandler.Create)
 			protected.PUT("/classes/:id", classHandler.Update)

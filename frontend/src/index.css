@@ -194,6 +194,14 @@ body {
   }
   .rpg-select option { background: #1a1a1a; color: #f4f4f5; }
 
+  /* ── Esconde a barra de rolagem visualmente sem desativar o scroll — usado
+     em barras de abas horizontais no mobile (overflow-x-auto) ── */
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+
   /* ── Step header ── */
   .rpg-step-header {
     @apply text-base font-semibold mb-3;

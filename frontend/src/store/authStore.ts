@@ -6,6 +6,7 @@ interface User {
   email: string
   role: 'player' | 'master'
   welcome_seen: boolean
+  master_welcome_seen: boolean
 }
 
 interface AuthStore {
@@ -15,6 +16,7 @@ interface AuthStore {
   logout: () => void
   isAuthenticated: () => boolean
   markWelcomeSeen: () => void
+  markMasterWelcomeSeen: () => void
 }
 
 export const useAuthStore = create<AuthStore>((set, get) => ({
@@ -41,6 +43,15 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     const current = get().user
     if (!current) return
     const updated = { ...current, welcome_seen: true }
+    localStorage.setItem('user', JSON.stringify(updated))
+    set({ user: updated })
+  },
+
+  // Mesma ideia de markWelcomeSeen, pra tela de boas-vindas específica de Mestre.
+  markMasterWelcomeSeen: () => {
+    const current = get().user
+    if (!current) return
+    const updated = { ...current, master_welcome_seen: true }
     localStorage.setItem('user', JSON.stringify(updated))
     set({ user: updated })
   },

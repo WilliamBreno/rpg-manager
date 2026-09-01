@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Stage, Layer, Image as KonvaImage, Text, Rect, Group } from 'react-konva'
 import useImage from 'use-image'
 import type { Scene, SceneToken } from '../types'
@@ -33,6 +33,12 @@ function TokenNode({ token, onMove, onDelete, readOnly }: { token: SceneToken; o
 // cima — Sistema do Mestre, Etapa 4. Só posição/arrastar, sem lógica de
 // movimento por turno (limite de escopo já combinado). Dê um duplo-clique
 // num token pra removê-lo.
+//
+// Responsivo via escala do próprio Stage do Konva (não CSS transform): o
+// Konva já converte a posição do ponteiro pelo fator de escala do Stage
+// internamente, então x/y de cada token continuam no espaço de coordenadas
+// original (800x500) independente da tela — não precisa reescalar nada ao
+// salvar/ler a posição.
 export default function MasterSceneCanvas({
   scene,
   onMoveToken,
@@ -46,8 +52,23 @@ export default function MasterSceneCanvas({
 }) {
   const [bgImage] = useImage(scene.image_url || '')
   const [tokens, setTokens] = useState<SceneToken[]>(scene.tokens ?? [])
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [scale, setScale] = useState(1)
 
   useEffect(() => { setTokens(scene.tokens ?? []) }, [scene.tokens, scene.ID])
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const updateScale = () => {
+      const width = el.offsetWidth
+      if (width > 0) setScale(Math.min(1, width / CANVAS_WIDTH))
+    }
+    updateScale()
+    const observer = new ResizeObserver(updateScale)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
 
   const handleMove = (tokenId: number, x: number, y: number) => {
     setTokens(prev => prev.map(t => (t.ID === tokenId ? { ...t, x, y } : t)))
@@ -55,8 +76,8 @@ export default function MasterSceneCanvas({
   }
 
   return (
-    <div className="rounded-xl overflow-hidden border border-gray-800 inline-block bg-gray-950">
-      <Stage width={CANVAS_WIDTH} height={CANVAS_HEIGHT}>
+    <div ref={containerRef} className="rounded-xl overflow-hidden border border-gray-800 bg-gray-950 w-full max-w-full" style={{ maxWidth: CANVAS_WIDTH }}>
+      <Stage width={CANVAS_WIDTH * scale} height={CANVAS_HEIGHT * scale} scaleX={scale} scaleY={scale}>
         <Layer>
           {bgImage ? (
             <KonvaImage image={bgImage} width={CANVAS_WIDTH} height={CANVAS_HEIGHT} />

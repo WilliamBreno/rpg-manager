@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c ' *)",
+      "Bash(go build *)",
+      "Bash(go vet *)",
+      "Bash(awk '/func seedDruidaSkillsPoderPrimitivo/,/^}$/' internal/seed/seed_poder_primitivo.go)",
+      "Bash(gofmt -l ./internal/seed/seed_poder_marcial.go)",
+      "Bash(gofmt -w ./internal/seed/seed_poder_marcial.go)",
+      "Bash(awk '/func seedLadinoSkillsPoderMarcial/,/^func seedPatrulheiroSkillsPoderMarcial/' internal/seed/seed_poder_marcial.go)",
+      "Bash(python3)",
+      "Bash(awk '/^func seedGuardiaoSkillsPoderPrimitivo/,0' internal/seed/seed_poder_primitivo.go)",
+      "Bash(python3 -c ' *)"
+    ]
+  }
+}

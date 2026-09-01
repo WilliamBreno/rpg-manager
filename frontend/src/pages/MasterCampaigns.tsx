@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { campaignService } from '../services/campaignService'
+import { authService } from '../services/authService'
 import { useAuthStore } from '../store/authStore'
+import MasterWelcomeModal from '../components/MasterWelcomeModal'
 import type { Campaign } from '../types'
 
 // Sistema do Mestre — Etapa 1 (CRUD de campanha). Edição fixa em 5e por
@@ -11,8 +13,9 @@ import type { Campaign } from '../types'
 export default function MasterCampaigns() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const user = useAuthStore(s => s.user)
+  const { user, markMasterWelcomeSeen } = useAuthStore()
 
+  const [showWelcome, setShowWelcome] = useState(() => user ? user.role === 'master' && !user.master_welcome_seen : false)
   const [showCreate, setShowCreate] = useState(false)
   const [name, setName] = useState('')
   const [mainStory, setMainStory] = useState('')
@@ -51,6 +54,14 @@ export default function MasterCampaigns() {
     setEditingId(c.ID); setEditName(c.name); setEditStory(c.main_story)
   }
 
+  const dismissWelcome = () => {
+    setShowWelcome(false)
+    markMasterWelcomeSeen()
+    authService.markMasterWelcomeSeen().catch(() => {
+      // Falha silenciosa: pior caso é a tela aparecer de novo, não é crítico.
+    })
+  }
+
   if (user && user.role !== 'master') {
     return (
       <div className="min-h-screen bg-gray-900 px-4 py-8 flex items-center justify-center">
@@ -66,15 +77,18 @@ export default function MasterCampaigns() {
 
   return (
     <div className="min-h-screen bg-gray-900 px-4 py-6 sm:px-8 sm:py-8">
+      {showWelcome && (
+        <MasterWelcomeModal onClose={dismissWelcome} onCreateCampaign={() => setShowCreate(true)} />
+      )}
       <div className="max-w-3xl mx-auto">
         <button onClick={() => navigate('/characters')} className="transition mb-6 block text-sm"
           style={{ color: 'rgba(201,168,76,0.5)' }}>← Voltar</button>
 
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
           <h1 className="font-rpg text-2xl sm:text-3xl font-bold" style={{ color: '#c9a84c' }}>
             Minhas Campanhas
           </h1>
-          <button onClick={() => setShowCreate(v => !v)} className="btn-rpg-primary px-4 py-2 text-sm">
+          <button onClick={() => setShowCreate(v => !v)} className="btn-rpg-primary px-4 py-2 text-sm w-full sm:w-auto">
             {showCreate ? 'Cancelar' : '+ Nova Campanha'}
           </button>
         </div>

@@ -35,12 +35,12 @@ export default function PlayerInvites() {
 
         <div className="flex flex-col gap-3">
           {(pending ?? []).map(inv => (
-            <div key={inv.ID} className="rpg-card p-4 flex items-center justify-between gap-3">
-              <div>
-                <p className="text-white font-semibold">{inv.campaign?.name ?? `Campanha #${inv.campaign_id}`}</p>
+            <div key={inv.ID} className="rpg-card p-4 flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="text-white font-semibold truncate">{inv.campaign?.name ?? `Campanha #${inv.campaign_id}`}</p>
                 <p className="text-gray-500 text-xs">Convite de mesa recebido</p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-shrink-0">
                 <button onClick={() => respond.mutate({ id: inv.ID, accept: true })} disabled={respond.isPending}
                   className="btn-rpg-primary px-3 py-1.5 text-xs">Aceitar</button>
                 <button onClick={() => respond.mutate({ id: inv.ID, accept: false })} disabled={respond.isPending}
@@ -55,9 +55,9 @@ export default function PlayerInvites() {
             <h2 className="font-rpg text-lg font-bold mt-8 mb-3" style={{ color: '#c9a84c' }}>Minhas Mesas</h2>
             <div className="flex flex-col gap-3">
               {(myCampaigns ?? []).map(m => (
-                <div key={m.ID} className="rpg-card p-4 flex items-center justify-between gap-3">
-                  <p className="text-white font-semibold">{m.campaign?.name ?? `Campanha #${m.campaign_id}`}</p>
-                  <button onClick={() => navigate(`/campaigns/${m.campaign_id}/room`)} className="btn-rpg-primary px-3 py-1.5 text-xs">
+                <div key={m.ID} className="rpg-card p-4 flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-white font-semibold min-w-0 flex-1 truncate">{m.campaign?.name ?? `Campanha #${m.campaign_id}`}</p>
+                  <button onClick={() => navigate(`/campaigns/${m.campaign_id}/room`)} className="btn-rpg-primary px-3 py-1.5 text-xs flex-shrink-0">
                     🔴 Entrar na Sala
                   </button>
                 </div>
