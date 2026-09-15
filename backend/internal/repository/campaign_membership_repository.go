@@ -18,7 +18,8 @@ func (r *CampaignMembershipRepository) Create(m *domain.CampaignMembership) erro
 
 func (r *CampaignMembershipRepository) FindByCampaign(campaignID uint) ([]domain.CampaignMembership, error) {
 	var memberships []domain.CampaignMembership
-	err := r.DB.Preload("User").Preload("Character").Where("campaign_id = ?", campaignID).Find(&memberships).Error
+	err := r.DB.Preload("User").Preload("Character").Preload("Character.Class").Preload("Character.Race").
+		Where("campaign_id = ?", campaignID).Find(&memberships).Error
 	return memberships, err
 }
 

@@ -46,4 +46,13 @@ type Skill struct {
 	ChoiceGroup    string `json:"choice_group"`
 
 	IsRaceFeature  bool   `json:"is_race_feature"`
+
+	// IsLegacy: só tem sentido pra edição 5e — marca uma característica
+	// (hoje só as 4 Escolas de Magia do Mago que faltam no PHB 2024:
+	// Convocador/Encantador/Necromante/Transmutador) como importada do PHB
+	// 2014 por não ter sido reimpressa em 2024, seguindo a mesma convenção
+	// já usada em Antecedent.IsLegacy — ver auditoria de mistura 2014/2024
+	// no CLAUDE.md. false (o padrão) significa "sourced do PHB 2024" (ou
+	// não se aplica, pra 4e).
+	IsLegacy bool `json:"is_legacy"`
 }

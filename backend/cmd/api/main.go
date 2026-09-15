@@ -48,6 +48,7 @@ func main() {
 	chatRepo := repository.NewChatMessageRepository(config.DB)
 	rewardRepo := repository.NewRewardRepository(config.DB)
 	magicItemRepo := repository.NewMagicItemRepository(config.DB)
+	ritualRepo := repository.NewRitualRepository(config.DB)
 
 	_ = backgroundRepo // usado indiretamente via backgroundService
 
@@ -72,10 +73,11 @@ func main() {
 	enemyService := service.NewEnemyService(enemyRepo)
 	sessionService := service.NewSessionService(sessionRepo)
 	sceneService := service.NewSceneService(sceneRepo)
-	membershipService := service.NewCampaignMembershipService(membershipRepo, userRepo)
+	membershipService := service.NewCampaignMembershipService(membershipRepo, userRepo, characterRepo)
 	chatService := service.NewChatService(chatRepo)
 	magicItemService := service.NewMagicItemService(magicItemRepo)
 	rewardService := service.NewRewardService(rewardRepo, magicItemRepo, inventoryService)
+	ritualService := service.NewRitualService(ritualRepo, characterRepo, config.DB)
 
 	// Handlers
 	antecedentHandler := handler.NewAntecedentHandler(antecedentSvc)
@@ -105,6 +107,7 @@ func main() {
 	wsHandler := handler.NewWSHandler(wsManager, authService, campaignService, membershipService)
 	chatHandler := handler.NewChatHandler(chatService, campaignService, membershipService, wsManager)
 	rewardHandler := handler.NewRewardHandler(rewardService, magicItemService, campaignService, membershipService)
+	ritualHandler := handler.NewRitualHandler(ritualService)
 
 	r := gin.Default()
 
@@ -147,6 +150,7 @@ func main() {
 		api.GET("/talentos", talentoHandler.GetAll)
 		api.GET("/spells", spellHandler.GetAll)
 		api.GET("/languages", languageHandler.GetAll)
+		api.GET("/rituals", ritualHandler.GetAll)
 		api.GET("/antecedentes", antecedentHandler.GetAll)
 		api.GET("/antecedentes/:id", antecedentHandler.GetByID)
 		api.GET("/dnd/cr-damage-table", handler.CRDamageTableHandler)
@@ -223,6 +227,10 @@ func main() {
 				characters.GET("/:id/languages", languageHandler.GetByCharacter)
 				characters.POST("/:id/languages/:language_id", languageHandler.Add)
 				characters.DELETE("/:id/languages/:language_id", languageHandler.Remove)
+				characters.GET("/:id/rituals", ritualHandler.GetByCharacter)
+				characters.GET("/:id/rituals/access", ritualHandler.GetAccess)
+				characters.POST("/:id/rituals/:ritual_id", ritualHandler.Add)
+				characters.DELETE("/:id/rituals/:ritual_id", ritualHandler.Remove)
 				characters.GET("/:id/inventory", inventoryHandler.GetInventory)
 				characters.POST("/:id/shop/items/:item_id", inventoryHandler.PurchaseItem)
 				characters.POST("/:id/shop/armors/:armor_id", inventoryHandler.PurchaseArmor)

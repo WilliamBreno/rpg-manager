@@ -58,6 +58,7 @@ export interface Skill {
   requires_choice?: boolean
   choice_group?: string
   is_race_feature: boolean
+  is_legacy?: boolean // 5e: característica importada do PHB 2014 (não reimpressa em 2024)
 }
 
 // ── Perícia ─────────────────────────────────────────────────────────────────
@@ -116,6 +117,32 @@ export interface Spell {
   concentration: boolean
   classes: string // JSON: '{"Mago":3,"Feiticeiro":3}' — classe -> círculo em que a aprende
   description: string
+}
+
+// ── Ritual (D&D 4e, Livro do Jogador 1 cap. 10 + Livro do Jogador 2 cap. 3) ─
+export interface Ritual {
+  ID: number
+  name: string
+  edition: string // sempre "4e"
+  level: number // nível do ritual, não o nível do personagem
+  category: string
+  key_skill: string
+  component_cost: string
+  market_price: string
+  prerequisite: string // nome da classe exigida, "" se não houver
+  source_book: string
+  description: string
+}
+
+export interface RitualAccessInfo {
+  has_ritual_casting: boolean
+  class_name: string
+  known: Ritual[]
+  total_slots: number
+  remaining_choices: number
+  required_prerequisite_class?: string
+  restricted_options?: string[]
+  available_rituals: Ritual[]
 }
 
 // ── Campaign — mesa do Mestre (Sistema do Mestre, Etapa 1) ─────────────────

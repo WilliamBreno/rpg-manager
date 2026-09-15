@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { characterService } from '../services/characterService'
 import { periciaService } from '../services/periciaService'
 import { talentoService } from '../services/talentoService'
+import { ritualService } from '../services/ritualService'
 import BackgroundForm from '../components/BackgroundForm'
 import AvatarUpload from '../components/AvatarUpload'
 import HPManager from '../components/HPManager'
@@ -160,6 +161,23 @@ export default function CharacterDetail() {
     queryFn: () => talentoService.getAll('5e'),
     enabled: showASIModal && character?.edition === '5e',
     staleTime: Infinity,
+  })
+
+  // ── Rituais (Conjuração Ritual, 4e) ─────────────────────────────────────
+  // GetAccess já resolve "quais tem automaticamente" (concedendo os fixos
+  // que faltarem, idempotente) e "quantos ainda pode escolher" — inclusive
+  // o crescimento por nível do Mago (5º/11º/15º/21º/25º), que a criação não
+  // cobre porque a criação é sempre nível 1. Não gated por classe aqui — o
+  // backend já responde has_ritual_casting:false pra quem não tem a
+  // característica, sem custo extra relevante.
+  const { data: ritualAccess } = useQuery({
+    queryKey: ['ritual-access', id],
+    queryFn: () => ritualService.getAccess(Number(id)),
+    enabled: character?.edition === '4e',
+  })
+  const addRitualMutation = useMutation({
+    mutationFn: (ritualId: number) => ritualService.add(Number(id), ritualId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['ritual-access', id] }),
   })
 
   // ── Mutations ────────────────────────────────────────────────────────────
@@ -835,6 +853,51 @@ export default function CharacterDetail() {
           </div>
         )}
 
+        {/* ── Rituais (Conjuração Ritual, 4e) ─────────────────────────────── */}
+        {is4e && ritualAccess?.has_ritual_casting && (
+          <div className="bg-gray-800 rounded-xl p-4 sm:p-6 mb-4 border border-gray-700">
+            <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
+              <h2 className="text-sm font-semibold uppercase tracking-widest" style={{ color: 'rgba(201,168,76,0.7)' }}>
+                📜 Rituais
+              </h2>
+              <span className="text-xs text-gray-500 bg-gray-700/60 px-3 py-1 rounded-full">
+                {ritualAccess.known.length} / {ritualAccess.total_slots} conhecidos
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-2 mb-4">
+              {ritualAccess.known.map(r => (
+                <span key={r.ID} className="text-xs px-2 py-1 rounded-full bg-teal-900/60 text-teal-300 border border-teal-700/40">
+                  {r.name} <span className="text-teal-400/60">· {r.category} · Nv{r.level}</span>
+                </span>
+              ))}
+              {ritualAccess.known.length === 0 && (
+                <p className="text-gray-500 text-xs">Nenhum ritual conhecido ainda.</p>
+              )}
+            </div>
+            {ritualAccess.remaining_choices > 0 && (
+              <div className="rounded-lg p-3" style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)' }}>
+                <p className="text-xs font-semibold mb-2" style={{ color: '#c9a84c' }}>
+                  Ainda pode escolher {ritualAccess.remaining_choices} ritual(is)
+                  {ritualAccess.required_prerequisite_class && ` (pelo menos um com pré-requisito ${ritualAccess.required_prerequisite_class})`}
+                  {ritualAccess.restricted_options && ` (um deles deve ser ${ritualAccess.restricted_options.join(' ou ')})`}:
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {ritualAccess.available_rituals.map(r => (
+                    <button key={r.ID} type="button" disabled={addRitualMutation.isPending}
+                      onClick={() => addRitualMutation.mutate(r.ID)}
+                      className="text-left rounded-lg p-2.5 border text-xs transition bg-gray-900/60 border-gray-700 hover:border-teal-600/60 disabled:opacity-40"
+                    >
+                      <span className="font-semibold text-gray-200">{r.name}</span>
+                      <span className="text-gray-500"> — {r.category} · Nv{r.level}</span>
+                      {r.prerequisite && <span className="ml-1 text-purple-400">Pré-req: {r.prerequisite}</span>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* ── Idiomas (5e) — RAW 2024: não vem da raça, é escolha livre na criação */}
         {is5e && (character.languages ?? []).length > 0 && (
           <div className="bg-gray-800 rounded-xl p-4 sm:p-6 mb-4 border border-gray-700">
@@ -908,8 +971,12 @@ export default function CharacterDetail() {
         {/* ── Antecedente 5e ──────────────────────────────────────────────── */}
         {is5e && bg5e && (
           <div className="bg-gray-800 rounded-xl p-4 sm:p-6 mb-4 border border-gray-700">
-            <h2 className="text-sm font-semibold uppercase tracking-widest mb-3" style={{ color: 'rgba(201,168,76,0.7)' }}>
+            <h2 className="text-sm font-semibold uppercase tracking-widest mb-3 flex items-center gap-2 flex-wrap" style={{ color: 'rgba(201,168,76,0.7)' }}>
               📜 Antecedente — {bg5e.name}
+              {bg5e.is_legacy
+                ? <span className="text-xs px-2 py-0.5 rounded-full bg-amber-900/70 text-amber-300 border border-amber-700/40 normal-case tracking-normal">📘 2014</span>
+                : <span className="text-xs px-2 py-0.5 rounded-full bg-sky-900/70 text-sky-300 border border-sky-700/40 normal-case tracking-normal">✨ 2024</span>
+              }
             </h2>
             <p className="text-gray-400 text-sm mb-3">{bg5e.description}</p>
             {bg5e.feature && (

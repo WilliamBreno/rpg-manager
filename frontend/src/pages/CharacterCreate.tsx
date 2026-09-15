@@ -15,11 +15,13 @@ import { antecedentService } from '../services/antecedentService'
 import { spellService } from '../services/spellService'
 import { languageService } from '../services/languageService'
 import { classEquipmentService } from '../services/classEquipmentService'
+import { ritualService } from '../services/ritualService'
 import { SkillCard, powerConfig } from '../components/SkillCard'
 import { Tooltip } from '../components/Tooltip'
 import { SPELLCASTING_CLASSES, SPELLCASTING_ABILITY, cantripsKnownFor } from '../lib/spellSlots'
 import { parseWeaponDescription, attackBonusFor, damageAbilityMod, formatSigned, acFor } from '../lib/weaponParser'
-import type { Class, Armor, Skill, PowerType, Race, Talento, Antecedent, Spell, ClassEquipmentOption, Language } from '../types'
+import { isRitualCastingClass, ritualRuleFor } from '../lib/ritualAccess'
+import type { Class, Armor, Skill, PowerType, Race, Talento, Antecedent, Spell, ClassEquipmentOption, Language, Ritual } from '../types'
 
 // Quantas magias de nível 1+ um conjurador escolhe já no nível 1 — Bardo,
 // Bruxo e Feiticeiro têm uma lista "conhecida" fixa por nível (não é fórmula
@@ -115,6 +117,7 @@ export default function CharacterCreate() {
   const [fightingStyleId, setFightingStyleId] = useState<number | null>(null)
   const [selectedLanguages, setSelectedLanguages] = useState<Language[]>([])
   const [selectedSpells, setSelectedSpells] = useState<Spell[]>([])
+  const [selectedRituals, setSelectedRituals] = useState<Ritual[]>([])
   const [equipmentOptionId, setEquipmentOptionId] = useState<number | null>(null)
 
   // Criação dividida em abas — cada aba agrupa os "Passos" que já existiam
@@ -229,6 +232,12 @@ export default function CharacterCreate() {
     queryFn:  () => spellService.getAll('5e'),
     enabled:  isSpellcastingClass, staleTime: Infinity,
   })
+  const hasRitualCasting = selectedEdition === '4e' && isRitualCastingClass(selectedClassData?.name)
+  const { data: allRituals4e } = useQuery({
+    queryKey: ['rituals', '4e'],
+    queryFn:  () => ritualService.getAll('4e'),
+    enabled:  hasRitualCasting, staleTime: Infinity,
+  })
   const { data: equipmentOptions } = useQuery({
     queryKey: ['class-equipment-options', selectedClass],
     queryFn:  () => classEquipmentService.getByClass(selectedClass!),
@@ -283,6 +292,21 @@ export default function CharacterCreate() {
   const spellsNeeded = selectedClassData?.name ? spellsToPickAtLevel1(selectedClassData.name, spellcastingAbilityMod) : 0
   const selectedCantrips = selectedSpells.filter(sp => sp.level === 0)
   const selectedLevel1Spells = selectedSpells.filter(sp => sp.level === 1)
+
+  // ── Rituais (Conjuração Ritual, 4e) ──────────────────────────────────────
+  // Só as 6 classes confirmadas no livro têm isso (Mago/Clérigo do LJ1,
+  // Bardo/Druida/Invocador do LJ2, Psionista do LJ3) — ver ritualAccess.ts.
+  // Na criação (sempre nível 1), os rituais FIXOS de cada classe (ex:
+  // Clérigo sempre começa com Repouso Tranquilo) são concedidos
+  // automaticamente pelo backend (CharacterService.Create) — aqui só as
+  // vagas de escolha livre são mostradas pro jogador.
+  const ritualRule = ritualRuleFor(selectedClassData?.name)
+  const ritualFreeChoiceSlots = ritualRule ? ritualRule.level1Slots - ritualRule.fixedRituals.length : 0
+  const availableRituals4e = (allRituals4e ?? []).filter(r =>
+    r.level <= 1 &&
+    !ritualRule?.fixedRituals.includes(r.name) &&
+    (!r.prerequisite || r.prerequisite === selectedClassData?.name)
+  )
 
   const backgroundSkills: string[] = (() => {
     if (!selectedBackground?.skill_proficiencies) return []
@@ -391,6 +415,8 @@ export default function CharacterCreate() {
     }
     if (selectedClass && totalTalentos > 0 && selectedTalentos.length < totalTalentos)
       pendingItems.push(`Escolha mais ${totalTalentos - selectedTalentos.length} talento(s)`)
+    if (hasRitualCasting && ritualFreeChoiceSlots > 0 && selectedRituals.length < ritualFreeChoiceSlots)
+      pendingItems.push(`Escolha mais ${ritualFreeChoiceSlots - selectedRituals.length} ritual(is)`)
   }
   if (is5e) {
     if (languageChoices.length > 0 && selectedLanguages.length < 2)
@@ -446,6 +472,8 @@ export default function CharacterCreate() {
         await languageService.add(character.ID, lang.ID)
       for (const spell of selectedSpells)
         await spellService.add(character.ID, spell.ID)
+      for (const ritual of selectedRituals)
+        await ritualService.add(character.ID, ritual.ID)
       return character
     },
     onSuccess: () => navigate('/characters'),
@@ -462,6 +490,7 @@ export default function CharacterCreate() {
     setSelectedSkills({ unlimited: [], encounter: [], daily: [], utility: [] })
     setChoiceSelections({})
     setSelectedPericias([]); setSelectedTalentos([]); setSelectedSpells([])
+    setSelectedRituals([])
     setEquipmentOptionId(null)
     setFightingStyleId(null)
     setSelectedLanguages([])
@@ -485,6 +514,7 @@ export default function CharacterCreate() {
     setSelectedPericias(is4e ? autoP : backgroundSkills)
     setSelectedTalentos([])
     setSelectedSpells([])
+    setSelectedRituals([])
     setEquipmentOptionId(null)
     setFightingStyleId(null)
   }
@@ -761,6 +791,10 @@ export default function CharacterCreate() {
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1 flex-wrap">
                               <span className="font-semibold text-sm" style={{ color: isSel ? '#c9a84c' : '#e4e4e7' }}>{bg.name}</span>
+                              {bg.is_legacy
+                                ? <span className="text-xs px-2 py-0.5 rounded-full bg-amber-900/70 text-amber-300 border border-amber-700/40" title="Antecedente do Livro do Jogador 2014, sem equivalente de mesmo nome em 2024 — bônus de atributo e talento de Origem são de escolha livre (ver regra de 'Antecedentes de Livros Antigos')">📘 2014</span>
+                                : <span className="text-xs px-2 py-0.5 rounded-full bg-sky-900/70 text-sky-300 border border-sky-700/40">✨ 2024</span>
+                              }
                               {isSel && <span className="text-xs bg-yellow-900/60 text-yellow-300 px-2 py-0.5 rounded-full">✓ Selecionado</span>}
                             </div>
                             <p className="text-gray-400 text-xs mb-2">{bg.description}</p>
@@ -1252,6 +1286,54 @@ export default function CharacterCreate() {
                 </div>
               </div>
             )}
+
+            {/* PASSO 9.5 — Rituais (Conjuração Ritual, só 4e — Mago/Clérigo/Bardo/Druida/Invocador/Psionista) */}
+            {hasRitualCasting && ritualRule && (
+              <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
+                {sectionHeader(`Passo ${S()} — Rituais`)}
+                <p className="text-gray-500 text-xs mb-4">
+                  Como {selectedClassData?.name}, você ganha o talento Conjuração Ritual de graça e conhece{' '}
+                  <span style={{ color: '#c9a84c' }}>{ritualRule.level1Slots} ritual(is)</span> no nível 1.
+                  {ritualRule.fixedRituals.length > 0 && (
+                    <> {ritualRule.fixedRituals.join(', ')} {ritualRule.fixedRituals.length > 1 ? 'são concedidos' : 'é concedido'} automaticamente — escolha o(s) restante(s) abaixo.</>
+                  )}
+                  {ritualRule.requiredPrerequisiteClass && (
+                    <> Pelo menos um dos escolhidos deve ter <strong>Bardo</strong> como pré-requisito (marcado abaixo).</>
+                  )}
+                  {ritualRule.restrictedOptions && (
+                    <> Um dos escolhidos deve ser {ritualRule.restrictedOptions.join(' ou ')}.</>
+                  )}
+                </p>
+                {ritualFreeChoiceSlots > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="text-sm font-bold text-teal-400">📜 Rituais Conhecidos</h3>
+                      {counterBadge(selectedRituals.length, ritualFreeChoiceSlots)}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {availableRituals4e.map(r => {
+                        const isSelected = selectedRituals.some(sel => sel.ID === r.ID)
+                        const isDisabled = !isSelected && selectedRituals.length >= ritualFreeChoiceSlots
+                        return (
+                          <button key={r.ID} type="button" disabled={isDisabled}
+                            onClick={() => setSelectedRituals(prev => isSelected ? prev.filter(sel => sel.ID !== r.ID) : [...prev, r])}
+                            className={`text-left rounded-lg p-2.5 border text-xs transition ${isDisabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+                            style={isSelected
+                              ? { background: 'rgba(201,168,76,0.1)', borderColor: 'rgba(201,168,76,0.5)' }
+                              : { background: '#1a1a1a', borderColor: '#3f3f46' }
+                            }
+                          >
+                            <span className="font-semibold" style={{ color: isSelected ? '#c9a84c' : '#e4e4e7' }}>{r.name}</span>
+                            <span className="text-gray-500"> — {r.category}</span>
+                            {r.prerequisite && <span className="ml-1 text-purple-400">Pré-req: {r.prerequisite}</span>}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             </>)}
 
             {activeTab === 'equipamento' && (<>
@@ -1444,7 +1526,7 @@ export default function CharacterCreate() {
 
             {activeTab === 'resumo' && (<>
             {/* Resumo */}
-            {(is4e || is5e) && (totalSelected > 0 || selectedPericias.length > 0 || selectedTalentos.length > 0 || selectedSpells.length > 0 || selectedBackground || selectedAlignment || equipmentOptionId || fightingStyleId || selectedLanguages.length > 0) && (
+            {(is4e || is5e) && (totalSelected > 0 || selectedPericias.length > 0 || selectedTalentos.length > 0 || selectedSpells.length > 0 || selectedRituals.length > 0 || selectedBackground || selectedAlignment || equipmentOptionId || fightingStyleId || selectedLanguages.length > 0) && (
               <div className="rounded-xl p-4" style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)' }}>
                 <p className="text-xs font-semibold mb-2 uppercase tracking-widest" style={{ color: '#c9a84c' }}>Resumo da Criação</p>
                 <div className="flex flex-wrap gap-2">
@@ -1474,6 +1556,9 @@ export default function CharacterCreate() {
                   })()}
                   {selectedSpells.map(sp => (
                     <span key={sp.ID} className="text-xs px-2 py-1 rounded-full bg-blue-900/60 text-blue-300">{sp.level === 0 ? '✨' : '📖'} {sp.name}</span>
+                  ))}
+                  {selectedRituals.map(r => (
+                    <span key={r.ID} className="text-xs px-2 py-1 rounded-full bg-teal-900/60 text-teal-300">📜 {r.name}</span>
                   ))}
                 </div>
               </div>

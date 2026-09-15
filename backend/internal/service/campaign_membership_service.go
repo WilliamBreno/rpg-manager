@@ -19,13 +19,18 @@ type userLookup interface {
 	FindByEmail(email string) (domain.User, error)
 }
 
-type CampaignMembershipService struct {
-	repo     campaignMembershipRepo
-	userRepo userLookup
+type membershipCharacterLookup interface {
+	FindByID(id uint) (domain.Character, error)
 }
 
-func NewCampaignMembershipService(repo campaignMembershipRepo, userRepo userLookup) *CampaignMembershipService {
-	return &CampaignMembershipService{repo: repo, userRepo: userRepo}
+type CampaignMembershipService struct {
+	repo      campaignMembershipRepo
+	userRepo  userLookup
+	charRepo  membershipCharacterLookup
+}
+
+func NewCampaignMembershipService(repo campaignMembershipRepo, userRepo userLookup, charRepo membershipCharacterLookup) *CampaignMembershipService {
+	return &CampaignMembershipService{repo: repo, userRepo: userRepo, charRepo: charRepo}
 }
 
 // Invite resolve o e-mail pra um usuário existente e cria o convite
@@ -89,12 +94,26 @@ func (s *CampaignMembershipService) GetByID(id uint) (domain.CampaignMembership,
 }
 
 // Respond é o jogador aceitando ou recusando um convite — só o próprio
-// convidado pode responder (checado no handler via UserID).
+// convidado pode responder (checado no handler via UserID). Ao aceitar, é
+// obrigatório escolher qual personagem representará o jogador nesta
+// campanha (pedido explícito do usuário — antes disso o vínculo de
+// personagem era opcional e a maioria dos jogadores entrava sem nenhum
+// personagem vinculado, o que quebrava o elenco do mestre e a concessão de
+// recompensas/XP). O personagem precisa pertencer ao próprio jogador que
+// está respondendo — sem essa checagem, o campo character_id do payload
+// permitiria vincular o personagem de outra pessoa à campanha.
 func (s *CampaignMembershipService) Respond(m *domain.CampaignMembership, accept bool, characterID *uint) error {
 	if m.Status != domain.MembershipInvited {
 		return errors.New("esse convite já foi respondido")
 	}
 	if accept {
+		if characterID == nil {
+			return errors.New("escolha um personagem para entrar na campanha")
+		}
+		character, err := s.charRepo.FindByID(*characterID)
+		if err != nil || character.UserID != m.UserID {
+			return errors.New("personagem inválido")
+		}
 		m.Status = domain.MembershipAccepted
 		m.CharacterID = characterID
 	} else {

@@ -72,6 +72,21 @@ export function SkillCard({
                   Automático
                 </span>
               )}
+              {/* Selo de ano — só aparece em características 5e ligadas ao
+                  sistema misto 2014/2024 (hoje, só as 4 Escolas de Magia do
+                  Mago que faltam no PHB 2024). Sem is_legacy definido (4e,
+                  ou qualquer característica 5e comum), nenhum selo aparece —
+                  evita ruído em tudo que não tem ambiguidade de ano. */}
+              {skill.edition === '5e' && skill.is_legacy === true && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-amber-900/70 text-amber-300 border border-amber-700/40" title="Importado do Livro do Jogador 2014 — não reimpresso no Livro do Jogador 2024">
+                  📘 2014
+                </span>
+              )}
+              {skill.edition === '5e' && skill.is_legacy === false && skill.is_class_feature && skill.requires_choice && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-sky-900/70 text-sky-300 border border-sky-700/40">
+                  ✨ 2024
+                </span>
+              )}
             </div>
 
             {/* Linha 2: palavras-chave */}

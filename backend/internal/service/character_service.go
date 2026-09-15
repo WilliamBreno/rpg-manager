@@ -662,6 +662,29 @@ func (s *CharacterService) Create(character *domain.Character) error {
 		}
 	}
 
+	// Rituais fixos das 6 classes 4e com Conjuração Ritual nativa (Mago,
+	// Clérigo, Bardo, Druida, Invocador, Psionista — ver levantamento
+	// aprovado antes desta feature). Só os rituais fixos (sem escolha, ex:
+	// Clérigo sempre começa com "Repouso Tranquilo") são concedidos aqui —
+	// as vagas de escolha livre são preenchidas depois via POST
+	// /characters/:id/rituals/:ritual_id, mesmo padrão de Spell/Talento/
+	// Language. RitualService.GetAccess também re-concede esses fixos de
+	// forma idempotente, então personagens 4e já existentes (criados antes
+	// desta feature) não ficam presos sem eles.
+	if character.Edition == "4e" {
+		if rule, ok := ritualAccessRules4e[character.Class.Name]; ok {
+			for _, name := range rule.FixedRituals {
+				var ritual domain.Ritual
+				if err := s.DB.Where("name = ? AND edition = ?", name, "4e").First(&ritual).Error; err == nil {
+					s.DB.Exec(
+						"INSERT INTO character_rituals (character_id, ritual_id) VALUES (?, ?) ON CONFLICT DO NOTHING",
+						character.ID, ritual.ID,
+					)
+				}
+			}
+		}
+	}
+
 	return nil
 }
 

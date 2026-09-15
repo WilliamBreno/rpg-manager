@@ -63,7 +63,7 @@ func classEquipmentData5e() []classEquip {
 			{"B", 110, nil},
 		}},
 		{"Druida", []equipOption{
-			{"A", 9, []equipComponent{armorComp("Armadura de Couro", 1), armorComp("Escudo", 1), item("Foice", 1), item("Foco Druídico: Cajado de Madeira", 1), item("Kit de Herbalismo", 1)}},
+			{"A", 9, []equipComponent{armorComp("Armadura de Couro", 1), armorComp("Escudo", 1), item("Foice", 1), item("Foco Druídico: Cajado de Madeira", 1), item("Kit de Explorador de Masmorras", 1), item("Kit de Herbalismo", 1)}},
 			{"B", 50, nil},
 		}},
 		{"Feiticeiro", []equipOption{

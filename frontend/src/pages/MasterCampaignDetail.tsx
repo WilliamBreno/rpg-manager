@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { campaignService } from '../services/campaignService'
+import { characterService } from '../services/characterService'
 import { npcService } from '../services/npcService'
 import { enemyService } from '../services/enemyService'
 import { sessionService } from '../services/sessionService'
@@ -30,7 +31,7 @@ export default function MasterCampaignDetail() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
-  const [tab, setTab] = useState<'npcs' | 'enemies' | 'sessions' | 'scenes' | 'dice' | 'rewards'>('npcs')
+  const [tab, setTab] = useState<'players' | 'npcs' | 'enemies' | 'sessions' | 'scenes' | 'dice' | 'rewards'>('players')
   const tabBarRef = useRef<HTMLDivElement>(null)
 
   // Garante que a aba escolhida fique visível mesmo quando a barra de abas
@@ -122,6 +123,25 @@ export default function MasterCampaignDetail() {
   })
 
   const { data: members } = useQuery({ queryKey: ['members', campaignId], queryFn: () => membershipService.getMembers(campaignId) })
+
+  // XP/nível concedido pelo mestre conforme a campanha avança — reaproveita
+  // os mesmos endpoints já usados pela própria ficha do jogador
+  // (characterService.addXP/levelUp); não há gate de dono nesses endpoints
+  // hoje (nenhum endpoint de personagem tem, ver CLAUDE.md), então isso já
+  // funcionava via API — só faltava uma tela pro mestre fazer isso sem
+  // precisar de curl.
+  const [xpInputs, setXpInputs] = useState<Record<number, string>>({})
+  const addXPToMember = useMutation({
+    mutationFn: ({ characterId, xp }: { characterId: number; xp: number }) => characterService.addXP(characterId, xp),
+    onSuccess: (_, { characterId }) => {
+      queryClient.invalidateQueries({ queryKey: ['members', campaignId] })
+      setXpInputs(prev => ({ ...prev, [characterId]: '' }))
+    },
+  })
+  const levelUpMember = useMutation({
+    mutationFn: (characterId: number) => characterService.levelUp(characterId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['members', campaignId] }),
+  })
   const { data: magicItems } = useQuery({ queryKey: ['magic-items', campaignId], queryFn: () => rewardService.getMagicItems(campaignId) })
   const { data: rewardHistory } = useQuery({ queryKey: ['rewards', campaignId], queryFn: () => rewardService.getHistory(campaignId) })
 
@@ -255,6 +275,9 @@ export default function MasterCampaignDetail() {
 
         <div className="relative mb-6">
           <div ref={tabBarRef} className="flex gap-2 border-b border-gray-800 overflow-x-auto no-scrollbar">
+            <button data-tab="players" onClick={() => setTab('players')} className={`flex-shrink-0 px-4 py-2 text-sm font-medium border-b-2 transition whitespace-nowrap ${tab === 'players' ? 'border-rpg-gold text-rpg-gold' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>
+              👥 Jogadores
+            </button>
             <button data-tab="npcs" onClick={() => setTab('npcs')} className={`flex-shrink-0 px-4 py-2 text-sm font-medium border-b-2 transition whitespace-nowrap ${tab === 'npcs' ? 'border-rpg-gold text-rpg-gold' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>
               NPCs
             </button>
@@ -279,6 +302,70 @@ export default function MasterCampaignDetail() {
               layout em vez de "arraste pra ver mais". */}
           <div className="md:hidden pointer-events-none absolute right-0 top-0 bottom-[2px] w-8 bg-gradient-to-l from-gray-900 to-transparent" />
         </div>
+
+        {tab === 'players' && (
+          <div>
+            <p className="text-gray-500 text-xs mb-4">
+              Todos os jogadores convidados pra esta campanha, o personagem que cada um escolheu ao aceitar, e um jeito rápido de conceder XP ou subir de nível conforme a aventura avança.
+            </p>
+            <div className="flex flex-col gap-3">
+              {(members ?? []).length === 0 && (
+                <p className="text-gray-500 text-sm">Nenhum jogador convidado ainda. Use o campo de e-mail acima pra convidar.</p>
+              )}
+              {(members ?? []).map(m => {
+                const char = m.character
+                const statusLabel = m.status === 'accepted' ? 'Aceito' : m.status === 'declined' ? 'Recusado' : 'Convite pendente'
+                const statusColor = m.status === 'accepted' ? 'bg-green-900/50 text-green-300' : m.status === 'declined' ? 'bg-red-900/50 text-red-300' : 'bg-amber-900/50 text-amber-300'
+                return (
+                  <div key={m.ID} className="rpg-card p-4 flex flex-col gap-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-white font-semibold truncate">{m.user?.name ?? `Usuário #${m.user_id}`}</p>
+                        <p className="text-gray-500 text-xs truncate">{m.user?.email}</p>
+                      </div>
+                      <span className={`text-xs px-2 py-1 rounded-full flex-shrink-0 ${statusColor}`}>{statusLabel}</span>
+                    </div>
+
+                    {char ? (
+                      <div className="bg-gray-900/50 rounded-lg p-3 flex flex-col gap-2">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div>
+                            <p className="text-rpg-gold text-sm font-semibold">{char.name}</p>
+                            <p className="text-gray-500 text-xs">
+                              {char.class?.name} {char.race?.name ? `· ${char.race.name}` : ''} · Nível {char.level} · {char.edition} · {char.experience_points} XP
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => levelUpMember.mutate(char.ID)}
+                            disabled={levelUpMember.isPending}
+                            className="btn-rpg-outline px-3 py-1.5 text-xs flex-shrink-0"
+                          >▲ Subir de Nível</button>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number" min={0} placeholder="Quantidade de XP"
+                            value={xpInputs[char.ID] ?? ''}
+                            onChange={e => setXpInputs(prev => ({ ...prev, [char.ID]: e.target.value }))}
+                            className="rpg-input text-sm flex-1"
+                          />
+                          <button
+                            onClick={() => addXPToMember.mutate({ characterId: char.ID, xp: Number(xpInputs[char.ID] || 0) })}
+                            disabled={addXPToMember.isPending || !xpInputs[char.ID]}
+                            className="btn-rpg-primary px-3 py-1.5 text-xs flex-shrink-0"
+                          >+ Adicionar XP</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 text-xs">
+                        {m.status === 'accepted' ? 'Aceitou o convite, mas ainda não vinculou um personagem.' : 'Ainda não respondeu ao convite.'}
+                      </p>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {tab === 'npcs' && (
           <div>

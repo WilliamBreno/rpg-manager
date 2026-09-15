@@ -7,7 +7,15 @@ export interface CampaignMembership {
   user_id: number
   user?: { ID: number; name: string; email: string }
   character_id: number | null
-  character?: { ID: number; name: string }
+  character?: {
+    ID: number
+    name: string
+    edition: string
+    level: number
+    experience_points: number
+    class?: { name: string }
+    race?: { name: string }
+  }
   status: 'invited' | 'accepted' | 'declined'
 }
 

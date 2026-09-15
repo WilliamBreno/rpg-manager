@@ -1,17 +1,36 @@
+import time
+
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import Response
 from pydantic import BaseModel
 import chromadb
 from langchain_ollama import OllamaEmbeddings
-import ollama
 import json
 
+import rag_cache
+from llm_provider import generate_text, RAG_LLM_PROVIDER
 from pdf_export.fill_dnd5e_sheet import fill_sheet
+
+load_dotenv()
 
 app = FastAPI()
 
 chroma_client = chromadb.PersistentClient(path="./chroma_db")
 collection = chroma_client.get_or_create_collection(name="dnd_books")
+
+# Reduz o contexto mandado pro LLM (causa raiz da lentidão, junto com o
+# provedor) — ver CLAUDE.md pra medições antes/depois. Antes: 6 resultados
+# por combinação (variante de busca × livro) sem teto nenhum de tamanho total
+# nem ranking por relevância, gerando ~62KB de prompt.
+N_RESULTS_PER_COMBO = 3     # era 6
+TOP_N_CHUNKS = 8            # quantos chunks (dos ~28 combinações × N_RESULTS_PER_COMBO) sobrevivem, por relevância
+MAX_CONTEXT_CHARS = 6000    # teto rígido de segurança, mesmo depois do corte acima
+
+try:
+    rag_cache.ensure_table()
+except Exception as e:
+    print(f"[CACHE] não foi possível preparar a tabela de cache no boot: {e}")
 
 class SkillQuery(BaseModel):
     class_name: str
@@ -45,6 +64,12 @@ def search_relevant_chunks(query: str, n_results: int = 10) -> str:
 
 @app.post("/skills")
 async def get_skills(query: SkillQuery):
+    cache_key = rag_cache.make_cache_key(query.class_name, query.edition, query.level)
+    cached = rag_cache.get_cached(cache_key)
+    if cached is not None:
+        print(f"[CACHE] hit para {cache_key!r} — pulando embed/busca/geração")
+        return cached
+
     # Busca múltiplos contextos para cobrir mais habilidades
     search_queries = [
         f"{query.class_name} at-will powers level {query.level} D&D {query.edition}",
@@ -52,9 +77,8 @@ async def get_skills(query: SkillQuery):
         f"{query.class_name} daily powers level {query.level} D&D {query.edition}",
         f"{query.class_name} utility powers level {query.level} D&D {query.edition}",
     ]
-    
+
     embeddings = OllamaEmbeddings(model="nomic-embed-text")
-    all_chunks = set()
 
     # Consulta cada livro indexado separadamente (em vez de um único top-k
     # global) para que livros menores, como "Poder Arcano", não sejam
@@ -62,23 +86,70 @@ async def get_skills(query: SkillQuery):
     # Jogador) na busca semântica.
     books = INDEXED_BOOKS or [None]
 
+    # --- INSTRUMENTAÇÃO DE TEMPO (mantida como observabilidade leve, não só diagnóstico pontual) ---
+    t_embed_total = 0.0
+    t_search_total = 0.0
+    embed_calls = 0
+    search_calls = 0
+
+    # (distância, texto) de toda combinação variante×livro — a distância do
+    # Chroma é "quanto menor, mais relevante" tanto pra espaço cosine quanto
+    # L2, então dá pra rankear tudo junto no fim em vez de manter só um
+    # set() deduplicado por texto exato sem noção de relevância (era o que
+    # fazia o contexto virar ~62KB: tudo que qualquer uma das 4 variantes ×
+    # todos os livros trouxesse ia pro prompt, sem corte).
+    candidates: list[tuple[float, str]] = []
+
     for q in search_queries:
+        t0 = time.perf_counter()
         query_embedding = embeddings.embed_query(q)
+        t_embed_total += time.perf_counter() - t0
+        embed_calls += 1
         for book in books:
+            t0 = time.perf_counter()
             results = collection.query(
                 query_embeddings=[query_embedding],
-                n_results=6,
+                n_results=N_RESULTS_PER_COMBO,
                 where={"book": book} if book else None,
+                include=["documents", "distances"],
             )
-            if results['documents'][0]:
-                for doc in results['documents'][0]:
-                    all_chunks.add(doc)
-    
-    context = "\n\n".join(list(all_chunks))
-    
+            t_search_total += time.perf_counter() - t0
+            search_calls += 1
+            docs = results['documents'][0] if results['documents'] else []
+            dists = results['distances'][0] if results.get('distances') else [float("inf")] * len(docs)
+            for doc, dist in zip(docs, dists):
+                candidates.append((dist, doc))
+
+    print(f"[TIMING] embeddings da pergunta: {t_embed_total:.3f}s total ({embed_calls} chamadas, {t_embed_total/embed_calls:.3f}s/cada)")
+    print(f"[TIMING] busca vetorial no Chroma: {t_search_total:.3f}s total ({search_calls} chamadas, {t_search_total/search_calls:.3f}s/cada)")
+
+    # Desduplica por texto mantendo a menor distância (mais relevante) de
+    # cada chunk repetido entre combinações, depois ordena tudo por
+    # relevância e mantém só os TOP_N_CHUNKS mais relevantes no total.
+    best_by_text: dict[str, float] = {}
+    for dist, text in candidates:
+        if text not in best_by_text or dist < best_by_text[text]:
+            best_by_text[text] = dist
+    ranked = sorted(best_by_text.items(), key=lambda kv: kv[1])  # (texto, distância) crescente
+
+    selected_chunks: list[str] = []
+    total_chars = 0
+    for text, _dist in ranked[:TOP_N_CHUNKS]:
+        # Teto rígido de segurança: mesmo dentro do top-N, não deixa o
+        # contexto total passar de MAX_CONTEXT_CHARS (protege contra um
+        # cenário futuro com mais livros/variantes de busca).
+        if selected_chunks and total_chars + len(text) > MAX_CONTEXT_CHARS:
+            break
+        selected_chunks.append(text)
+        total_chars += len(text)
+
+    context = "\n\n".join(selected_chunks)
+    print(f"[TIMING] contexto final: {len(context)} chars ({len(selected_chunks)} chunks de {len(candidates)} candidatos brutos)")
+    # --- FIM DA INSTRUMENTAÇÃO DE EMBED/BUSCA/CONTEXTO ---
+
     if not context:
         return {"error": "Nenhum contexto encontrado nos livros indexados"}
-    
+
     prompt = f"""You are a D&D {query.edition} expert. Based ONLY on the rulebook content below, list ALL powers for the {query.class_name} class with min_level <= {query.level}.
 
 IMPORTANT RULES:
@@ -96,22 +167,29 @@ RESPOND WITH ONLY A JSON ARRAY. NO OTHER TEXT. Example:
 
 JSON array of ALL {query.class_name} powers up to level {query.level}:"""
 
-    response = ollama.generate(model="llama3.2", prompt=prompt)
-    raw = response.response
-    
+    # --- INSTRUMENTAÇÃO DE TEMPO ---
+    t0 = time.perf_counter()
+    try:
+        raw = generate_text(prompt)
+    except Exception as e:
+        return {"error": f"Falha ao gerar resposta via {RAG_LLM_PROVIDER}: {e}"}
+    t_generate = time.perf_counter() - t0
+    print(f"[TIMING] geração via {RAG_LLM_PROVIDER}: {t_generate:.3f}s (prompt ~{len(prompt)} chars, contexto ~{len(context)} chars)")
+    # --- FIM DA INSTRUMENTAÇÃO DE GERAÇÃO ---
+
     raw = raw.replace('```json', '').replace('```', '').strip()
-    
+
     start = raw.find('[')
     end = raw.rfind(']')
-    
+
     if start == -1 or end == -1:
         return {"error": "IA não retornou JSON válido", "raw": raw}
-    
+
     json_str = raw[start:end+1]
-    
+
     try:
         skills = json.loads(json_str)
-        
+
         type_map = {
             'at-will': 'at-will', 'at will': 'at-will', 'atwill': 'at-will',
             'cantrip': 'at-will', 'unlimited': 'at-will', 'bonus action': 'at-will',
@@ -119,26 +197,27 @@ JSON array of ALL {query.class_name} powers up to level {query.level}:"""
             'daily': 'daily', 'per day': 'daily',
             'utility': 'utility',
         }
-        
+
         filtered = []
         for skill in skills:
             pt = skill.get('power_type', '').lower().strip()
             skill['power_type'] = type_map.get(pt, 'at-will')
-            
+
             min_level = skill.get('min_level', 1)
             try:
                 min_level = int(min_level)
             except:
                 min_level = 1
-            
+
             skill['min_level'] = min_level
-            
+
             # Filtra apenas habilidades do nível correto
             if min_level <= query.level:
                 filtered.append(skill)
-        
+
+        rag_cache.set_cached(cache_key, filtered)
         return filtered
-        
+
     except json.JSONDecodeError as e:
         return {"error": f"Erro ao parsear JSON: {str(e)}", "raw": json_str}
 

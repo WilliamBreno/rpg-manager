@@ -7,6 +7,7 @@ frontend/node_modules/
 frontend/dist/
 
 # AI Service
+ai-service/.env
 ai-service/chroma_db/
 ai-service/chroma_db_5e/
 ai-service/books/
