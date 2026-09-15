@@ -104,7 +104,7 @@ export default function CharacterEdit() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <p className="text-gray-500">Carregando...</p>
+        <p className="text-gray-500">Rolando os dados...</p>
       </div>
     )
   }

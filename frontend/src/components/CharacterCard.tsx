@@ -53,7 +53,7 @@ export default function CharacterCard({ character }: Props) {
 
   const handleDelete = () => {
     setMenuOpen(false)
-    if (window.confirm(`Excluir ${character.name}? Essa ação não pode ser desfeita.`)) {
+    if (window.confirm(`Apagar ${character.name} para sempre? Não há ritual de Reviver os Mortos pra isso.`)) {
       deleteMutation.mutate()
     }
   }

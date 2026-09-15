@@ -210,7 +210,7 @@ export default function CharacterDetail() {
       }
     },
     onError: () => {
-      setXpFeedback({ message: 'Erro ao adicionar XP', type: 'error' })
+      setXpFeedback({ message: '⚠ Não foi possível adicionar XP', type: 'error' })
       setTimeout(() => setXpFeedback(null), 3000)
     },
   })
@@ -241,7 +241,7 @@ export default function CharacterDetail() {
       }
     },
     onError: () => {
-      setXpFeedback({ message: 'Erro ao aplicar melhorias', type: 'error' })
+      setXpFeedback({ message: '⚠ Não foi possível aplicar as melhorias', type: 'error' })
       setTimeout(() => setXpFeedback(null), 3000)
     },
   })
@@ -263,7 +263,7 @@ export default function CharacterDetail() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <p className="text-gray-500">Carregando...</p>
+        <p className="text-gray-500">Rolando os dados...</p>
       </div>
     )
   }
@@ -871,7 +871,7 @@ export default function CharacterDetail() {
                 </span>
               ))}
               {ritualAccess.known.length === 0 && (
-                <p className="text-gray-500 text-xs">Nenhum ritual conhecido ainda.</p>
+                <p className="text-gray-500 text-xs">Nenhum ritual no grimório ainda.</p>
               )}
             </div>
             {ritualAccess.remaining_choices > 0 && (

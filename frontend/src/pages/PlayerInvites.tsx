@@ -37,7 +37,7 @@ export default function PlayerInvites() {
         <button onClick={() => navigate('/characters')} className="transition mb-6 block text-sm" style={{ color: 'rgba(201,168,76,0.5)' }}>← Voltar</button>
         <h1 className="font-rpg text-2xl font-bold mb-6" style={{ color: '#c9a84c' }}>Convites de Campanha</h1>
 
-        {isLoading && <p className="text-gray-500 text-sm">Carregando...</p>}
+        {isLoading && <p className="text-gray-500 text-sm">Rolando os dados...</p>}
         {!isLoading && (pending ?? []).length === 0 && (
           <p className="text-gray-500 text-sm">Nenhum convite pendente no momento.</p>
         )}

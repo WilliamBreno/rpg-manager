@@ -152,7 +152,7 @@ export default function CharacterList() {
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-6">
                 <div>
                   <h1 className="text-2xl sm:text-3xl font-bold text-white">Meus Personagens</h1>
-                  <p className="text-gray-500 text-sm mt-1">Gerencie todos os seus heróis e suas histórias.</p>
+                  <p className="text-gray-500 text-sm mt-1">Veja e edite os personagens que você já criou.</p>
                 </div>
                 <button
                   onClick={() => navigate('/characters/new')}
@@ -172,13 +172,13 @@ export default function CharacterList() {
                 />
               )}
 
-              {isLoading && <p className="text-gray-400 text-center py-8">Carregando...</p>}
-              {error   && <p className="text-red-400 text-center py-8">Erro ao carregar personagens.</p>}
+              {isLoading && <p className="text-gray-400 text-center py-8">Rolando os dados...</p>}
+              {error   && <p className="text-red-400 text-center py-8">⚠ Não foi possível carregar seus personagens.</p>}
 
               {characters?.length === 0 && (
                 <div className="text-center py-16">
                   <p className="text-4xl mb-4">🎲</p>
-                  <p className="text-gray-400">Nenhum personagem criado ainda.</p>
+                  <p className="text-gray-400">Sua mesa está vazia. Hora de criar seu primeiro personagem.</p>
                   <button
                     onClick={() => navigate('/characters/new')}
                     className="mt-4 btn-rpg-primary px-6 py-2"

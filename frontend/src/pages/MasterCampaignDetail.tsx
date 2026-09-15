@@ -169,7 +169,7 @@ export default function MasterCampaignDetail() {
       setRewardMsg(`${rewards.length} personagem(ns) recebeu(ram) a recompensa em moeda.`)
     },
     onError: (err: unknown) => {
-      const message = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Erro ao conceder recompensa.'
+      const message = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? '⚠ Não foi possível conceder a recompensa.'
       setRewardMsg(message)
     },
   })
@@ -185,7 +185,7 @@ export default function MasterCampaignDetail() {
       setRewardMsg(`${rewards.length} personagem(ns) recebeu(ram) o item.`)
     },
     onError: (err: unknown) => {
-      const message = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Erro ao conceder item.'
+      const message = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? '⚠ Não foi possível conceder o item.'
       setRewardMsg(message)
     },
   })
@@ -194,7 +194,7 @@ export default function MasterCampaignDetail() {
     mutationFn: () => membershipService.invite(campaignId, inviteEmail),
     onSuccess: () => { setInviteEmail(''); setInviteMsg('Convite enviado!') },
     onError: (err: unknown) => {
-      const message = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Erro ao convidar.'
+      const message = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? '⚠ Não foi possível enviar o convite.'
       setInviteMsg(message)
     },
   })
@@ -392,7 +392,7 @@ export default function MasterCampaignDetail() {
               </form>
             )}
 
-            {loadingNpcs && <p className="text-gray-500 text-sm">Carregando...</p>}
+            {loadingNpcs && <p className="text-gray-500 text-sm">Rolando os dados...</p>}
             {!loadingNpcs && (npcs ?? []).length === 0 && <p className="text-gray-500 text-sm">Nenhum NPC ainda.</p>}
             <div className="flex flex-col gap-3">
               {(npcs ?? []).map(n => (
@@ -435,7 +435,7 @@ export default function MasterCampaignDetail() {
               />
             )}
 
-            {loadingEnemies && <p className="text-gray-500 text-sm">Carregando...</p>}
+            {loadingEnemies && <p className="text-gray-500 text-sm">Rolando os dados...</p>}
             {!loadingEnemies && (enemies ?? []).length === 0 && <p className="text-gray-500 text-sm">Nenhum inimigo ainda.</p>}
             <div className="flex flex-col gap-3">
               {(enemies ?? []).map(en => (
@@ -506,7 +506,7 @@ export default function MasterCampaignDetail() {
               </div>
             )}
 
-            {loadingSessions && <p className="text-gray-500 text-sm">Carregando...</p>}
+            {loadingSessions && <p className="text-gray-500 text-sm">Rolando os dados...</p>}
             {!loadingSessions && (sessions ?? []).length === 0 && <p className="text-gray-500 text-sm">Nenhuma sessão registrada ainda.</p>}
 
             <div className="flex flex-col gap-3">
@@ -572,7 +572,7 @@ export default function MasterCampaignDetail() {
               </form>
             )}
 
-            {loadingScenes && <p className="text-gray-500 text-sm">Carregando...</p>}
+            {loadingScenes && <p className="text-gray-500 text-sm">Rolando os dados...</p>}
             {!loadingScenes && (scenes ?? []).length === 0 && <p className="text-gray-500 text-sm">Nenhum cenário na biblioteca ainda.</p>}
 
             <div className="flex flex-wrap gap-3 mb-6">

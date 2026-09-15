@@ -90,7 +90,7 @@ export default function Shop() {
     onError: () => { setFeedback('Não foi possível conceder moedas.'); setTimeout(() => setFeedback(null), 2500) },
   })
 
-  if (!character) return <div className="min-h-screen bg-gray-900 p-8 text-gray-400">Carregando...</div>
+  if (!character) return <div className="min-h-screen bg-gray-900 p-8 text-gray-400">Rolando os dados...</div>
 
   const currency: Currency = {
     copper_pieces: character.copper_pieces ?? 0,

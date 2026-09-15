@@ -113,7 +113,7 @@ export default function MasterCampaigns() {
           </form>
         )}
 
-        {isLoading && <p className="text-gray-500 text-sm">Carregando...</p>}
+        {isLoading && <p className="text-gray-500 text-sm">Rolando os dados...</p>}
         {!isLoading && (campaigns ?? []).length === 0 && !showCreate && (
           <p className="text-gray-500 text-sm">Nenhuma campanha ainda — crie a primeira acima.</p>
         )}
